@@ -27,6 +27,10 @@
         <env name="DB_DATABASE" value=":memory:" force="true"/>
         <env name="DB_URL" value="" force="true"/>
         <env name="GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED" value="true" force="true"/>
+        <!-- Keep the unified AI gateway override OFF in tests so resolve*() exercises
+             per-URL normalization rather than the runtime override from .env. -->
+        <env name="GEOFLOW_AI_BASE_URL" value="" force="true"/>
+        <env name="GEOFLOW_AI_API_KEY" value="" force="true"/>
         <env name="MAIL_MAILER" value="array"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>

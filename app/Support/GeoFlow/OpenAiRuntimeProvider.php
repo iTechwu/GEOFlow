@@ -11,10 +11,39 @@ use Throwable;
 final class OpenAiRuntimeProvider
 {
     /**
+     * 统一 AI 网关覆盖是否启用：base_url 与 api_key 两者均非空时为 true。
+     * 启用后所有模型调用（chat/embedding/后台测试）强制走统一 base + key，忽略按模型/按用户解析。
+     */
+    public static function hasUnifiedOverride(): bool
+    {
+        return self::unifiedBaseUrl() !== '' && self::unifiedApiKey() !== '';
+    }
+
+    /**
+     * 统一 AI 网关 base URL（来自 GEOFLOW_AI_BASE_URL，trim 后原样使用）。
+     */
+    public static function unifiedBaseUrl(): string
+    {
+        return trim((string) config('geoflow.ai_base_url', ''));
+    }
+
+    /**
+     * 统一 AI 网关 API Key（来自 GEOFLOW_AI_API_KEY）。
+     */
+    public static function unifiedApiKey(): string
+    {
+        return trim((string) config('geoflow.ai_api_key', ''));
+    }
+
+    /**
      * 将历史或自定义 api_url 规范为 Chat Completions 可用的 base（根路径时补全 /v1）。
      */
     public static function resolveChatBaseUrl(string $apiUrl): string
     {
+        if (self::hasUnifiedOverride()) {
+            return self::unifiedBaseUrl();
+        }
+
         $normalized = trim($apiUrl);
         if ($normalized === '') {
             return '';
@@ -45,6 +74,10 @@ final class OpenAiRuntimeProvider
      */
     public static function resolveEmbeddingBaseUrl(string $apiUrl): string
     {
+        if (self::hasUnifiedOverride()) {
+            return self::unifiedBaseUrl();
+        }
+
         $normalized = trim($apiUrl);
         if ($normalized === '') {
             return '';
@@ -151,6 +184,12 @@ final class OpenAiRuntimeProvider
      */
     public static function registerProvider(string $registrySlot, string $driver, string $providerUrl, string $apiKey): string
     {
+        // 统一网关覆盖：强制使用统一 base + key，忽略调用方传入的按模型/按用户值。
+        if (self::hasUnifiedOverride()) {
+            $providerUrl = self::unifiedBaseUrl();
+            $apiKey = self::unifiedApiKey();
+        }
+
         $providerName = 'runtime_'.$registrySlot.'_'.md5($driver.'|'.$providerUrl.'|'.$apiKey);
         Config::set('ai.providers.'.$providerName, [
             'driver' => $driver,
