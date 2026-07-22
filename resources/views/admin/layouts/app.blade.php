@@ -9,6 +9,7 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@isset($pageTitle){{ $pageTitle }} — @endisset{{ $adminBrandName }}</title>
     <script src="{{ asset('js/tailwindcss.play-cdn.js') }}"></script>
+    <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
     <script src="{{ asset('js/lucide.min.js') }}"></script>
     @stack('styles')
 </head>

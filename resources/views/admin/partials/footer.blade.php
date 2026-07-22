@@ -1,13 +1,13 @@
 @php
-    $projectGithubUrl = 'https://github.com/yaojingang/GEOFlow';
+    $projectGithubUrl = 'https://github.com/yaojingang/geo.dofe';
     $xProfileUrl = 'https://x.com/yaojingang';
     $appVersion = (string) config('geoflow.app_version', '2.0');
     $changelogUrl = app()->getLocale() === 'en'
-        ? 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG_en.md'
-        : 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG.md';
+        ? 'https://github.com/yaojingang/geo.dofe/blob/main/docs/CHANGELOG_en.md'
+        : 'https://github.com/yaojingang/geo.dofe/blob/main/docs/CHANGELOG.md';
     $helpDocsUrl = app()->getLocale() === 'en'
-        ? 'https://github.com/yaojingang/GEOFlow/wiki/Home-English'
-        : 'https://github.com/yaojingang/GEOFlow/wiki';
+        ? 'https://github.com/yaojingang/geo.dofe/wiki/Home-English'
+        : 'https://github.com/yaojingang/geo.dofe/wiki';
     $reverbApp = config('reverb.apps.apps.0', []);
     $reverbHost = (string) (config('reverb.servers.reverb.hostname') ?: config('app.url'));
     $reverbParsedHost = parse_url($reverbHost, PHP_URL_HOST);

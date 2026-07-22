@@ -3,14 +3,13 @@
 namespace Tests\Feature;
 
 use App\Console\Commands\GeoFlowInstallCommand;
-use App\Models\Admin;
 use App\Models\Article;
+use App\Models\Admin;
 use App\Models\Category;
 use App\Models\SiteSetting;
 use App\Models\SystemState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -29,9 +28,7 @@ class GeoFlowInstallCommandTest extends TestCase
         $this->assertTrue(Schema::hasTable('managed_image_paths'));
         $this->assertTrue(Schema::hasColumn('images', 'managed_path_hash'));
 
-        $admin = Admin::query()->where('username', 'admin')->first();
-        $this->assertNotNull($admin);
-        $this->assertTrue(Hash::check('password', (string) $admin->password));
+        $this->assertSame(0, \App\Models\Admin::query()->count());
         $this->assertSame(0, Category::query()->count());
         $this->assertSame(0, Article::query()->count());
 
@@ -40,24 +37,22 @@ class GeoFlowInstallCommandTest extends TestCase
         $this->assertSame('fresh_install', $state->value['mode'] ?? null);
     }
 
-    public function test_install_command_skips_when_marker_exists_without_overwriting_admin(): void
+    public function test_install_command_skips_when_marker_exists_without_creating_a_local_user(): void
     {
         $this->artisan('geoflow:install')->assertExitCode(0);
 
-        $admin = Admin::query()->where('username', 'admin')->firstOrFail();
-        $admin->forceFill([
-            'email' => 'custom-admin@example.com',
-            'password' => 'custom-secret',
-        ])->save();
-        $originalPasswordHash = (string) $admin->password;
+        $installedAt = SystemState::query()
+            ->where('key', GeoFlowInstallCommand::INSTALLATION_STATE_KEY)
+            ->value('value')['installed_at'] ?? null;
 
         $this->artisan('geoflow:install')
             ->assertExitCode(0);
 
-        $admin->refresh();
-        $this->assertSame('custom-admin@example.com', $admin->email);
-        $this->assertSame($originalPasswordHash, (string) $admin->password);
-        $this->assertSame(1, Admin::query()->where('username', 'admin')->count());
+        $this->assertSame(0, \App\Models\Admin::query()->count());
+        $this->assertSame(
+            $installedAt,
+            SystemState::query()->where('key', GeoFlowInstallCommand::INSTALLATION_STATE_KEY)->value('value')['installed_at'] ?? null
+        );
     }
 
     public function test_install_command_backfills_marker_for_existing_database_without_seeding(): void
@@ -87,7 +82,7 @@ class GeoFlowInstallCommandTest extends TestCase
         $this->artisan('geoflow:install')
             ->assertExitCode(0);
 
-        $this->assertSame(1, Admin::query()->where('username', 'admin')->count());
+        $this->assertSame(0, \App\Models\Admin::query()->count());
 
         $state = SystemState::query()->where('key', GeoFlowInstallCommand::INSTALLATION_STATE_KEY)->first();
         $this->assertNotNull($state);
@@ -102,7 +97,7 @@ class GeoFlowInstallCommandTest extends TestCase
         $this->artisan('geoflow:install')
             ->assertExitCode(0);
 
-        $this->assertSame(1, Admin::query()->where('username', 'admin')->count());
+        $this->assertSame(0, \App\Models\Admin::query()->count());
         $this->assertGreaterThan(0, Category::query()->where('slug', 'mac')->count());
         $this->assertGreaterThan(0, Article::query()->where('slug', 'how-to-reinstall-macos')->count());
     }

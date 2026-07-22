@@ -10,7 +10,7 @@
         "public routes",
         "SEO title/description/keywords/canonical",
         "JSON-LD schema output",
-        "GEOFlow category/article variables",
+        "geo.dofe category/article variables",
         "rendered article HTML",
         "optional article detail ad data"
     ],

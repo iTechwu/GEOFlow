@@ -11,8 +11,8 @@ class AdminWelcomeIntroCopyTest extends TestCase
         /** @var array<string, array<string, mixed>> $copy */
         $copy = require app_path('Support/AdminWelcome/intro_copy.php');
 
-        $this->assertSame('写给 GEOFlow 使用者的一封信', $copy['zh-CN']['letter']['title']);
-        $this->assertSame('A Letter to GEOFlow Users', $copy['en']['letter']['title']);
+        $this->assertSame('写给 geo.dofe 使用者的一封信', $copy['zh-CN']['letter']['title']);
+        $this->assertSame('A Letter to geo.dofe Users', $copy['en']['letter']['title']);
         $this->assertStringContainsString('提高被理解、引用和推荐的概率', $copy['zh-CN']['letter']['subtitle']);
         $this->assertStringContainsString('不承诺排名', $copy['zh-CN']['letter']['subtitle']);
         $this->assertStringContainsString('GEO 优化的是答案引擎采纳事实、观点和页面的概率', $this->flattenCopy($copy['zh-CN']['letter']['blocks']));

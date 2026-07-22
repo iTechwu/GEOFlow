@@ -7,13 +7,15 @@ use Closure;
 
 final class SystemHostResolver implements HostResolver
 {
+    private const MAX_LOOKUP_ATTEMPTS = 3;
+
     /** @var Closure(string): array<int, array<string, mixed>> */
     private readonly Closure $lookup;
 
     /** @param (Closure(string): array<int, array<string, mixed>>)|null $lookup */
     public function __construct(?Closure $lookup = null)
     {
-        $this->lookup = $lookup ?? static fn (string $host): array => dns_get_record($host, DNS_A | DNS_AAAA | DNS_CNAME) ?: [];
+        $this->lookup = $lookup ?? static fn (string $host): array => @dns_get_record($host, DNS_A | DNS_AAAA | DNS_CNAME) ?: [];
     }
 
     public function resolve(string $host): array
@@ -33,7 +35,7 @@ final class SystemHostResolver implements HostResolver
 
         $visited[$host] = true;
         $addresses = [];
-        foreach (($this->lookup)($host) as $record) {
+        foreach ($this->lookupRecords($host) as $record) {
             $type = strtoupper((string) ($record['type'] ?? ''));
             if ($type === 'A' && filter_var($record['ip'] ?? null, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
                 $addresses[] = (string) $record['ip'];
@@ -48,5 +50,26 @@ final class SystemHostResolver implements HostResolver
         }
 
         return array_values(array_unique($addresses));
+    }
+
+    /** @return array<int, array<string, mixed>> */
+    private function lookupRecords(string $host): array
+    {
+        for ($attempt = 1; $attempt <= self::MAX_LOOKUP_ATTEMPTS; $attempt++) {
+            $records = ($this->lookup)($host);
+            if ($records !== []) {
+                return $records;
+            }
+
+            if ($attempt < self::MAX_LOOKUP_ATTEMPTS) {
+                usleep(100_000);
+            }
+        }
+
+        $ipv4 = @gethostbynamel($host);
+
+        return is_array($ipv4)
+            ? array_map(static fn (string $ip): array => ['type' => 'A', 'ip' => $ip], $ipv4)
+            : [];
     }
 }

@@ -153,6 +153,7 @@ class TaskController extends Controller
 
         $payload = $this->validateTaskForm($request);
         $taskData = $this->buildTaskPayload($request, $payload);
+        $taskData['sso_owner_admin_id'] = (int) auth('admin')->id();
         $channelIds = $this->selectedDistributionChannelIds($request);
 
         try {

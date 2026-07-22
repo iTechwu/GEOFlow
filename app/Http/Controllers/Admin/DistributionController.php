@@ -27,7 +27,6 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
@@ -543,16 +542,6 @@ class DistributionController extends Controller
             ]);
         }
 
-        $payload = $request->validate([
-            'password' => ['required', 'string'],
-        ]);
-
-        if (! Hash::check((string) $payload['password'], (string) $admin->password)) {
-            return back()->withErrors([
-                'password' => __('admin.distribution.message.password_invalid'),
-            ]);
-        }
-
         try {
             $revealed = $this->channelOperationLeaseService->run(
                 $channel,
@@ -613,16 +602,6 @@ class DistributionController extends Controller
         if (! $admin instanceof Admin || ! $admin->isSuperAdmin()) {
             return back()->withErrors([
                 'package_password' => __('admin.distribution.message.package_download_forbidden'),
-            ]);
-        }
-
-        $payload = $request->validate([
-            'package_password' => ['required', 'string'],
-        ]);
-
-        if (! Hash::check((string) $payload['package_password'], (string) $admin->password)) {
-            return back()->withErrors([
-                'package_password' => __('admin.distribution.message.password_invalid'),
             ]);
         }
 

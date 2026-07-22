@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\ApiAuthContext;
 use App\Services\GeoFlow\TaskLifecycleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +19,12 @@ class JobController extends BaseApiController
      */
     public function show(Request $request, int $job, TaskLifecycleService $tasks): JsonResponse
     {
+        $context = $request->attributes->get('api_auth');
+        if (! $context instanceof ApiAuthContext) {
+            abort(401);
+        }
+        $tasks->ensureJobOwnedBy($job, $context->auditAdminId);
+
         return $this->success($request, $tasks->getJob($job));
     }
 }

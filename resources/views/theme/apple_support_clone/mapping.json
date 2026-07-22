@@ -5,7 +5,7 @@
   },
   "footer": {
     "source": "Apple Support footer",
-    "implementation": "Restyle existing footer as a quiet legal footer, preserving GEOFlow copyright text."
+    "implementation": "Restyle existing footer as a quiet legal footer, preserving geo.dofe copyright text."
   },
   "home.hero": {
     "source": "apple.com first viewport hero",

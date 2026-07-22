@@ -10,7 +10,6 @@
  */
 
 use App\Http\Controllers\Api\V1\ArticleController;
-use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\JobController;
 use App\Http\Controllers\Api\V1\MaterialController;
@@ -21,10 +20,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix('v1')
     ->middleware(['api.request_id'])
     ->group(function (): void {
-        // 公开：管理员登录，返回 API Token（无需 Bearer）
-        Route::post('auth/login', [AuthController::class, 'login']);
-
-        // 需有效 Token + 对应 scope
+        // API access uses an SSO Bearer token; local password and token issuance are disabled.
         Route::middleware(['api.auth'])->group(function (): void {
             // catalog:read — 下拉元数据（模型、提示词、库、作者、分类等）
             Route::get('catalog', [CatalogController::class, 'show'])->middleware('api.scope:catalog:read');

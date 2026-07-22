@@ -182,21 +182,14 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 
 ### 默认管理员（首次安装）
 
-生产 `docker-compose.prod.yml` 的 **`init`** 服务会在迁移完成后执行 `php artisan geoflow:install`。该命令只在空库首次安装时写入默认管理员；如果检测到已有业务数据但没有安装标记，只会补写标记并跳过填充，避免重启、重构或拉取新代码后污染线上网站设置、广告、提示词、分类和文章。常驻的 `app`、`queue`、`scheduler`、`reverb` 服务不会自动 seed。
+生产 `docker-compose.prod.yml` 的 **`init`** 服务会在迁移完成后执行 `php artisan geoflow:install`。该命令不会创建本地账号；它只写入安装状态，并且仅在显式开启演示数据时导入内容。常驻的 `app`、`queue`、`scheduler`、`reverb` 服务不会自动 seed。
 
 ```bash
 # 如果你没有使用 compose 的 init 服务，可在迁移成功后执行首次安装命令：
 docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm app php artisan geoflow:install
 ```
 
-账号由 `Database\Seeders\AdminUserSeeder` 在首次空库安装时写入：只在目标用户名不存在时创建，**重复执行不会覆盖**已存在账号的用户名、邮箱或密码。前台演示分类和文章默认不会写入；只有显式设置 `GEOFLOW_SEED_FRONTEND_DEMO=true` 且首次空库安装时才会导入演示数据。
-
-| 项目 | 值 |
-|------|-----|
-| 用户名 | `GEOFLOW_ADMIN_USERNAME`，默认 `admin` |
-| 密码 | 生产环境请设置 `GEOFLOW_ADMIN_PASSWORD`；若留空且账号尚不存在，首次安装会生成一次性随机密码并输出到初始化日志 |
-
-登录地址：站点根 URL + `/geo_admin/login`（默认；若改过 `ADMIN_BASE_PATH` 则把 `geo_admin` 换成你的前缀）。账号已存在时，重复执行安装命令不会重新生成或打印密码。**上线后请立即修改默认或初始化生成的密码。**
+认证统一由 SSO 提供。登录地址：站点根 URL + `/geo_admin/login`（默认；若改过 `ADMIN_BASE_PATH` 则把 `geo_admin` 换成你的前缀），随后会重定向到 SSO。应用数据库只保存由 SSO `sub` 同步的最小审计和归属投影。
 
 ### 初始化数据维护规则
 

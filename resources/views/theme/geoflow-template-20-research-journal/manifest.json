@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-20-research-journal",
-    "name": "GEOFlow 20 Research Journal",
+    "name": "geo.dofe 20 Research Journal",
     "version": "1.0.0",
-    "description": "A research-journal variant with teal accents, rigorous article layout, and citation-friendly reading. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "A research-journal variant with teal accents, rigorous article layout, and citation-friendly reading. Preserves geo.dofe frontend data contracts and derives from the NetEase News Inspired base theme.",
     "templates": [
         "layout",
         "home",
@@ -14,7 +14,7 @@
     "reference_url": "https://www.nature.com/",
     "notes": [
         "Generated as a high-level visual variant inspired by Nature. It does not copy logos, assets, content, or proprietary source code.",
-        "Keeps GEOFlow Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
+        "Keeps geo.dofe Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
         "Visual differences are concentrated in theme.css and documented in tokens.json for future maintenance."
     ],
     "base_theme_id": "netease-news-20260507",

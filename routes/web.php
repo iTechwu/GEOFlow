@@ -6,13 +6,11 @@
 
 use App\Http\Controllers\Admin\AdminActivityLogController;
 use App\Http\Controllers\Admin\AdminAuthController;
-use App\Http\Controllers\Admin\AdminUserController;
 use App\Http\Controllers\Admin\AdminWelcomeController;
 use App\Http\Controllers\Admin\AiModelController;
 use App\Http\Controllers\Admin\AiPromptController;
 use App\Http\Controllers\Admin\AiSpecialPromptController;
 use App\Http\Controllers\Admin\AnalyticsController;
-use App\Http\Controllers\Admin\ApiTokenController;
 use App\Http\Controllers\Admin\ArticleController;
 use App\Http\Controllers\Admin\ArticleEditorAssetController;
 use App\Http\Controllers\Admin\AuthorController;
@@ -39,6 +37,7 @@ use App\Http\Controllers\Site\ArticleController as SiteArticleController;
 use App\Http\Controllers\Site\CategoryController as SiteCategoryController;
 use App\Http\Controllers\Site\HomeController;
 use App\Http\Controllers\Site\LeadFormController as SiteLeadFormController;
+use App\Http\Controllers\Auth\SsoAuthController;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
@@ -56,6 +55,9 @@ Route::middleware(['site.locale', 'site.view_log'])->group(function (): void {
         ->name('site.lead-forms.submit');
 });
 
+Route::get('/auth/login', [SsoAuthController::class, 'login'])->name('sso.login');
+Route::get('/auth/callback', [SsoAuthController::class, 'callback'])->name('sso.callback');
+
 $adminPrefix = trim((string) config('geoflow.admin_base_path', '/geo_admin'), '/');
 
 Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group(function () {
@@ -71,7 +73,6 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
     // 访客认证路由
     Route::middleware('guest:admin')->group(function () {
         Route::get('login', [AdminAuthController::class, 'showLoginForm'])->name('login');
-        Route::post('login', [AdminAuthController::class, 'login'])->name('login.attempt');
     });
 
     // 后台受保护路由
@@ -385,24 +386,11 @@ Route::prefix($adminPrefix)->name('admin.')->middleware(['admin.locale'])->group
             Route::post('sensitive-words/{wordId}/delete', [SecuritySettingsController::class, 'destroySensitiveWord'])
                 ->middleware('admin.super')
                 ->name('words.delete');
-            Route::post('password', [SecuritySettingsController::class, 'updatePassword'])->name('password.update');
         });
 
         // 超级管理员功能
         Route::middleware('admin.super')->group(function () {
-            Route::prefix('admin-users')->name('admin-users.')->group(function () {
-                Route::get('/', [AdminUserController::class, 'index'])->name('index');
-                Route::post('create', [AdminUserController::class, 'store'])->name('store');
-                Route::post('{adminId}/update', [AdminUserController::class, 'update'])->name('update');
-                Route::post('{adminId}/toggle-status', [AdminUserController::class, 'toggleStatus'])->name('toggle-status');
-                Route::post('{adminId}/delete', [AdminUserController::class, 'destroy'])->name('delete');
-            });
             Route::get('admin-activity-logs', [AdminActivityLogController::class, 'index'])->name('admin-activity-logs');
-            Route::prefix('api-tokens')->name('api-tokens.')->group(function () {
-                Route::get('/', [ApiTokenController::class, 'index'])->name('index');
-                Route::post('/', [ApiTokenController::class, 'store'])->name('store');
-                Route::post('{tokenId}/revoke', [ApiTokenController::class, 'revoke'])->name('revoke');
-            });
         });
     });
 });

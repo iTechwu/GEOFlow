@@ -20,8 +20,6 @@ use App\Services\Admin\SystemUpdateStateService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class SystemUpdateController extends Controller
@@ -408,20 +406,8 @@ class SystemUpdateController extends Controller
 
     private function validateAdminPassword(Request $request): void
     {
-        if (! (bool) config('geoflow.update_require_admin_password', true)) {
-            return;
-        }
-
-        $validated = $request->validate([
-            'current_admin_password' => ['required', 'string'],
-        ]);
-
         $admin = $request->user('admin');
-        if (! $admin || ! Hash::check((string) $validated['current_admin_password'], (string) $admin->password)) {
-            throw ValidationException::withMessages([
-                'current_admin_password' => __('admin.system_updates.error.admin_password_invalid'),
-            ]);
-        }
+        abort_unless($admin instanceof Admin, 403);
     }
 
     private function dispatchQueuedRun(SystemUpdateRun $run): void

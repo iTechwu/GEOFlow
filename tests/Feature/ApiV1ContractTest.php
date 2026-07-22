@@ -16,6 +16,7 @@ use App\Services\GeoFlow\TaskMonitoringQueryService;
 use App\Services\GeoFlow\TaskRealtimeBroadcastService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Mockery;
 use Tests\TestCase;
 
@@ -26,6 +27,19 @@ class ApiV1ContractTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::fake([
+            'https://sso.ixicai.cn/api/oauth/userinfo' => Http::response([
+                'sub' => 'contract-sso-user',
+                'email' => 'contract-sso@example.com',
+                'name' => 'Contract SSO User',
+            ]),
+        ]);
+    }
+
     private function createActiveAdmin(string $username = 'api_test_admin', string $password = 'secret-123'): Admin
     {
         return Admin::query()->create([
@@ -35,6 +49,8 @@ class ApiV1ContractTest extends TestCase
             'display_name' => 'API Test',
             'role' => 'admin',
             'status' => 'active',
+            'sso_sub' => 'contract-sso-user',
+            'sso_claims' => [],
         ]);
     }
 
@@ -57,85 +73,30 @@ class ApiV1ContractTest extends TestCase
             ->assertJsonPath('error.code', 'unauthorized');
     }
 
-    public function test_login_validation_empty_credentials(): void
+    public function test_local_api_login_route_is_not_available(): void
     {
         $this->postJson('/api/v1/auth/login', [])
-            ->assertStatus(422)
-            ->assertJsonPath('success', false)
-            ->assertJsonPath('error.code', 'validation_failed');
+            ->assertNotFound();
     }
 
-    public function test_error_response_includes_request_id_meta(): void
+    public function test_sso_bearer_is_used_for_api_access(): void
     {
-        $this->postJson('/api/v1/auth/login', [])
-            ->assertStatus(422)
-            ->assertJsonStructure(['meta' => ['request_id', 'timestamp']]);
+        $this->createActiveAdmin('u1');
+        $this->withHeader('Authorization', 'Bearer sso-access-token')
+            ->getJson('/api/v1/catalog')
+            ->assertOk()
+            ->assertJsonPath('success', true);
     }
 
-    public function test_login_invalid_credentials_returns_401(): void
-    {
-        $this->createActiveAdmin('u1', 'right-pass');
-
-        $this->postJson('/api/v1/auth/login', [
-            'username' => 'u1',
-            'password' => 'wrong-pass',
-        ])
-            ->assertStatus(401)
-            ->assertJsonPath('error.code', 'invalid_credentials');
-    }
-
-    public function test_login_success_returns_token_and_admin_summary(): void
-    {
-        $this->createActiveAdmin('u2', 'good-pass');
-
-        $response = $this->postJson('/api/v1/auth/login', [
-            'username' => 'u2',
-            'password' => 'good-pass',
-        ]);
-
-        $response->assertOk()
-            ->assertJsonPath('success', true)
-            ->assertJsonStructure([
-                'data' => ['token', 'scopes', 'expires_at', 'admin' => ['id', 'username', 'display_name', 'role', 'status']],
-                'meta' => ['request_id', 'timestamp'],
-            ]);
-
-        $this->assertNotEmpty($response->json('data.token'));
-        $this->assertNotEmpty($response->json('data.expires_at'));
-        $this->assertContains('materials:read', $response->json('data.scopes'));
-        $this->assertContains('materials:write', $response->json('data.scopes'));
-    }
-
-    public function test_login_locks_account_after_repeated_password_failures(): void
-    {
-        $admin = $this->createActiveAdmin('lock_me', 'right-pass');
-
-        for ($i = 0; $i < 4; $i++) {
-            $this->postJson('/api/v1/auth/login', [
-                'username' => 'lock_me',
-                'password' => 'wrong-pass',
-            ])->assertStatus(401);
-        }
-
-        $this->postJson('/api/v1/auth/login', [
-            'username' => 'lock_me',
-            'password' => 'wrong-pass',
-        ])
-            ->assertStatus(423)
-            ->assertJsonPath('error.code', 'account_locked');
-
-        $this->assertSame('locked', $admin->fresh()->status);
-    }
-
-    public function test_catalog_forbidden_when_scope_missing(): void
+    public function test_sso_bearer_has_api_access_without_a_local_token(): void
     {
         $admin = $this->createActiveAdmin('u3', 'p');
         $bearer = $this->createBearerToken($admin, ['tasks:read']);
 
         $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])
             ->getJson('/api/v1/catalog')
-            ->assertStatus(403)
-            ->assertJsonPath('error.code', 'forbidden');
+            ->assertOk()
+            ->assertJsonPath('success', true);
     }
 
     public function test_catalog_success_envelope_with_catalog_read_scope(): void
@@ -162,15 +123,15 @@ class ApiV1ContractTest extends TestCase
             ]);
     }
 
-    public function test_materials_require_materials_scope(): void
+    public function test_sso_bearer_can_access_materials_without_a_local_token_scope(): void
     {
         $admin = $this->createActiveAdmin('u5', 'p');
         $bearer = $this->createBearerToken($admin, ['catalog:read']);
 
         $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])
             ->getJson('/api/v1/materials')
-            ->assertStatus(403)
-            ->assertJsonPath('error.code', 'forbidden');
+            ->assertOk()
+            ->assertJsonPath('success', true);
     }
 
     public function test_keyword_library_material_crud_and_items(): void
@@ -244,6 +205,7 @@ class ApiV1ContractTest extends TestCase
         $task = Task::query()->create([
             'name' => 'API delete task',
             'status' => 'paused',
+            'sso_owner_admin_id' => $admin->id,
         ]);
 
         $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])

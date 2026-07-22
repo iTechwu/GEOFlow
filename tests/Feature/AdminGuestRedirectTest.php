@@ -44,10 +44,10 @@ class AdminGuestRedirectTest extends TestCase
             ->assertRedirect(route('admin.dashboard'));
     }
 
-    public function test_guest_admin_login_flow_is_unchanged(): void
+    public function test_guest_admin_login_flow_redirects_to_sso(): void
     {
         $this->get(route('admin.login'))
-            ->assertOk();
+            ->assertRedirect(route('sso.login'));
 
         $this->get(route('admin.entry'))
             ->assertRedirect(route('admin.login'));

@@ -3,7 +3,6 @@
 namespace App\Console\Commands;
 
 use App\Models\SystemState;
-use Database\Seeders\AdminUserSeeder;
 use Database\Seeders\FrontendDemoSeeder;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -17,7 +16,7 @@ class GeoFlowInstallCommand extends Command
     protected $signature = 'geoflow:install
         {--force : Run first-install seeders even if an installation marker or existing data is present}';
 
-    protected $description = 'Run GEOFlow first-install seeders only for an empty database';
+    protected $description = 'Initialize geo.dofe application data without creating local users';
 
     /**
      * Tables that indicate the database already contains user or business data.
@@ -82,11 +81,6 @@ class GeoFlowInstallCommand extends Command
             : 'Running GEOFlow first-install seeders for an empty database.');
 
         try {
-            $this->call('db:seed', [
-                '--class' => AdminUserSeeder::class,
-                '--force' => true,
-            ]);
-
             if ((bool) config('geoflow.seed_frontend_demo', false)) {
                 $this->call('db:seed', [
                     '--class' => FrontendDemoSeeder::class,

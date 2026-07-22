@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\ApiAuthContext;
 use App\Services\Api\IdempotencyService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use Illuminate\Http\JsonResponse;
@@ -30,6 +31,7 @@ class TaskController extends BaseApiController
             [
                 'status' => is_string($statusQuery) ? trim($statusQuery) : null,
                 'search' => is_string($searchQuery) ? trim($searchQuery) : null,
+                'sso_owner_admin_id' => $this->ownerId($request),
             ]
         );
 
@@ -46,7 +48,9 @@ class TaskController extends BaseApiController
         return IdempotencyService::executeJson(
             $request,
             'POST /tasks',
-            fn (): JsonResponse => $this->success($request, $tasks->createTask($request->all()), 201),
+            fn (): JsonResponse => $this->success($request, $tasks->createTask(array_merge($request->all(), [
+                'sso_owner_admin_id' => $this->ownerId($request),
+            ])), 201),
         );
     }
 
@@ -55,6 +59,7 @@ class TaskController extends BaseApiController
      */
     public function show(Request $request, int $task, TaskLifecycleService $tasks): JsonResponse
     {
+        $tasks->ensureTaskOwnedBy($task, $this->ownerId($request));
         return $this->success($request, $tasks->getTask($task));
     }
 
@@ -65,6 +70,7 @@ class TaskController extends BaseApiController
      */
     public function update(Request $request, int $task, TaskLifecycleService $tasks): JsonResponse
     {
+        $tasks->ensureTaskOwnedBy($task, $this->ownerId($request));
         return IdempotencyService::executeJson(
             $request,
             'PATCH /tasks/{id}',
@@ -77,6 +83,7 @@ class TaskController extends BaseApiController
      */
     public function destroy(Request $request, int $task, TaskLifecycleService $tasks): JsonResponse
     {
+        $tasks->ensureTaskOwnedBy($task, $this->ownerId($request));
         return $this->success($request, $tasks->deleteTask($task));
     }
 
@@ -87,6 +94,7 @@ class TaskController extends BaseApiController
      */
     public function start(Request $request, int $task, TaskLifecycleService $tasks): JsonResponse
     {
+        $tasks->ensureTaskOwnedBy($task, $this->ownerId($request));
         $enqueueNow = ! empty($request->input('enqueue_now'));
 
         return IdempotencyService::executeJson(
@@ -103,6 +111,7 @@ class TaskController extends BaseApiController
      */
     public function stop(Request $request, int $task, TaskLifecycleService $tasks): JsonResponse
     {
+        $tasks->ensureTaskOwnedBy($task, $this->ownerId($request));
         return IdempotencyService::executeJson(
             $request,
             'POST /tasks/{id}/stop',
@@ -117,6 +126,7 @@ class TaskController extends BaseApiController
      */
     public function enqueue(Request $request, int $task, TaskLifecycleService $tasks): JsonResponse
     {
+        $tasks->ensureTaskOwnedBy($task, $this->ownerId($request));
         $body = $request->all();
         $jobType = trim((string) ($body['job_type'] ?? 'generate_article'));
         $payload = $body;
@@ -136,6 +146,7 @@ class TaskController extends BaseApiController
      */
     public function jobs(Request $request, int $task, TaskLifecycleService $tasks): JsonResponse
     {
+        $tasks->ensureTaskOwnedBy($task, $this->ownerId($request));
         $status = $request->query('status');
         $statusStr = is_string($status) ? trim($status) : '';
 
@@ -144,5 +155,15 @@ class TaskController extends BaseApiController
             $statusStr !== '' ? $statusStr : null,
             $request->integer('limit', 20)
         ));
+    }
+
+    private function ownerId(Request $request): int
+    {
+        $context = $request->attributes->get('api_auth');
+        if (! $context instanceof ApiAuthContext) {
+            abort(401);
+        }
+
+        return $context->auditAdminId;
     }
 }

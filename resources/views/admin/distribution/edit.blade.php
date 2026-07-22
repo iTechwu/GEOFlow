@@ -559,7 +559,7 @@
                                 </fieldset>
 
                                 <div class="mt-4 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm leading-6 text-blue-900">
-                                    支持模块：{{ implode('、', $supportedFrontendModules) }}。WordPress REST 和 Generic API 只透传字段，不保证渲染 GEOFlow 模块。
+                                    支持模块：{{ implode('、', $supportedFrontendModules) }}。WordPress REST 和 Generic API 只透传字段，不保证渲染 geo.dofe 模块。
                                 </div>
 
                                 <div class="mt-5 grid grid-cols-1 gap-5 xl:grid-cols-2">
@@ -582,7 +582,7 @@
 
                     @if (! $channel->isGeoFlowAgent())
                         <div class="rounded-lg border border-amber-200 bg-amber-50 px-5 py-4 text-sm leading-6 text-amber-900">
-                            WordPress REST 和 Generic API 只作为外部分发渠道处理，可接收字段透传，不保证渲染 GEOFlow 首页模块、轮播或主题映射。
+                            WordPress REST 和 Generic API 只作为外部分发渠道处理，可接收字段透传，不保证渲染 geo.dofe 首页模块、轮播或主题映射。
                         </div>
                     @endif
 

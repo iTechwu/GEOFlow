@@ -7,7 +7,6 @@ use App\Models\DistributionChannel;
 use App\Services\GeoFlow\DistributionChannelDeletionService;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Validator;
 
 class DeleteDistributionChannelRequest extends FormRequest
@@ -31,7 +30,6 @@ class DeleteDistributionChannelRequest extends FormRequest
     {
         return [
             'confirmation_name' => ['required', 'string', 'max:120'],
-            'current_password' => ['required', 'string'],
             'impact_fingerprint' => ['required', 'string', 'size:64'],
             'ack_remote_content' => ['nullable', 'boolean'],
             'ack_task_changes' => ['nullable', 'boolean'],
@@ -62,11 +60,6 @@ class DeleteDistributionChannelRequest extends FormRequest
 
             if (! hash_equals((string) $channel->name, (string) $this->input('confirmation_name', ''))) {
                 $validator->errors()->add('confirmation_name', __('admin.distribution.delete.validation.name_mismatch'));
-            }
-
-            $admin = Auth::guard('admin')->user();
-            if (! $admin instanceof Admin || ! Hash::check((string) $this->input('current_password', ''), (string) $admin->password)) {
-                $validator->errors()->add('current_password', __('admin.distribution.delete.validation.password_invalid'));
             }
 
             if ((string) $channel->status !== DistributionChannel::STATUS_DELETING) {

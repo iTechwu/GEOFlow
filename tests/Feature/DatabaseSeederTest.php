@@ -22,7 +22,7 @@ class DatabaseSeederTest extends TestCase
 
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(1, Admin::query()->where('username', 'admin')->count());
+        $this->assertSame(0, Admin::query()->count());
         $this->assertSame(0, Category::query()->count());
         $this->assertSame(0, Article::query()->count());
     }
@@ -34,7 +34,7 @@ class DatabaseSeederTest extends TestCase
 
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame(1, Admin::query()->where('username', 'admin')->count());
+        $this->assertSame(0, Admin::query()->count());
         $this->assertGreaterThan(0, Category::query()->where('slug', 'mac')->count());
         $this->assertGreaterThan(0, Article::query()->where('slug', 'how-to-reinstall-macos')->count());
     }
@@ -127,14 +127,14 @@ class DatabaseSeederTest extends TestCase
 
         $this->seed(DatabaseSeeder::class);
 
-        $this->assertSame('GEOFlow Support', SiteSetting::query()->where('setting_key', 'site_name')->value('setting_value'));
+        $this->assertSame('geo.dofe Support', SiteSetting::query()->where('setting_key', 'site_name')->value('setting_value'));
 
         $category->refresh();
         $this->assertSame('Mac 支持', $category->name);
         $this->assertSame(10, $category->sort_order);
 
         $author->refresh();
-        $this->assertSame('GEOFlow 编辑部', $author->name);
+        $this->assertSame('geo.dofe 编辑部', $author->name);
 
         $article = Article::query()->where('slug', 'how-to-reinstall-macos')->firstOrFail();
         $this->assertSame('如何重新安装 macOS', $article->title);

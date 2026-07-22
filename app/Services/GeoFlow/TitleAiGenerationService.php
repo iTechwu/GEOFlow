@@ -3,6 +3,7 @@
 namespace App\Services\GeoFlow;
 
 use App\Models\AiModel;
+use App\Services\Ixicai\IxicaiRuntimeCredentials;
 use App\Support\GeoFlow\ApiKeyCrypto;
 use App\Support\GeoFlow\OpenAiRuntimeProvider;
 use Throwable;
@@ -22,7 +23,10 @@ class TitleAiGenerationService
     /**
      * 复用统一 API Key 解密组件，避免标题生成链路与其他 AI 链路出现差异。
      */
-    public function __construct(private readonly ApiKeyCrypto $apiKeyCrypto) {}
+    public function __construct(
+        private readonly ApiKeyCrypto $apiKeyCrypto,
+        private readonly IxicaiRuntimeCredentials $ixicaiCredentials,
+    ) {}
 
     /**
      * 生成标题列表。
@@ -78,15 +82,9 @@ class TitleAiGenerationService
         string $style,
         string $customPrompt
     ): string {
-        $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl((string) ($aiModel->api_url ?? ''));
-        if ($providerUrl === '') {
-            throw new \RuntimeException('ai_url_missing');
-        }
-
-        $apiKey = $this->decryptApiKey((string) ($aiModel->getRawOriginal('api_key') ?? ''));
-        if ($apiKey === '') {
-            throw new \RuntimeException('ai_key_missing');
-        }
+        $credentials = $this->ixicaiCredentials->forCurrentUser();
+        $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl($credentials['base_url']);
+        $apiKey = $credentials['api_key'];
 
         $driver = OpenAiRuntimeProvider::resolveChatDriver($providerUrl, (string) ($aiModel->model_id ?? ''));
         $providerName = OpenAiRuntimeProvider::registerProvider('title_ai', $driver, $providerUrl, $apiKey);

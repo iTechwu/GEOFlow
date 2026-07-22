@@ -6,6 +6,7 @@ use App\Ai\Agents\MarkdownContentWriterAgent;
 use App\Models\AiModel;
 use App\Models\EnterpriseKnowledgeProject;
 use App\Models\KnowledgeBase;
+use App\Services\Ixicai\IxicaiRuntimeCredentials;
 use App\Support\GeoFlow\ApiKeyCrypto;
 use App\Support\GeoFlow\OpenAiRuntimeProvider;
 use Illuminate\Support\Collection;
@@ -70,6 +71,7 @@ final class EnterpriseKnowledgeDraftService
     public function __construct(
         private readonly ApiKeyCrypto $apiKeyCrypto,
         private readonly KnowledgeChunkSyncService $chunkSyncService,
+        private readonly IxicaiRuntimeCredentials $ixicaiCredentials,
     ) {}
 
     /**
@@ -1161,15 +1163,9 @@ MARKDOWN;
      */
     private function prepareAiRuntime(AiModel $model): array
     {
-        $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl((string) $model->api_url);
-        if ($providerUrl === '') {
-            throw new \RuntimeException(__('admin.url_import.error.ai_model_required'));
-        }
-
-        $apiKey = $this->apiKeyCrypto->decrypt((string) $model->api_key);
-        if ($apiKey === '') {
-            throw new \RuntimeException(__('admin.url_import.error.ai_model_required'));
-        }
+        $credentials = $this->ixicaiCredentials->forCurrentUser();
+        $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl($credentials['base_url']);
+        $apiKey = $credentials['api_key'];
 
         $driver = OpenAiRuntimeProvider::resolveChatDriver($providerUrl, (string) $model->model_id);
         $provider = OpenAiRuntimeProvider::registerProvider('enterprise_knowledge', $driver, $providerUrl, $apiKey);

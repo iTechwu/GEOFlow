@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-02-market-briefing",
-    "name": "GEOFlow 02 Market Briefing",
+    "name": "geo.dofe 02 Market Briefing",
     "version": "1.0.0",
-    "description": "A dense market-briefing variant with sharp contrast, compact cards, and data-news rhythm. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "A dense market-briefing variant with sharp contrast, compact cards, and data-news rhythm. Preserves geo.dofe frontend data contracts and derives from the NetEase News Inspired base theme.",
     "templates": [
         "layout",
         "home",
@@ -14,7 +14,7 @@
     "reference_url": "https://www.bloomberg.com/",
     "notes": [
         "Generated as a high-level visual variant inspired by Bloomberg. It does not copy logos, assets, content, or proprietary source code.",
-        "Keeps GEOFlow Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
+        "Keeps geo.dofe Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
         "Visual differences are concentrated in theme.css and documented in tokens.json for future maintenance."
     ],
     "base_theme_id": "netease-news-20260507",

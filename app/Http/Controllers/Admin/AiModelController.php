@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\AiModel;
 use App\Models\Article;
 use App\Models\SiteSetting;
+use App\Services\Ixicai\IxicaiRuntimeCredentials;
 use App\Services\Outbound\SafeOutboundHttpClient;
 use App\Support\AdminWeb;
 use App\Support\GeoFlow\ApiKeyCrypto;
@@ -26,7 +27,7 @@ use Throwable;
  * 1. 模型增删改（聊天模型 + embedding 模型）；
  * 2. 默认 embedding 模型配置；
  * 3. 模型使用统计展示（任务引用数、文章产出数、调用次数）；
- * 4. 兼容历史 enc:v1 API Key 的加解密读写。
+ * 4. 模型端点固定为 ixicai；用户凭据由 SSO 会话自动管理。
  */
 class AiModelController extends Controller
 {
@@ -37,6 +38,7 @@ class AiModelController extends Controller
         private readonly ApiKeyCrypto $apiKeyCrypto,
         private readonly SafeOutboundHttpClient $safeHttp,
         private readonly Factory $http,
+        private readonly IxicaiRuntimeCredentials $ixicaiCredentials,
     ) {}
 
     /**
@@ -73,20 +75,15 @@ class AiModelController extends Controller
     {
         $payload = $this->validateModelPayload($request, false);
 
-        $apiKey = trim((string) ($payload['api_key'] ?? ''));
-        if ($apiKey === '') {
-            return back()->withErrors(__('admin.ai_models.error.required_fields'));
-        }
-
         try {
             $modelType = $this->normalizeModelType((string) ($payload['model_type'] ?? 'chat'));
             $createData = [
                 'name' => trim((string) $payload['name']),
                 'version' => trim((string) ($payload['version'] ?? '')),
-                'api_key' => $this->encryptApiKey($apiKey),
+                'api_key' => '',
                 'model_id' => trim((string) $payload['model_id']),
                 'model_type' => $modelType,
-                'api_url' => trim((string) ($payload['api_url'] ?? '')),
+                'api_url' => (string) config('ixicai.chat_base_url'),
                 'failover_priority' => max(1, (int) ($payload['failover_priority'] ?? 100)),
                 'daily_limit' => max(0, (int) ($payload['daily_limit'] ?? 0)),
                 'status' => 'active',
@@ -132,22 +129,13 @@ class AiModelController extends Controller
             'version' => trim((string) ($payload['version'] ?? '')),
             'model_id' => trim((string) $payload['model_id']),
             'model_type' => $modelType,
-            'api_url' => trim((string) ($payload['api_url'] ?? '')),
+            'api_url' => (string) config('ixicai.chat_base_url'),
             'failover_priority' => max(1, (int) ($payload['failover_priority'] ?? 100)),
             'daily_limit' => max(0, (int) ($payload['daily_limit'] ?? 0)),
             'status' => $status,
         ];
         if ($this->supportsModelMaxTokens()) {
             $updateData['max_tokens'] = $this->normalizeMaxTokensForModelType($payload['max_tokens'] ?? null, $modelType);
-        }
-
-        $apiKey = trim((string) ($payload['api_key'] ?? ''));
-        if ($apiKey !== '') {
-            try {
-                $updateData['api_key'] = $this->encryptApiKey($apiKey);
-            } catch (\RuntimeException) {
-                return back()->withInput()->withErrors(__('admin.ai_models.error.crypto_key_missing'));
-            }
         }
 
         $model->update($updateData);
@@ -195,8 +183,10 @@ class AiModelController extends Controller
 
         try {
             $modelType = $this->normalizeModelType((string) ($model->model_type ?? 'chat'));
+            $credentials = $this->ixicaiCredentials->forCurrentUser();
+            $model->api_url = $credentials['base_url'];
             $endpoint = $this->resolveTestEndpoint($model, $modelType);
-            $apiKey = $this->decryptApiKey((string) ($model->getRawOriginal('api_key') ?? ''));
+            $apiKey = $credentials['api_key'];
             $modelName = trim((string) ($model->model_id ?? ''));
             $isGemini = OpenAiRuntimeProvider::isGeminiProviderUrl($endpoint);
 
@@ -468,7 +458,7 @@ class AiModelController extends Controller
         $rules = [
             'name' => ['required', 'string', 'max:100'],
             'version' => ['nullable', 'string', 'max:50'],
-            'api_key' => [$isUpdate ? 'nullable' : 'required', 'string', 'max:500'],
+            'api_key' => ['nullable', 'string', 'max:500'],
             'model_id' => ['required', 'string', 'max:100'],
             'model_type' => ['required', 'in:chat,embedding'],
             'api_url' => ['nullable', 'string', 'max:500'],

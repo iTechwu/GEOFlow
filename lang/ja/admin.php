@@ -112,7 +112,7 @@ return array_replace_recursive($base, [
         'first_login_hint_intro' => '一度だけ表示されます。ログイン後、管理者パスワードをすぐに変更してください。',
         'first_login_username' => '初期ユーザー名',
         'first_login_password' => '初期パスワード',
-        'first_login_password_from_log' => '本番環境で固定パスワード未設定の場合、GEOFlow は一度限りのパスワードを生成します。geoflow-init の初期化ログを確認してください。',
+        'first_login_password_from_log' => '本番環境で固定パスワード未設定の場合、geo.dofe は一度限りのパスワードを生成します。geoflow-init の初期化ログを確認してください。',
         'first_login_security' => '共有端末ではログイン状態を保存しないでください。初回アクセス後にパスワードを変更してください。',
         'first_login_dismiss' => '初回デプロイの案内を閉じる',
         'back_home' => 'ホームへ戻る',
@@ -204,7 +204,7 @@ return array_replace_recursive($base, [
         'view_count_short' => ':count 回',
         'quick_start' => [
             'eyebrow' => 'クイックスタート',
-            'title' => '3ステップでGEOFlowの自動コンテンツ生成を開始',
+            'title' => '3ステップでgeo.dofeの自動コンテンツ生成を開始',
             'subtitle' => '利用可能なモデルを接続し、知識・タイトル・キーワード・画像素材を準備してからタスクを作成すると、下書き生成と予約公開を自動化できます。',
             'api_title' => 'APIを設定',
             'api_desc' => '少なくとも1つのチャットモデルを追加します。知識ベースのRAG検索を使う場合は、embeddingモデルも設定してください。',
@@ -516,7 +516,7 @@ return array_replace_recursive($base, [
             'title' => 'Insert Article Image',
             'desc' => 'Confirm the image description, crop if needed, then upload it to the article asset library.',
             'alt_label' => 'Image Description',
-            'alt_placeholder' => 'Example: GEOFlow admin article editor',
+            'alt_placeholder' => 'Example: geo.dofe admin article editor',
             'alt_help' => 'This becomes the Markdown image alt text for readability and SEO.',
             'crop_label' => 'Enable crop',
             'crop_help' => 'Useful for screenshots with extra whitespace, oversized images, or cover-style crops.',
@@ -546,7 +546,7 @@ return array_replace_recursive($base, [
         'delete' => [
             'page_title' => '配信チャネルを削除',
             'heading' => '配信チャネルを削除',
-            'subtitle' => '影響を確認し、:channel を GEOFlow から安全に削除します。',
+            'subtitle' => '影響を確認し、:channel を geo.dofe から安全に削除します。',
             'back' => 'チャネル詳細に戻る',
             'impact_heading' => '削除の影響',
             'review_jobs' => 'このチャネルの配信記録を確認',
@@ -570,7 +570,7 @@ return array_replace_recursive($base, [
             'ack' => [
                 'remote_content' => '対象サイトに :count 件のリモートコンテンツが残り、手動削除が必要な場合があることを理解しました。',
                 'task_changes' => ':count 件の関連タスクを確認しました。:local 件はローカルのみへ切り替わり、配信のみの :paused 件は一時停止します。',
-                'credentials' => ':count 件の保存済み認証情報が GEOFlow から完全に削除されることを理解しました。',
+                'credentials' => ':count 件の保存済み認証情報が geo.dofe から完全に削除されることを理解しました。',
                 'history' => 'ローカル配信記録は削除され、チャネル削除の監査記録は保持されることを理解しました。',
                 'stale_sending' => ':minutes 分を超えた送信中ジョブ :count 件を強制削除します。遅延したワーカーが対象サイトへ接続済みの場合があります。',
                 'stale_operations' => ':minutes 分を超えたチャネル操作リース :count 件を強制期限切れにします。操作が対象サイトへ接続済みの場合があります。',
@@ -590,7 +590,7 @@ return array_replace_recursive($base, [
             'message' => [
                 'prepared' => 'チャネルを「削除中」にしました。最終削除の前に更新された影響を確認してください。',
                 'cancelled' => 'チャネル削除をキャンセルしました。チャネルは一時停止のままになり、キャンセル済みジョブは自動復元されません。',
-                'deleted' => 'チャネル :channel を GEOFlow から削除しました。リモートコンテンツは変更していません。',
+                'deleted' => 'チャネル :channel を geo.dofe から削除しました。リモートコンテンツは変更していません。',
             ],
             'validation' => [
                 'name_mismatch' => 'チャネル名が一致しません。',

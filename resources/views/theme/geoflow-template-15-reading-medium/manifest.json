@@ -1,8 +1,8 @@
 {
     "id": "geoflow-template-15-reading-medium",
-    "name": "GEOFlow 15 Reading Medium",
+    "name": "geo.dofe 15 Reading Medium",
     "version": "1.0.0",
-    "description": "A reading-first variant with generous typography, restrained controls, and article-led flow. Preserves GEOFlow frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "A reading-first variant with generous typography, restrained controls, and article-led flow. Preserves geo.dofe frontend data contracts and derives from the NetEase News Inspired base theme.",
     "templates": [
         "layout",
         "home",
@@ -14,7 +14,7 @@
     "reference_url": "https://medium.com/",
     "notes": [
         "Generated as a high-level visual variant inspired by Medium. It does not copy logos, assets, content, or proprietary source code.",
-        "Keeps GEOFlow Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
+        "Keeps geo.dofe Blade variables, SEO meta fields, JSON-LD schema output, category navigation, article routes, and markdown HTML rendering intact.",
         "Visual differences are concentrated in theme.css and documented in tokens.json for future maintenance."
     ],
     "base_theme_id": "netease-news-20260507",

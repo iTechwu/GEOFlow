@@ -1621,3 +1621,18 @@ blockquote {
         font-size: 1.8rem;
     }
 }
+/* SSO design-token primary palette. */
+:root {
+    --geo-brand: oklch(0.55 0.14 162);
+    --geo-brand-dark: oklch(0.45 0.12 164);
+    --geo-brand-soft: oklch(0.91 0.03 162);
+    --geo-brand-wash: oklch(0.96 0.01 162);
+}
+
+.bg-blue-600, .bg-indigo-600 { background-color: var(--geo-brand) !important; }
+.hover\:bg-blue-700:hover, .hover\:bg-indigo-700:hover { background-color: var(--geo-brand-dark) !important; }
+.text-blue-600, .text-indigo-600 { color: var(--geo-brand) !important; }
+.bg-blue-50, .bg-indigo-50 { background-color: var(--geo-brand-wash) !important; }
+.border-blue-200, .border-indigo-200 { border-color: var(--geo-brand-soft) !important; }
+.focus\:ring-blue-500:focus, .focus\:ring-indigo-500:focus { --tw-ring-color: var(--geo-brand) !important; }
+.focus\:border-blue-500:focus, .focus\:border-indigo-500:focus { border-color: var(--geo-brand) !important; }

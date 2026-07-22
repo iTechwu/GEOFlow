@@ -8,6 +8,7 @@ use App\Models\AiModel;
 use App\Models\Article;
 use App\Models\ArticleImage;
 use App\Models\Author;
+use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Image;
 use App\Models\KnowledgeBase;
@@ -19,6 +20,7 @@ use App\Support\GeoFlow\ApiKeyCrypto;
 use App\Support\GeoFlow\ArticleWorkflow;
 use App\Support\GeoFlow\ImageUrlNormalizer;
 use App\Support\GeoFlow\OpenAiRuntimeProvider;
+use App\Services\Ixicai\IxicaiRuntimeCredentials;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -41,6 +43,7 @@ class WorkerExecutionService
         private readonly DistributionOrchestrator $distributionOrchestrator,
         private readonly ArticleRiskScanner $articleRiskScanner,
         private readonly ArticleWorkflowTransitionService $articleWorkflowTransitionService,
+        private readonly IxicaiRuntimeCredentials $ixicaiCredentials,
     ) {}
 
     /**
@@ -358,7 +361,7 @@ class WorkerExecutionService
             }
 
             try {
-                $content = $this->generateContent($candidate, $contentPrompt);
+                $content = $this->generateContent($candidate, $contentPrompt, $task);
                 $attempts[] = $this->buildModelAttempt($candidate, 'success', null);
 
                 return [
@@ -932,17 +935,15 @@ class WorkerExecutionService
     /**
      * 调用任务配置模型生成正文。
      */
-    private function generateContent(AiModel $aiModel, string $contentPrompt): string
+    private function generateContent(AiModel $aiModel, string $contentPrompt, Task $task): string
     {
-        $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl((string) ($aiModel->api_url ?? ''));
-        if ($providerUrl === '') {
-            throw new RuntimeException('AI 模型 API 地址为空');
+        $owner = $task->ssoOwner;
+        if (! $owner instanceof Admin) {
+            throw new RuntimeException('任务缺少 SSO 所有者，无法选择 ixicai 用户密钥。');
         }
-
-        $apiKey = $this->decryptApiKey((string) ($aiModel->getRawOriginal('api_key') ?? ''));
-        if ($apiKey === '') {
-            throw new RuntimeException('AI 模型密钥为空');
-        }
+        $credentials = $this->ixicaiCredentials->forAdmin($owner);
+        $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl($credentials['base_url']);
+        $apiKey = $credentials['api_key'];
 
         $driver = OpenAiRuntimeProvider::resolveChatDriver($providerUrl, (string) ($aiModel->model_id ?? ''));
         $providerName = OpenAiRuntimeProvider::registerProvider('worker', $driver, $providerUrl, $apiKey);

@@ -119,12 +119,6 @@
                         <input id="confirmation_name" name="confirmation_name" type="text" value="{{ old('confirmation_name') }}" required autocomplete="off" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
                         @error('confirmation_name')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
                     </div>
-                    <div>
-                        <label for="current_password" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.delete.field.current_password') }}</label>
-                        <input id="current_password" name="current_password" type="password" required autocomplete="current-password" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-red-500 focus:ring-red-500">
-                        @error('current_password')<p class="mt-2 text-sm text-red-600">{{ $message }}</p>@enderror
-                    </div>
-
                     @if ($errors->any())
                         <div class="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ $errors->first() }}</div>
                     @endif

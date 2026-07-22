@@ -270,14 +270,14 @@
 
                     <div>
                         <label for="api_key" class="block text-sm font-medium text-gray-700">{{ __('admin.ai_models.field_api_key') }}</label>
-                        <input type="password" name="api_key" id="api_key" required class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="{{ __('admin.ai_models.placeholder_api_key') }}">
-                        <p id="apiKeyHelp" class="mt-1 text-xs text-gray-500">{{ __('admin.ai_models.api_key_help_create') }}</p>
+                        <input type="text" id="api_key" value="Managed by SSO" readonly class="mt-1 block w-full border-gray-300 rounded-md bg-gray-50 shadow-sm sm:text-sm">
+                        <p id="apiKeyHelp" class="mt-1 text-xs text-gray-500">Each SSO user receives and uses an encrypted ixicai key automatically.</p>
                     </div>
 
                     <div>
                         <label for="api_url" class="block text-sm font-medium text-gray-700">{{ __('admin.ai_models.field_api_url') }}</label>
-                        <input type="url" name="api_url" id="api_url" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm" value="https://api.deepseek.com" placeholder="{{ __('admin.ai_models.placeholder_api_url') }}">
-                        <p class="mt-1 text-xs text-gray-500">{{ __('admin.ai_models.api_url_help') }}</p>
+                        <input type="url" id="api_url" value="{{ config('ixicai.chat_base_url') }}" readonly class="mt-1 block w-full border-gray-300 rounded-md bg-gray-50 shadow-sm sm:text-sm">
+                        <p class="mt-1 text-xs text-gray-500">All model traffic is sent through ixicai.</p>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">

@@ -14,8 +14,8 @@
         ? ($updatePayload['summary_en'] ?? '')
         : ($updatePayload['summary_zh'] ?? ''));
     $changelogLinks = is_array($updateLinks['changelog'] ?? null) ? $updateLinks['changelog'] : [];
-    $notificationChangelogUrl = (string) ($changelogLinks[$localeForChangelog] ?? $changelogLinks['zh-CN'] ?? 'https://github.com/yaojingang/GEOFlow/blob/main/docs/CHANGELOG.md');
-    $notificationGithubUrl = (string) ($updateLinks['github'] ?? 'https://github.com/yaojingang/GEOFlow');
+    $notificationChangelogUrl = (string) ($changelogLinks[$localeForChangelog] ?? $changelogLinks['zh-CN'] ?? 'https://github.com/yaojingang/geo.dofe/blob/main/docs/CHANGELOG.md');
+    $notificationGithubUrl = (string) ($updateLinks['github'] ?? 'https://github.com/yaojingang/geo.dofe');
     $notificationUpdateCenterUrl = $isUpdateCenterEnabled && $isSuperAdmin ? \App\Support\AdminWeb::routePath('admin.system-updates.index') : '';
     $notificationStatus = (string) ($updateState['status'] ?? 'disabled');
     $menu = [
@@ -30,9 +30,6 @@
     ];
     if (!$isSuperAdmin) {
         unset($menu['distribution']);
-    }
-    if ($isSuperAdmin) {
-        $menu['admin_users'] = ['route' => 'admin.admin-users.index', 'name' => __('admin.nav.admin_users')];
     }
     $subMap = [
         'admin.analytics' => 'analytics',
@@ -102,9 +99,6 @@
         'admin.security-settings.index' => 'site_settings',
         'admin.security-settings.words.store' => 'site_settings',
         'admin.security-settings.words.delete' => 'site_settings',
-        'admin.api-tokens.index' => 'admin_users',
-        'admin.api-tokens.store' => 'admin_users',
-        'admin.api-tokens.revoke' => 'admin_users',
         'admin.admin-activity-logs' => 'admin_users',
     ];
     $routeName = request()->route()?->getName();
@@ -228,17 +222,9 @@
                             {{ __('admin.nav.system_settings') }}
                         </a>
                         @if ($isSuperAdmin)
-                            <a href="{{ route('admin.admin-users.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i data-lucide="users" class="w-4 h-4 inline mr-2"></i>
-                                {{ __('admin.nav.admin_management') }}
-                            </a>
                             <a href="{{ route('admin.admin-activity-logs') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                 <i data-lucide="clipboard-list" class="w-4 h-4 inline mr-2"></i>
                                 {{ __('admin.nav.activity_logs') }}
-                            </a>
-                            <a href="{{ route('admin.api-tokens.index') }}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                <i data-lucide="key-round" class="w-4 h-4 inline mr-2"></i>
-                                {{ __('admin.nav.api_tokens') }}
                             </a>
                         @endif
                         <div class="border-t border-gray-100"></div>

@@ -4,16 +4,15 @@ namespace App\Http\Middleware;
 
 use App\Exceptions\ApiException;
 use App\Http\ApiAuthContext;
-use App\Services\Api\ApiTokenService;
+use App\Services\Sso\SsoIdentityService;
 use Closure;
+use Illuminate\Http\Client\Factory as HttpFactory;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthenticateApiToken
 {
-    public function __construct(
-        private ApiTokenService $tokenService
-    ) {}
+    public function __construct(private readonly HttpFactory $http, private readonly SsoIdentityService $identities) {}
 
     public function handle(Request $request, Closure $next): Response
     {
@@ -31,17 +30,18 @@ class AuthenticateApiToken
             throw new ApiException('unauthorized', 'Token 不能为空', 401);
         }
 
-        $token = $this->tokenService->getActiveTokenByPlaintext($tokenValue);
-        if (! $token) {
-            throw new ApiException('unauthorized', 'Token 无效或已过期', 401);
+        $response = $this->http->acceptJson()->withToken($tokenValue)->connectTimeout(5)->timeout(10)->retry(2, 200, throw: false)
+            ->get(rtrim((string) config('sso.api_url'), '/').'/oauth/userinfo');
+        $claims = $response->json();
+        if (! $response->successful() || ! is_array($claims) || ! is_string($claims['sub'] ?? null)) {
+            throw new ApiException('unauthorized', 'SSO token is invalid or expired.', 401);
         }
-
-        $this->tokenService->touchToken((int) $token['id']);
-        $auditAdminId = $this->tokenService->resolveAuditAdminId(
-            isset($token['created_by_admin_id']) ? (int) $token['created_by_admin_id'] : null
-        );
-
-        $request->attributes->set('api_auth', new ApiAuthContext($token, $auditAdminId));
+        $admin = $this->identities->synchronize($claims);
+        $request->attributes->set('api_auth', new ApiAuthContext([
+            'id' => 'sso:'.$admin->sso_sub,
+            'scopes' => ['*'],
+            'status' => 'active',
+        ], (int) $admin->id));
 
         return $next($request);
     }

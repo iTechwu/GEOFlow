@@ -347,7 +347,6 @@
                     ['title' => __('admin.dashboard.navigation.articles_title'), 'desc' => __('admin.dashboard.automation.lane_articles_desc'), 'href' => route('admin.articles.index'), 'icon' => 'file-text', 'count' => $totalArticles],
                     ['title' => __('admin.dashboard.navigation.prompt_config_title'), 'desc' => __('admin.dashboard.navigation.prompt_config_desc'), 'href' => route('admin.ai-prompts'), 'icon' => 'message-square-text', 'count' => $totalPrompts],
                     ['title' => __('admin.dashboard.navigation.site_settings_title'), 'desc' => __('admin.dashboard.navigation.site_settings_desc'), 'href' => route('admin.site-settings.index'), 'icon' => 'settings', 'count' => 'SEO'],
-                    ['title' => __('admin.dashboard.navigation.admin_users_title'), 'desc' => __('admin.dashboard.navigation.admin_users_desc'), 'href' => route('admin.admin-users.index'), 'icon' => 'users', 'count' => 'Admin'],
                 ],
             ],
             [

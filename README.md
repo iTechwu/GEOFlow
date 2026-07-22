@@ -314,30 +314,9 @@ php artisan reverb:start
 chmod -R ug+rwx storage bootstrap/cache
 ```
 
-**默认管理员（首次空库执行 `php artisan geoflow:install` 后，以 `Database\\Seeders\\AdminUserSeeder` 为准）：**
+**认证与用户：** geo.dofe 仅使用 SSO。访问后台会重定向到 SSO；本地数据库只保留按 SSO `sub` 同步的审计与数据归属投影，不创建本地用户名或密码。首次安装也不会生成管理员。
 
-| 字段 | 值 |
-|------|-----|
-| 用户名 | `GEOFLOW_ADMIN_USERNAME`，默认 `admin` |
-| 密码 | 本地开发默认 `password`；生产环境请设置 `GEOFLOW_ADMIN_PASSWORD`。若生产环境留空且账号尚不存在，首次安装会生成一次性随机密码并输出到初始化日志 |
-
-补充规则：`geoflow:install` 只在空库首次安装时执行安装填充；如果检测到线上已有业务数据但没有初始化标记，它只写入标记并跳过填充。`AdminUserSeeder` 本身仍保持幂等：目标用户名已存在时不会覆盖用户名、邮箱或密码。
-
-### 管理员登录失败锁定与手动解锁
-
-- 后台账号连续登录失败 **5 次** 会自动锁定（`status=locked`）。
-- 被锁定账号无法继续登录，需管理员手动解锁。
-- 解锁命令：
-
-```bash
-php artisan geoflow:admin-unlock <username>
-```
-
-例如：
-
-```bash
-php artisan geoflow:admin-unlock admin
-```
+`geoflow:install` 只在空库首次安装时写入安装状态，并且仅在显式开启 `GEOFLOW_SEED_FRONTEND_DEMO=true` 时导入演示内容。
 
 **生产环境 Web：** 使用 Nginx / Apache + **PHP-FPM**，网站根目录指向项目 **`public/`**，勿将仓库根目录直接暴露为文档根。
 

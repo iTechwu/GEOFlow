@@ -326,7 +326,7 @@
 <div class="section-head" id="latest-articles">
 <div>
 <h2>最新文章 <span class="tag">最近 10 篇</span></h2>
-<span class="sub">自动调用当前 GEOFlow 站点按发布时间排序的最新内容</span>
+<span class="sub">自动调用当前 geo.dofe 站点按发布时间排序的最新内容</span>
 </div>
 <a class="btn btn-ghost btn-sm" href="{{ $reviewCenterUrl }}">更多</a>
 </div>

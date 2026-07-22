@@ -17,16 +17,16 @@ class Admin extends Authenticatable
 {
     use HasApiTokens;
 
+
     protected $table = 'admins';
 
     protected $hidden = [
         'password',
         'remember_token',
+        'sso_claims',
     ];
 
     protected $fillable = [
-        'username',
-        'password',
         'email',
         'display_name',
         'role',
@@ -35,6 +35,9 @@ class Admin extends Authenticatable
         'last_login',
         'welcome_seen_version',
         'welcome_dismissed_at',
+        'sso_sub',
+        'sso_claims',
+        'sso_last_synced_at',
     ];
 
     protected function casts(): array
@@ -43,7 +46,8 @@ class Admin extends Authenticatable
             'last_login' => 'datetime',
             'welcome_dismissed_at' => 'datetime',
             'created_by' => 'integer',
-            'password' => 'hashed',
+            'sso_claims' => 'array',
+            'sso_last_synced_at' => 'datetime',
         ];
     }
 
@@ -59,7 +63,7 @@ class Admin extends Authenticatable
     {
         $display = trim((string) $this->display_name);
 
-        return $display !== '' ? $display : (string) $this->username;
+        return $display !== '' ? $display : (string) $this->sso_sub;
     }
 
     /**
@@ -67,6 +71,15 @@ class Admin extends Authenticatable
      */
     public function isSuperAdmin(): bool
     {
+        $claims = $this->sso_claims;
+        $roles = is_array($claims) && is_array($claims['roles'] ?? null) ? $claims['roles'] : [];
+        if ((string) $this->sso_sub !== '') {
+            return in_array('super_admin', $roles, true) || in_array('superadmin', $roles, true);
+        }
+        if (in_array('super_admin', $roles, true) || in_array('superadmin', $roles, true)) {
+            return true;
+        }
+
         $role = trim(strtolower((string) ($this->role ?? '')));
 
         return in_array($role, ['super_admin', 'superadmin'], true);
@@ -90,5 +103,10 @@ class Admin extends Authenticatable
     public function articleReviews(): HasMany
     {
         return $this->hasMany(ArticleReview::class, 'admin_id');
+    }
+
+    public function ixicaiApiKey(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(IxicaiApiKey::class);
     }
 }

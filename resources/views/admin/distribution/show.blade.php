@@ -370,11 +370,6 @@
                         @if ($channel->activeSecret && $canRevealSecret)
                             <form method="POST" action="{{ route('admin.distribution.download-package', ['channelId' => (int) $channel->id]) }}">
                                 @csrf
-                                <label for="distribution-package-password" class="block text-sm font-medium text-gray-800">{{ __('admin.distribution.field.admin_password') }}</label>
-                                <input id="distribution-package-password" name="package_password" type="password" autocomplete="current-password" required class="mt-2 block w-full rounded-md border-gray-300 bg-white shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                                @error('package_password')
-                                    <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
-                                @enderror
                                 <p class="mt-2 text-xs leading-5 text-gray-600">{{ __('admin.distribution.help.download_package') }}</p>
                                 <button type="submit" class="mt-4 inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
                                     <i data-lucide="download" class="mr-2 h-4 w-4"></i>
@@ -456,7 +451,7 @@
                     </div>
                     <div class="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
                         <span class="font-medium">{{ __('admin.distribution.generic.payload_contract') }}：</span>
-                        <code class="break-all text-gray-900">GEOFlow article JSON v1</code>
+                        <code class="break-all text-gray-900">geo.dofe article JSON v1</code>
                     </div>
                 </div>
                 <div class="mt-6 grid grid-cols-1 gap-4 text-sm text-gray-700 md:grid-cols-2 xl:grid-cols-4">

@@ -47,6 +47,7 @@ class Task extends Model
         'last_error_message',
         'schedule_enabled',
         'max_retry_count',
+        'sso_owner_admin_id',
     ];
 
     protected function casts(): array
@@ -79,6 +80,7 @@ class Task extends Model
             'last_error_at' => 'datetime',
             'schedule_enabled' => 'integer',
             'max_retry_count' => 'integer',
+            'sso_owner_admin_id' => 'integer',
         ];
     }
 
@@ -105,6 +107,11 @@ class Task extends Model
     public function author(): BelongsTo
     {
         return $this->belongsTo(Author::class, 'author_id');
+    }
+
+    public function ssoOwner(): BelongsTo
+    {
+        return $this->belongsTo(Admin::class, 'sso_owner_admin_id');
     }
 
     public function customAuthor(): BelongsTo

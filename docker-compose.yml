@@ -1,31 +1,6 @@
 name: geoflow-laravel
 
 services:
-  postgres:
-    image: ${PGVECTOR_IMAGE:-pgvector/pgvector:pg16}
-    container_name: geoflow-postgres
-    environment:
-      POSTGRES_DB: ${DB_DATABASE:-geo_flow}
-      POSTGRES_USER: ${DB_USERNAME:-geo_user}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-geo_password}
-    ports:
-      - "127.0.0.1:${DB_EXPOSE_PORT:-15432}:5432"
-    volumes:
-      - ${POSTGRES_DATA_DIR:-./docker-data/dev/postgres}:${POSTGRES_CONTAINER_DATA_DIR:-/var/lib/postgresql}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-geo_user} -d ${DB_DATABASE:-geo_flow}"]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
-  redis:
-    image: ${REDIS_IMAGE:-redis:7-alpine}
-    container_name: geoflow-redis
-    ports:
-      - "127.0.0.1:${REDIS_EXPOSE_PORT:-16379}:6379"
-    restart: unless-stopped
-
   assets:
     image: ${NODE_IMAGE:-node:22-bookworm-slim}
     container_name: geoflow-assets
@@ -54,11 +29,8 @@ services:
     command: ["php", "artisan", "about"]
     volumes:
       - ./:/var/www/html
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: "no"
 
   app:
@@ -73,9 +45,11 @@ services:
     working_dir: /var/www/html
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
     ports:
-      - "${APP_PORT:-18080}:8080"
+      - "127.0.0.1:${APP_PORT:-18080}:8080"
     volumes:
       - ./:/var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       assets:
         condition: service_completed_successfully
@@ -96,6 +70,8 @@ services:
     command: ["php", "artisan", "queue:work", "redis", "--queue=geoflow,distribution,theme-replication,default", "--sleep=1", "--tries=1", "--timeout=300"]
     volumes:
       - ./:/var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       init:
         condition: service_completed_successfully
@@ -114,6 +90,8 @@ services:
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - ./:/var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       init:
         condition: service_completed_successfully
@@ -134,6 +112,8 @@ services:
       - "${REVERB_EXPOSE_PORT:-18081}:8080"
     volumes:
       - ./:/var/www/html
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     depends_on:
       init:
         condition: service_completed_successfully

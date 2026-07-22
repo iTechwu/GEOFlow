@@ -112,7 +112,7 @@ return array_replace_recursive($base, [
         'first_login_hint_intro' => 'Se muestra solo una vez. Tras iniciar sesión, cambia de inmediato la contraseña del administrador.',
         'first_login_username' => 'Usuario inicial',
         'first_login_password' => 'Contraseña inicial',
-        'first_login_password_from_log' => 'Si producción no tiene contraseña fija, GEOFlow genera una contraseña de un solo uso. Revise el log geoflow-init.',
+        'first_login_password_from_log' => 'Si producción no tiene contraseña fija, geo.dofe genera una contraseña de un solo uso. Revise el log geoflow-init.',
         'first_login_security' => 'No mantengas la sesión en dispositivos compartidos. Cambia la contraseña tras el primer acceso.',
         'first_login_dismiss' => 'Cerrar ayuda del primer despliegue',
         'back_home' => 'Volver al inicio',
@@ -516,7 +516,7 @@ return array_replace_recursive($base, [
             'title' => 'Insert Article Image',
             'desc' => 'Confirm the image description, crop if needed, then upload it to the article asset library.',
             'alt_label' => 'Image Description',
-            'alt_placeholder' => 'Example: GEOFlow admin article editor',
+            'alt_placeholder' => 'Example: geo.dofe admin article editor',
             'alt_help' => 'This becomes the Markdown image alt text for readability and SEO.',
             'crop_label' => 'Enable crop',
             'crop_help' => 'Useful for screenshots with extra whitespace, oversized images, or cover-style crops.',
@@ -546,7 +546,7 @@ return array_replace_recursive($base, [
         'delete' => [
             'page_title' => 'Eliminar canal de distribución',
             'heading' => 'Eliminar canal de distribución',
-            'subtitle' => 'Revisa el impacto y elimina :channel de GEOFlow de forma segura.',
+            'subtitle' => 'Revisa el impacto y elimina :channel de geo.dofe de forma segura.',
             'back' => 'Volver a los detalles del canal',
             'impact_heading' => 'Impacto de la eliminación',
             'review_jobs' => 'Revisar los registros de distribución de este canal',
@@ -570,7 +570,7 @@ return array_replace_recursive($base, [
             'ack' => [
                 'remote_content' => 'Entiendo que :count elemento(s) de contenido remoto permanecerán en el sitio de destino y pueden requerir limpieza manual.',
                 'task_changes' => 'Revisé :count tarea(s) vinculadas: :local cambiarán a publicación solo local y :paused tareas de solo distribución se pausarán.',
-                'credentials' => 'Entiendo que :count registro(s) de credenciales guardadas se eliminarán permanentemente de GEOFlow.',
+                'credentials' => 'Entiendo que :count registro(s) de credenciales guardadas se eliminarán permanentemente de geo.dofe.',
                 'history' => 'Entiendo que se eliminarán los registros locales de distribución y se conservará la auditoría de eliminación del canal.',
                 'stale_sending' => 'Forzar la eliminación de :count trabajo(s) en envío con más de :minutes minuto(s). Un worker retrasado puede haber contactado el sitio remoto.',
                 'stale_operations' => 'Forzar el vencimiento de :count arrendamiento(s) de operación con más de :minutes minuto(s). La operación puede haber contactado el sitio remoto.',
@@ -590,7 +590,7 @@ return array_replace_recursive($base, [
             'message' => [
                 'prepared' => 'El canal está en estado Eliminando. Revisa el impacto actualizado antes de la eliminación final.',
                 'cancelled' => 'La eliminación fue cancelada. El canal permanece en pausa y los trabajos cancelados no se restauran automáticamente.',
-                'deleted' => 'El canal :channel fue eliminado de GEOFlow. El contenido remoto no se modificó.',
+                'deleted' => 'El canal :channel fue eliminado de geo.dofe. El contenido remoto no se modificó.',
             ],
             'validation' => [
                 'name_mismatch' => 'El nombre del canal no coincide.',

@@ -6,7 +6,7 @@
   "framework": "laravel",
   "geoflow_contract": "site-theme-view-resolver",
   "created_at": "2026-05-30",
-  "description": "Apple.com and Apple Support inspired GEOFlow frontend theme. It keeps GEOFlow routes and article/category data contracts intact.",
+  "description": "Apple.com and Apple Support inspired geo.dofe frontend theme. It keeps geo.dofe routes and article/category data contracts intact.",
   "source_reference_url": [
     "https://www.apple.com/",
     "https://support.apple.com/en-us/102655",

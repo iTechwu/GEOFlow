@@ -2,7 +2,7 @@
   "id": "apihot-recommend-20260623",
   "name": "API热点网精选推荐",
   "version": "1.0.0",
-  "description": "A GEOFlow frontend theme for API recommendation portals, with a full static-style recommendation homepage, dynamic latest-article section, and NetEase-derived list/detail page contracts.",
+  "description": "A geo.dofe frontend theme for API recommendation portals, with a full static-style recommendation homepage, dynamic latest-article section, and NetEase-derived list/detail page contracts.",
   "templates": [
     "layout",
     "home",
@@ -12,7 +12,7 @@
     "archive-month"
   ],
   "notes": [
-    "Homepage is derived from the local recommend static page and adapted into a GEOFlow Blade theme.",
+    "Homepage is derived from the local recommend static page and adapted into a geo.dofe Blade theme.",
     "Default homepage shows the API recommendation modules plus the latest 10 published articles using the existing article paginator.",
     "Search, category, article, archive, SEO meta, JSON-LD, route helpers, and article rendering contracts are preserved.",
     "The original netease-news-20260507 theme is not modified."

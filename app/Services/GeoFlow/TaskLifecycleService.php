@@ -98,6 +98,7 @@ class TaskLifecycleService
                 'knowledge_base_id' => $normalized['knowledge_base_id'],
                 'category_mode' => $normalized['category_mode'],
                 'fixed_category_id' => $normalized['fixed_category_id'],
+                'sso_owner_admin_id' => isset($data['sso_owner_admin_id']) ? (int) $data['sso_owner_admin_id'] : null,
             ]);
 
             $taskId = (int) $task->id;
@@ -139,6 +140,27 @@ class TaskLifecycleService
             return $this->taskMonitoringQueryService->getTaskMonitoringDetail($taskId);
         } catch (ModelNotFoundException) {
             throw new ApiException('task_not_found', '任务不存在', 404);
+        }
+    }
+
+    /**
+     * API users may only operate on the tasks created for their SSO identity.
+     */
+    public function ensureTaskOwnedBy(int $taskId, int $adminId): void
+    {
+        if (! Task::query()->whereKey($taskId)->where('sso_owner_admin_id', $adminId)->exists()) {
+            throw new ApiException('task_not_found', '任务不存在', 404);
+        }
+    }
+
+    /**
+     * A job is visible only through a task owned by the requesting SSO user.
+     */
+    public function ensureJobOwnedBy(int $jobId, int $adminId): void
+    {
+        $ownedTaskIds = Task::query()->where('sso_owner_admin_id', $adminId)->select('id');
+        if (! TaskRun::query()->whereKey($jobId)->whereIn('task_id', $ownedTaskIds)->exists()) {
+            throw new ApiException('job_not_found', 'Job 不存在', 404);
         }
     }
 

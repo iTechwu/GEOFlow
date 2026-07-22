@@ -8,12 +8,24 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 return new class extends Migration
 {
     public function up(): void
     {
         if (DB::getDriverName() !== 'pgsql') {
+            return;
+        }
+
+        $available = DB::selectOne("
+            SELECT EXISTS (
+                SELECT 1 FROM pg_available_extensions WHERE name = 'vector'
+            ) AS available
+        ");
+        if (! $available || ! $available->available) {
+            Log::warning('geo.dofe PostgreSQL does not provide pgvector; knowledge retrieval will use the JSON embedding fallback.');
+
             return;
         }
 

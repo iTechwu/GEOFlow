@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Exceptions\ApiException;
-use App\Services\Api\ApiTokenService;
 use App\Services\Api\IdempotencyService;
 use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Support\ApiResponse;
@@ -58,13 +57,14 @@ class ArticleController extends BaseApiController
     /**
      * 创建文章；成功 HTTP 201。幂等键：POST /articles。
      */
-    public function store(Request $request, ArticleGeoFlowService $articles, ApiTokenService $tokens): JsonResponse
+    public function store(Request $request, ArticleGeoFlowService $articles): JsonResponse
     {
         $body = $request->all();
         $requestsPublication = in_array(trim((string) ($body['status'] ?? 'draft')), ['published', 'private'], true)
             || in_array(trim((string) ($body['review_status'] ?? 'pending')), ['approved', 'auto_approved'], true)
             || trim((string) ($body['risk_override_reason'] ?? '')) !== '';
-        if ($requestsPublication && ! $tokens->tokenHasScope($this->auth($request)->token, 'articles:publish')) {
+        $scopes = $this->auth($request)->token['scopes'] ?? [];
+        if ($requestsPublication && ! in_array('*', $scopes, true) && ! in_array('articles:publish', $scopes, true)) {
             throw new ApiException('forbidden', '当前 Token 没有发布或风险放行权限', 403, [
                 'required_scope' => 'articles:publish',
             ]);
