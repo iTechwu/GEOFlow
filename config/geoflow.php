@@ -97,6 +97,11 @@ return [
     // 避免依赖各服务商较小的默认上限（常见 4K）导致长文被截断。
     'content_max_tokens' => max(256, (int) env('GEOFLOW_CONTENT_MAX_TOKENS', 8192)),
 
+    // 统一 AI 网关覆盖：两者均非空时，所有模型调用（chat/embedding/后台测试）强制走此 base + key，
+    // 忽略 ai_models 与每用户 ixicai key；留空则恢复按模型/按用户解析（可一键回退）。
+    'ai_base_url' => trim((string) env('GEOFLOW_AI_BASE_URL', '')),
+    'ai_api_key' => trim((string) env('GEOFLOW_AI_API_KEY', '')),
+
     // 本地上传根目录（绝对路径）
     'upload_path' => env('GEOFLOW_UPLOAD_PATH', public_path('assets/images')),
     // 上传资源对外访问 URL 前缀
