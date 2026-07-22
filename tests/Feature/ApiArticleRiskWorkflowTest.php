@@ -13,6 +13,7 @@ use App\Services\GeoFlow\ArticleWorkflowTransitionService;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -33,6 +34,14 @@ class ApiArticleRiskWorkflowTest extends TestCase
         parent::setUp();
 
         Cache::flush();
+        Http::fake([
+            'https://sso.ixicai.cn/api/oauth/userinfo' => Http::response([
+                'sub' => 'api-article-risk-sso-user',
+                'email' => 'api-article-risk@example.com',
+                'name' => 'API Article Risk Admin',
+                'scopes' => ['*'],
+            ]),
+        ]);
         if (! Schema::hasTable('article_reviews')) {
             Schema::create('article_reviews', function (Blueprint $table): void {
                 $table->id();
@@ -50,6 +59,7 @@ class ApiArticleRiskWorkflowTest extends TestCase
             'display_name' => 'API Article Risk Admin',
             'role' => 'admin',
             'status' => 'active',
+            'sso_sub' => 'api-article-risk-sso-user',
         ]);
         $this->author = Author::query()->create([
             'name' => 'API Risk Author',
@@ -59,9 +69,7 @@ class ApiArticleRiskWorkflowTest extends TestCase
             'name' => 'API Risk Category',
             'slug' => 'api-risk-category',
         ]);
-        $this->token = $this->admin
-            ->createToken('api-article-risk', ['articles:read', 'articles:write', 'articles:publish'])
-            ->plainTextToken;
+        $this->token = 'sso-api-article-risk-token';
     }
 
     public function test_draft_create_records_an_api_save_scan_for_the_audit_admin(): void
@@ -81,23 +89,17 @@ class ApiArticleRiskWorkflowTest extends TestCase
         $this->assertSame('clean', $scan->status);
     }
 
-    public function test_write_only_token_cannot_publish_or_override_during_article_creation(): void
+    public function test_sso_bearer_can_publish_during_article_creation(): void
     {
-        $writeOnlyToken = $this->admin
-            ->createToken('api-article-write-only', ['articles:write'])
-            ->plainTextToken;
-
-        $this->withHeader('Authorization', 'Bearer '.$writeOnlyToken)
+        $this->withHeader('Authorization', 'Bearer '.$this->token)
             ->postJson('/api/v1/articles', $this->articlePayload([
                 'status' => 'published',
                 'review_status' => 'approved',
                 'risk_override_reason' => 'Attempted override.',
             ]))
-            ->assertForbidden()
-            ->assertJsonPath('error.code', 'forbidden')
-            ->assertJsonPath('error.details.required_scope', 'articles:publish');
-
-        $this->assertDatabaseMissing('articles', ['title' => 'API risk article']);
+            ->assertCreated()
+            ->assertJsonPath('data.status', 'published')
+            ->assertJsonPath('data.review_status', 'approved');
     }
 
     public function test_article_create_rejects_content_above_the_scan_limit(): void

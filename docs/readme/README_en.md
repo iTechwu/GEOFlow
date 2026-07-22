@@ -192,7 +192,7 @@ docker compose up -d
 - Site (default): `http://localhost:18080` (host port from **`APP_PORT`**, default `18080`)
 - Admin login: `http://localhost:18080/geo_admin/login` (path prefix from **`ADMIN_BASE_PATH`**, default `geo_admin`)
 
-Under **`docker-compose.yml`**, the **`init`** service runs first-time migration and seeding after the database is ready (default admin—see below).
+Under **`docker-compose.yml`**, the **`init`** service runs first-time migration and optional demo-content seeding after the database is ready. Authentication is provided exclusively by SSO.
 
 ### Option 1 add-on: Docker (production)
 
@@ -273,30 +273,11 @@ php artisan reverb:start
 chmod -R ug+rwx storage bootstrap/cache
 ```
 
-**Default admin** (after first-empty-db `php artisan geoflow:install`, see `Database\Seeders\AdminUserSeeder`):
+**SSO authentication**
 
-| Field | Value |
-|-------|--------|
-| Username | `GEOFLOW_ADMIN_USERNAME`, default `admin` |
-| Password | Local/dev default `password`; in production set `GEOFLOW_ADMIN_PASSWORD`. If it is empty and the account does not exist yet, the installer generates a one-time random password in the init / `geoflow:install` logs. |
+Configure the SSO client credentials and redirect URI in `.env`. The installer never creates a local administrator or password. The first successful SSO callback creates a local identity projection keyed by the SSO subject, and API requests accept only SSO bearer tokens.
 
-`geoflow:install` only runs install seeders on a fresh empty database. If it detects existing user/business data but no installation marker, it writes the marker and skips seeding. `AdminUserSeeder` itself remains idempotent and never overwrites an existing username, email, or password.
-
-### Admin login lockout and manual unlock
-
-- Admin accounts are automatically locked (`status=locked`) after **5** consecutive failed login attempts.
-- Locked accounts cannot sign in until manually unlocked by an administrator.
-- Unlock command:
-
-```bash
-php artisan geoflow:admin-unlock <username>
-```
-
-Example:
-
-```bash
-php artisan geoflow:admin-unlock admin
-```
+`geoflow:install` initializes schema and optional demo content only. If it detects existing business data without an installation marker, it writes the marker and skips initialization seeders.
 
 **Production HTTP:** Nginx/Apache + **PHP-FPM**, document root **`public/`**—do not expose the project root as the web root.
 

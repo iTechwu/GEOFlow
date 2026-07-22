@@ -22,6 +22,7 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
@@ -40,6 +41,14 @@ class ImageLibrarySecurityTest extends TestCase
         parent::setUp();
 
         config()->set('geoflow.managed_image_deletion_enabled', true);
+        Http::fake([
+            'https://sso.ixicai.cn/api/oauth/userinfo' => Http::response([
+                'sub' => 'image-security-sso-user',
+                'email' => 'image-security@example.com',
+                'name' => 'Image Security User',
+                'scopes' => ['materials:read', 'materials:write'],
+            ]),
+        ]);
     }
 
     public function test_durable_image_coordination_schema_is_installed(): void
@@ -1948,7 +1957,7 @@ class ImageLibrarySecurityTest extends TestCase
 
     private function materialsToken(): string
     {
-        return $this->createAdmin()->createToken('image-security', ['materials:read', 'materials:write'])->plainTextToken;
+        return 'sso-image-security-token';
     }
 
     private function gifUpload(bool $alternate = false): UploadedFile

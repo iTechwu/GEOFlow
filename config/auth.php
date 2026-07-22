@@ -3,8 +3,8 @@
 /**
  * Laravel 认证默认值、Guard、用户 Provider、密码重置。
  *
- * GEOFlow 后台管理员表为 `admins`，Filament 面板使用 `admin` guard + `admins` provider；
- * API Bearer Token 基于 Sanctum `personal_access_tokens`。默认 `web` guard 仍对应 `users` 表（Laravel 脚手架）。
+ * geo.dofe 后台管理员表为 `admins`，仅由 SSO OIDC 会话建立；
+ * API Bearer Token 仅接受 SSO access token。
  */
 
 use App\Models\Admin;

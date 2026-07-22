@@ -12,7 +12,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 use Throwable;
 
@@ -188,51 +187,6 @@ class SecuritySettingsController extends Controller
             return redirect()->route('admin.site-settings.sensitive-words')->with('message', __('admin.security.message.word_deleted'));
         } catch (Throwable $exception) {
             return back()->withErrors(__('admin.security.message.word_delete_error', ['message' => $exception->getMessage()]));
-        }
-    }
-
-    /**
-     * 更新当前管理员密码，并强制重新登录。
-     */
-    public function updatePassword(Request $request): RedirectResponse
-    {
-        $payload = $request->validate([
-            'current_password' => ['required', 'string'],
-            'new_password' => ['required', 'string', 'min:6'],
-            'confirm_password' => ['required', 'string', 'same:new_password'],
-        ], [
-            'current_password.required' => __('admin.security.error.password_fields_required'),
-            'new_password.required' => __('admin.security.error.password_fields_required'),
-            'confirm_password.required' => __('admin.security.error.password_fields_required'),
-            'confirm_password.same' => __('admin.security.error.password_mismatch'),
-            'new_password.min' => __('admin.security.error.password_too_short'),
-        ]);
-
-        /** @var Admin|null $admin */
-        $admin = Auth::guard('admin')->user();
-        if (! $admin) {
-            return redirect()->route('admin.login');
-        }
-
-        if (! Hash::check((string) $payload['current_password'], (string) $admin->password)) {
-            return back()->withErrors(__('admin.security.error.current_password_wrong'));
-        }
-
-        try {
-            $admin->forceFill([
-                'password' => (string) $payload['new_password'],
-            ])->save();
-
-            // 与 bak 保持一致：密码修改后立即失效当前会话。
-            Auth::guard('admin')->logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-
-            return redirect()
-                ->route('admin.login')
-                ->with('message', __('admin.login.success.password_updated'));
-        } catch (Throwable $exception) {
-            return back()->withErrors(__('admin.security.message.password_update_error', ['message' => $exception->getMessage()]));
         }
     }
 

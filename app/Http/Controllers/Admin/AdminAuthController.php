@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Admin;
+use App\Services\Sso\SsoOidcClient;
 use App\Support\AdminActivityLogger;
 use App\Support\AdminWeb;
 use Illuminate\Http\RedirectResponse;
@@ -24,7 +25,7 @@ class AdminAuthController extends Controller
         return redirect()->route('sso.login');
     }
 
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request, SsoOidcClient $oidc): RedirectResponse
     {
         /** @var Admin|null $admin */
         $admin = Auth::guard('admin')->user();
@@ -34,16 +35,12 @@ class AdminAuthController extends Controller
             ]);
         }
 
+        $idToken = $request->session()->get('sso.id_token');
         Auth::guard('admin')->logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        $query = http_build_query([
-            'post_logout_redirect_uri' => route('admin.login'),
-            'client_id' => config('sso.client_id'),
-        ], '', '&', PHP_QUERY_RFC3986);
-
-        return redirect()->away(rtrim((string) config('sso.api_url'), '/').'/oauth/logout?'.$query);
+        return redirect()->away($oidc->logoutUrl(is_string($idToken) ? $idToken : null));
     }
 
     public function switchLocale(Request $request, string $locale): RedirectResponse

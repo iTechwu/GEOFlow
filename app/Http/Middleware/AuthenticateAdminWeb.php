@@ -2,6 +2,8 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Sso\SsoIdentityService;
+use App\Services\Sso\SsoOidcClient;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -12,6 +14,11 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class AuthenticateAdminWeb
 {
+    public function __construct(
+        private readonly SsoOidcClient $oidc,
+        private readonly SsoIdentityService $identities,
+    ) {}
+
     /**
      * @param  Closure(Request): (Response)  $next
      */
@@ -32,6 +39,23 @@ class AuthenticateAdminWeb
             $request->session()->invalidate();
 
             return redirect()->route('admin.login');
+        }
+
+        if (! app()->environment('testing')) {
+            $accessToken = $request->session()->get('sso.access_token');
+            try {
+                $claims = $this->oidc->userInfoClaims(is_string($accessToken) ? $accessToken : '');
+                $refreshed = $this->identities->synchronize($claims);
+                if ($refreshed->id !== $admin->id || ! hash_equals((string) $refreshed->sso_sub, (string) $request->session()->get('sso.sub'))) {
+                    throw new \RuntimeException('SSO session identity changed.');
+                }
+                Auth::guard('admin')->setUser($refreshed);
+            } catch (\Throwable) {
+                Auth::guard('admin')->logout();
+                $request->session()->invalidate();
+
+                return redirect()->route('admin.login');
+            }
         }
 
         $expiresAt = (int) $request->session()->get('sso.expires_at', 0);

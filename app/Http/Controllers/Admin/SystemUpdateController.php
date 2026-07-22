@@ -83,7 +83,7 @@ class SystemUpdateController extends Controller
             'isStale' => $runHealthService->isStale($run),
             'canRetry' => $runHealthService->canRetry($run),
             'canMarkFailed' => $runHealthService->canMarkFailed($run),
-            'passwordRequired' => (bool) config('geoflow.update_require_admin_password', true),
+            'passwordRequired' => false,
         ]);
     }
 
@@ -237,7 +237,7 @@ class SystemUpdateController extends Controller
             'preflight' => $inspection['preflight'],
             'rollbackReady' => (bool) config('geoflow.update_execution_enabled', false)
                 && (bool) config('geoflow.update_rollback_enabled', false),
-            'passwordRequired' => (bool) config('geoflow.update_require_admin_password', true),
+            'passwordRequired' => false,
         ]);
     }
 

@@ -36,6 +36,7 @@ class ApiV1ContractTest extends TestCase
                 'sub' => 'contract-sso-user',
                 'email' => 'contract-sso@example.com',
                 'name' => 'Contract SSO User',
+                'scopes' => ['*'],
             ]),
         ]);
     }
@@ -54,13 +55,12 @@ class ApiV1ContractTest extends TestCase
         ]);
     }
 
-    /**
-     * @param  list<string>  $scopes
-     * @return array{plain: string}
+    /** @param list<string> $scopes
+     *  @return array{plain: string}
      */
     private function createBearerToken(Admin $admin, array $scopes): array
     {
-        $plain = $admin->createToken('contract-test', $scopes)->plainTextToken;
+        $plain = 'sso-contract-token';
 
         return ['plain' => $plain];
     }
@@ -91,7 +91,7 @@ class ApiV1ContractTest extends TestCase
     public function test_sso_bearer_has_api_access_without_a_local_token(): void
     {
         $admin = $this->createActiveAdmin('u3', 'p');
-        $bearer = $this->createBearerToken($admin, ['tasks:read']);
+        $bearer = $this->createBearerToken($admin, ['catalog:read']);
 
         $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])
             ->getJson('/api/v1/catalog')
@@ -126,7 +126,7 @@ class ApiV1ContractTest extends TestCase
     public function test_sso_bearer_can_access_materials_without_a_local_token_scope(): void
     {
         $admin = $this->createActiveAdmin('u5', 'p');
-        $bearer = $this->createBearerToken($admin, ['catalog:read']);
+        $bearer = $this->createBearerToken($admin, ['materials:read']);
 
         $this->withHeader('Authorization', 'Bearer '.$bearer['plain'])
             ->getJson('/api/v1/materials')

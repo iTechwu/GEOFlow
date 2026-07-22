@@ -13,5 +13,8 @@ return [
     'jwks_path' => (string) env('JWKS_PATH', '.well-known/jwks.json'),
     'jwks_uri' => (string) env('JWKS_URI', 'https://sso.ixicai.cn/api/.well-known/jwks.json'),
     'internal_jwks_uri' => (string) env('INTERNAL_JWKS_URI', 'https://sso.ixicai.cn/api/.well-known/jwks.json'),
+    'scope' => (string) env('SSO_SCOPE', 'openid profile email tenant'),
+    'state_ttl_seconds' => (int) env('SSO_STATE_TTL_SECONDS', 600),
+    'token_cache_seconds' => (int) env('SSO_TOKEN_CACHE_SECONDS', 15),
     'session_lifetime' => (int) env('SSO_SESSION_LIFETIME', 3600),
 ];

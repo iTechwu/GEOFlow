@@ -241,32 +241,13 @@ php artisan reverb:start
 
 ---
 
-## デフォルト管理者（`geoflow:install` 後）
+## SSO 認証
 
-| 項目 | 値 |
-|------|-----|
-| ユーザー名 | `GEOFLOW_ADMIN_USERNAME`、既定は `admin` |
-| パスワード | ローカル開発では既定 `password`。本番では `GEOFLOW_ADMIN_PASSWORD` を設定してください。未設定でアカウントがまだ存在しない場合、インストーラは一回限りのランダムパスワードを init / `geoflow:install` ログに出力します。 |
+`.env` に SSO クライアント資格情報と redirect URI を設定してください。インストーラはローカル管理者やパスワードを作成しません。初回 SSO ログイン時に subject に紐付くローカル投影が作成されます。
 
-`geoflow:install` は空のデータベースでのみ初期 seeders を実行します。ユーザーや業務データを検出した場合はインストール済みマーカーだけを書き込み、seed はスキップします。Admin seeder 自体も冪等で、既存のユーザー名、メール、パスワードは上書きしません。
+`geoflow:install` はスキーマと任意のデモデータだけを初期化します。API は SSO bearer token のみを受け付けます。
 
 フロントのデモカテゴリや記事が必要な場合のみ `GEOFLOW_SEED_FRONTEND_DEMO=true` を設定してから `php artisan db:seed --force` を実行してください。デモデータは既定で不足分だけを追加し、既存のサイト設定、広告、カテゴリ、記事は上書きしません。デモ環境をリセットしたい場合だけ `GEOFLOW_SEED_FRONTEND_DEMO_OVERWRITE=true` を追加します。
-
-### ログイン失敗時のロックと手動解除
-
-- 管理者アカウントは、連続 **5** 回ログインに失敗すると自動的にロックされます（`status=locked`）。
-- ロックされたアカウントは、管理者による手動解除までログインできません。
-- 解除コマンド:
-
-```bash
-php artisan geoflow:admin-unlock <username>
-```
-
-例:
-
-```bash
-php artisan geoflow:admin-unlock admin
-```
 
 ---
 

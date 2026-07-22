@@ -63,8 +63,6 @@ return [
     'update_archive_max_uncompressed_bytes' => max(1, (int) env('GEOFLOW_UPDATE_ARCHIVE_MAX_UNCOMPRESSED_BYTES', 150 * 1024 * 1024)),
     'update_min_free_disk_bytes' => max(1, (int) env('GEOFLOW_UPDATE_MIN_FREE_DISK_BYTES', 200 * 1024 * 1024)),
     'update_preflight_check_git_dirty' => filter_var(env('GEOFLOW_UPDATE_PREFLIGHT_CHECK_GIT_DIRTY', true), FILTER_VALIDATE_BOOLEAN),
-    // geo.dofe has no local password credential; sensitive operations are authorized by the SSO session and role.
-    'update_require_admin_password' => false,
     'update_archive_apply_enabled' => filter_var(env('GEOFLOW_UPDATE_ALLOW_ARCHIVE_APPLY', false), FILTER_VALIDATE_BOOLEAN),
     'update_database_backup_enabled' => filter_var(env('GEOFLOW_UPDATE_DATABASE_BACKUP_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
     'update_lock_ttl_seconds' => max(30, (int) env('GEOFLOW_UPDATE_LOCK_TTL', 900)),
@@ -135,8 +133,6 @@ return [
     'api_login_rate_limit_attempts' => (int) env('GEOFLOW_API_LOGIN_RATE_LIMIT_ATTEMPTS', 10),
     // API 登录限速窗口（秒）
     'api_login_rate_limit_decay_seconds' => (int) env('GEOFLOW_API_LOGIN_RATE_LIMIT_DECAY', 60),
-    // API Token 默认有效期（天）
-    'api_token_default_ttl_days' => (int) env('GEOFLOW_API_TOKEN_DEFAULT_TTL_DAYS', 30),
     // 会话空闲超时（秒）
     'session_timeout_seconds' => (int) env('GEOFLOW_SESSION_TIMEOUT', 2592000),
 

@@ -39,14 +39,15 @@ final class IxicaiApiKeyProvisioner
             return $existing;
         }
 
-        $tenantId = trim((string) (($admin->sso_claims ?? [])['tenant_id'] ?? ''));
-        if ($tenantId === '') {
-            throw new RuntimeException('Your SSO session has no selected tenant.');
+        $teamId = trim((string) (($admin->sso_claims ?? [])['selected_team_id'] ?? ''));
+        if ($teamId === '') {
+            throw new RuntimeException('Your SSO session has no selected team.');
         }
 
         $response = $this->http->acceptJson()
             ->withToken($accessToken)
-            ->withHeaders(['x-current-tenant' => $tenantId])
+            // ixicai validates membership for this selected SSO Team.id server-side.
+            ->withHeaders(['x-current-tenant' => $teamId])
             ->connectTimeout(5)->timeout(15)->retry(2, 250, throw: false)
             ->post((string) config('ixicai.api_url').(string) config('ixicai.provision_path'), [
                 'name' => config('ixicai.default_key_name'),

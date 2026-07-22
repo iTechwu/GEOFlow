@@ -35,6 +35,8 @@ class SsoAuthController extends Controller
             Auth::guard('admin')->login($admin, false);
             $request->session()->regenerate();
             $request->session()->put('sso.sub', $admin->sso_sub);
+            $request->session()->put('sso.access_token', $result['access_token']);
+            $request->session()->put('sso.id_token', $result['id_token']);
             $request->session()->put('sso.expires_at', now()->addSeconds($result['expires_in'])->timestamp);
             return redirect()->intended(route('admin.dashboard'));
         } catch (Throwable $exception) {

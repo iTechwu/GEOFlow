@@ -231,32 +231,13 @@ Admin: `http://127.0.0.1:8080/geo_admin/login`. **Producción:** Nginx + PHP-FPM
 
 ---
 
-## Credenciales por defecto (tras `geoflow:install`)
+## Autenticación SSO
 
-| Campo | Valor |
-|-------|--------|
-| Usuario | `GEOFLOW_ADMIN_USERNAME`, por defecto `admin` |
-| Contraseña | En desarrollo local es `password`; en producción define `GEOFLOW_ADMIN_PASSWORD`. Si está vacío y la cuenta aún no existe, el instalador genera una contraseña aleatoria de un solo uso en los logs de init / `geoflow:install`. |
+Configure las credenciales del cliente SSO y la URI de retorno en `.env`. El instalador no crea administradores ni contraseñas locales; el primer acceso SSO crea una proyección local vinculada al subject de SSO.
 
-`geoflow:install` solo ejecuta datos iniciales cuando la base está vacía. Si detecta datos de usuario o negocio, solo escribe el marcador de instalación y omite el seed. El seeder de admin sigue siendo idempotente y no sobrescribe usuario, correo ni contraseña existentes.
+`geoflow:install` inicializa el esquema y el contenido demo opcional. Las API solo aceptan bearer tokens de SSO.
 
 Si necesitas categorías y artículos demo del frontend, configura `GEOFLOW_SEED_FRONTEND_DEMO=true` y después ejecuta `php artisan db:seed --force`. Los datos demo solo rellenan filas faltantes por defecto y no sobrescriben ajustes del sitio, anuncios, categorías ni artículos existentes. Usa `GEOFLOW_SEED_FRONTEND_DEMO_OVERWRITE=true` solo para reiniciar una base demo.
-
-### Bloqueo por intentos fallidos y desbloqueo manual
-
-- La cuenta de administrador se bloquea automáticamente (`status=locked`) tras **5** intentos fallidos consecutivos.
-- Una cuenta bloqueada no puede iniciar sesión hasta que un administrador la desbloquee manualmente.
-- Comando de desbloqueo:
-
-```bash
-php artisan geoflow:admin-unlock <username>
-```
-
-Ejemplo:
-
-```bash
-php artisan geoflow:admin-unlock admin
-```
 
 ---
 
