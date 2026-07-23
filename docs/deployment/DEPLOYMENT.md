@@ -199,14 +199,14 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm app php 
 
 ### 当前开发 Docker
 
-- `php:8.4-cli-bookworm`
+- `uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm`
 - `php artisan serve`
 - 允许运行时 `composer install`
 - 默认 `AUTO_MIGRATE=true`
 
 ### 当前生产 Docker
 
-- `php:8.4-fpm-bookworm`
+- `uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm`
 - `nginx` 直接服务静态文件，PHP 交给 `php-fpm`
 - 依赖在构建期安装完成
 - 通过 `docker/entrypoint.prod.sh` 执行可选的等待数据库、迁移、`php artisan optimize`
@@ -262,17 +262,17 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm \
 
 ## 9. 构建时拉取基础镜像失败（`not found` / `could not fetch content descriptor`）
 
-若日志类似 `FROM php:8.4-fpm-bookworm` 或某层 `application/vnd.oci.image.layer...` **`from remote: not found`**，多为**仓库侧或镜像加速与 manifest 不一致**，而非项目 Dockerfile 写错。
+若日志类似 `FROM uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm` 或某层 `application/vnd.oci.image.layer...` **`from remote: not found`**，多为**仓库侧或镜像加速与 manifest 不一致**，而非项目 Dockerfile 写错。
 
 建议按顺序尝试：
 
 1. **直接重试** `docker compose --env-file .env.prod -f docker-compose.prod.yml build`（偶发 Hub 或链路问题）。
 2. **单独拉基础镜像**，确认是拉取问题还是仅 BuildKit 缓存问题：  
-   `docker pull php:8.4-fpm-bookworm`  
+   `docker pull uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm`  
    若此处同样 `not found`，说明当前访问的 registry/加速源缺层，需换源或直连。
 3. **检查本机 `/etc/docker/daemon.json` 的 `registry-mirrors`**：部分公共加速源对 `docker.io` 层同步不完整，可**暂时注释镜像加速**后重启 Docker，再 `docker pull` / `build`；或换成你环境稳定可用的镜像源策略。
 4. **清理构建缓存后再构建**：  
    `docker builder prune -f`  
    必要时再 `docker system prune`（注意会删掉未使用镜像，执行前自行确认）。
 
-仍失败时，把 **`docker pull php:8.4-fpm-bookworm` 的完整输出**与 **`daemon.json` 中与 registry 相关的配置**（可打码）一并排查网络与镜像源。
+仍失败时，把 **`docker pull uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm` 的完整输出**与 **`daemon.json` 中与 registry 相关的配置**（可打码）一并排查网络与镜像源。

@@ -1,6 +1,6 @@
 ARG NGINX_IMAGE=nginx:1.27-alpine
 
-FROM node:22-bookworm-slim AS assets
+FROM uhub.service.ucloud.cn/techwu/node:25-bookworm-slim AS assets
 
 WORKDIR /app
 

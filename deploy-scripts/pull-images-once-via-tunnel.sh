@@ -80,7 +80,7 @@ read_images_from_env() {
   if [[ ${#images[@]} -eq 0 ]]; then
     images=(
       composer:2
-      php:8.4-fpm-bookworm
+      uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
       nginx:1.31.1-alpine
       pgvector/pgvector:pg18
       redis:8-alpine

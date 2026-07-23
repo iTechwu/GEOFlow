@@ -19,7 +19,7 @@ PLATFORM="${DOCKER_PLATFORM:-linux/amd64}"
 BUILDER_NAME="${DOCKER_BUILDX_BUILDER:-geoflow-builder}"
 
 COMPOSER_IMAGE="${COMPOSER_IMAGE:-composer:2}"
-PHP_FPM_IMAGE="${PHP_FPM_IMAGE:-php:8.4-fpm-bookworm}"
+PHP_FPM_IMAGE="${PHP_FPM_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm}"
 PECL_REDIS_VERSION="${PECL_REDIS_VERSION:-6.3.0}"
 NGINX_IMAGE="${NGINX_IMAGE:-nginx:1.31.1-alpine}"
 

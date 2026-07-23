@@ -46,7 +46,7 @@ services:
     restart: unless-stopped
 
   assets:
-    image: ${NODE_IMAGE:-node:22-bookworm-slim}
+    image: ${NODE_IMAGE:-uhub.service.ucloud.cn/techwu/node:25-bookworm-slim}
     container_name: geoflow-assets
     working_dir: /var/www/html
     command: ["sh", "-lc", "npm ci --include=dev --no-audit --no-fund && npm run build"]
@@ -56,7 +56,7 @@ services:
     restart: "no"
 
   vite:
-    image: ${NODE_IMAGE:-node:22-bookworm-slim}
+    image: ${NODE_IMAGE:-uhub.service.ucloud.cn/techwu/node:25-bookworm-slim}
     container_name: geoflow-vite
     working_dir: /var/www/html
     command: ["sh", "-lc", "npm run dev -- --host 0.0.0.0 --port 5173"]
@@ -76,7 +76,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-init
     working_dir: /var/www/html
@@ -102,7 +102,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-app
     working_dir: /var/www/html
@@ -127,7 +127,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-queue
     working_dir: /var/www/html
@@ -148,7 +148,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-scheduler
     working_dir: /var/www/html
@@ -169,7 +169,7 @@ services:
       context: .
       dockerfile: docker/Dockerfile
       args:
-        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-php:8.4-cli-bookworm}
+        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-reverb
     working_dir: /var/www/html

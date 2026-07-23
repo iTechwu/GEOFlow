@@ -1,4 +1,4 @@
-ARG PHP_CLI_IMAGE=php:8.4-cli-bookworm
+ARG PHP_CLI_IMAGE=uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm
 
 FROM ${PHP_CLI_IMAGE}
 
