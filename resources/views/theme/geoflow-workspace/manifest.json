@@ -1,0 +1,8 @@
+{
+  "id": "geoflow-workspace",
+  "name": "GeoFlow Workspace",
+  "version": "1.0.0",
+  "description": "GeoFlow SSO workspace entry page.",
+  "compatible_pages": ["home"],
+  "requires_admin_activation": true
+}

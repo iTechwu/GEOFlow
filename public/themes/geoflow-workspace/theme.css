@@ -1,0 +1,79 @@
+:root {
+    color-scheme: light;
+    font-family: Inter, "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+body.geoflow-entry-body {
+    margin: 0;
+    min-width: 320px;
+    min-height: 100vh;
+    background: #f7f8f5;
+    color: #17211d;
+}
+
+.geoflow-entry-shell {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 32px;
+}
+
+.geoflow-entry {
+    width: min(100%, 420px);
+    display: grid;
+    justify-items: center;
+    gap: 28px;
+    text-align: center;
+}
+
+.geoflow-entry-mark {
+    width: 58px;
+    height: 58px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    align-items: end;
+    gap: 6px;
+    padding: 10px;
+    border: 1px solid #c8d3cd;
+    border-radius: 8px;
+    background: #ffffff;
+}
+
+.geoflow-entry-mark span {
+    display: block;
+    border-radius: 2px;
+    background: #167460;
+}
+
+.geoflow-entry-mark span:nth-child(1) { height: 36%; }
+.geoflow-entry-mark span:nth-child(2) { height: 68%; background: #e16d46; }
+.geoflow-entry-mark span:nth-child(3) { height: 100%; }
+
+.geoflow-entry h1 {
+    margin: 0;
+    font-size: 36px;
+    line-height: 1;
+    font-weight: 700;
+    letter-spacing: 0;
+}
+
+.geoflow-entry-action a {
+    display: inline-flex;
+    min-width: 128px;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 18px;
+    border-radius: 6px;
+    background: #167460;
+    color: #ffffff;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    text-decoration: none;
+}
+
+.geoflow-entry-action a:hover { background: #0e5d4c; }
+.geoflow-entry-action a:focus-visible { outline: 3px solid #e16d46; outline-offset: 3px; }
