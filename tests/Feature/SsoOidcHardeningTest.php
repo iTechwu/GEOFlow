@@ -59,7 +59,7 @@ class SsoOidcHardeningTest extends TestCase
                 'issuedAt' => now()->subMinutes(11)->timestamp,
             ],
         ])->get(route('sso.callback', ['state' => 'expired-state', 'code' => 'authorization-code']))
-            ->assertRedirect(route('admin.login'));
+            ->assertRedirect(route('site.home'));
 
         Http::assertNothingSent();
     }

@@ -31,7 +31,16 @@ class SsoAuthController extends Controller
         try {
             $result = $oidc->complete($request);
             $admin = $identities->synchronize($result['claims']);
-            $keys->ensure($admin, $result['access_token']);
+
+            // A missing SSO team must not prevent the administrator from
+            // establishing a GeoFlow session. Key provisioning can retry on
+            // a later sign-in after the user selects a team in SSO.
+            try {
+                $keys->ensure($admin, $result['access_token']);
+            } catch (Throwable $exception) {
+                report($exception);
+            }
+
             Auth::guard('admin')->login($admin, false);
             $request->session()->regenerate();
             $request->session()->put('sso.sub', $admin->sso_sub);
@@ -41,7 +50,8 @@ class SsoAuthController extends Controller
             return redirect()->intended(route('admin.dashboard'));
         } catch (Throwable $exception) {
             report($exception);
-            return redirect()->route('admin.login')->withErrors(['sso' => 'SSO sign-in could not be completed.']);
+
+            return redirect()->route('site.home')->withErrors(['sso' => 'SSO sign-in could not be completed.']);
         }
     }
 }
