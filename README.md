@@ -208,25 +208,27 @@ GEOFlow 适合这些真实且可落地的场景：
 ### 方式一：Docker（开发 / 演示）
 
 ```bash
-# 1. 克隆仓库
-git clone https://github.com/yaojingang/GEOFlow.git
-cd GEOFlow
-
-# 2. 复制环境变量
-cp .env.example .env
-
-# 3. 按需编辑 .env（数据库、Redis、APP_URL、ADMIN_BASE_PATH、REVERB_* 等）
-vi .env
-
-# 4. 构建并启动（含 postgres、redis、init、app、queue、scheduler、reverb）
-docker compose build
-docker compose up -d
+# 前台开发：首次运行自动创建被忽略的 .env.local，再启动完整本地栈。
+make dev
 ```
 
 - 前台默认访问：`http://localhost:18080`（端口由环境变量 **`APP_PORT`** 控制，默认 `18080`）
 - 后台登录：`http://localhost:18080/geo_admin/login`（前缀由 **`ADMIN_BASE_PATH`** 控制，默认 `geo_admin`）
+- 数据库与 Redis 会一同启动，并仅绑定到宿主机 `127.0.0.1:15432` 和 `127.0.0.1:16379`；容器内分别使用 `postgres:5432`、`redis:6379`。
+- Vite 热更新端口为 `127.0.0.1:5173`；Blade/PHP 修改刷新页面即可生效，JS/CSS 修改会热更新。
 
-首次启动会运行 **`init`** 容器：在数据库就绪后执行首次迁移与种子（默认管理员见下文「默认管理员」）。
+首次启动会运行 **`init`** 容器：在数据库与 Redis 就绪后执行迁移与 `geoflow:install`。项目后台使用 SSO，需为 `SSO_CLIENT_ID`、`SSO_CLIENT_SECRET`、`INTERNAL_API_SECRET` 和回调地址配置可用的身份提供方；未配置时前台仍可访问，但不能完成后台登录。
+
+常用开发命令：
+
+```bash
+make dev-up    # 后台启动
+make dev-logs  # 跟随所有服务日志
+make dev-shell # 进入 app 容器执行 artisan、测试等命令
+make dev-down  # 停止并移除容器，保留数据库卷目录
+```
+
+`make dev` 使用单独的 `.env.local`，不会修改现有 `.env`；如需本地 SSO 登录，在 `.env.local` 中填入该本地回调地址已登记的凭据。
 
 ### 方式一补充：Docker（生产）
 
@@ -267,9 +269,12 @@ cd GEOFlow
 
 # 2. 环境与依赖
 cp .env.example .env
-# 编辑 .env：将 DB_HOST/DB_* 指向本机 Postgres，REDIS_* 指向本机 Redis，QUEUE_CONNECTION=redis 等
+# 本地 PHP 进程不在 Compose 网络内：将 DB_HOST 改为 127.0.0.1、DB_PORT 改为本机 PostgreSQL 端口，
+# 将 REDIS_HOST 改为 127.0.0.1、REDIS_PORT 改为本机 Redis 端口；HTTP 调试保持 SESSION_SECURE_COOKIE=false。
 
 composer install --no-interaction --prefer-dist
+npm ci
+npm run build
 php artisan key:generate
 
 # 3. 数据库与存储
@@ -328,8 +333,8 @@ chmod -R ug+rwx storage bootstrap/cache
 
 | 服务 | 作用 |
 |------|------|
-| `postgres` | PostgreSQL 16 + pgvector |
-| `redis` | Redis 7 |
+| `postgres` | PostgreSQL 18 + pgvector（仅暴露 `127.0.0.1:${DB_EXPOSE_PORT:-15432}`） |
+| `redis` | Redis 8（仅暴露 `127.0.0.1:${REDIS_EXPOSE_PORT:-16379}`） |
 | `init` | 一次性初始化（`restart: "no"`） |
 | `app` | `php artisan serve`，映射 **`${APP_PORT:-18080}:8080`** |
 | `queue` | `queue:work redis` |

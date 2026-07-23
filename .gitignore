@@ -5,6 +5,7 @@
 /logs
 /uploads
 .env
+.env.local
 .env.prod
 .env.backup
 .env.production
