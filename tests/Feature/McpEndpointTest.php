@@ -317,7 +317,7 @@ class McpEndpointTest extends TestCase
 
         $this->mockServices();
 
-        $this->withHeader('Authorization', 'Bearer sso-token')
+        $this->withHeader('Authorization', 'Bearer sso-token-without-team')
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
             ->assertUnauthorized()
             ->assertJsonPath('error.code', -32001);
