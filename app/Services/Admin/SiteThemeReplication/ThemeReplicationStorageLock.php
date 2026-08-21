@@ -3,6 +3,8 @@
 namespace App\Services\Admin\SiteThemeReplication;
 
 use Closure;
+use Illuminate\Contracts\Cache\Lock;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use RuntimeException;
 
@@ -15,27 +17,35 @@ final class ThemeReplicationStorageLock
 
     public function run(int $replicationId, Closure $operation): mixed
     {
-        $handle = $this->acquire($this->pathGuard->positiveInteger($replicationId));
+        $replicationId = $this->pathGuard->positiveInteger($replicationId);
+        $timeoutMilliseconds = $this->timeoutMilliseconds();
+        $distributedLock = Cache::lock(
+            'geoflow:theme-replication-storage:'.$replicationId,
+            max(2, (int) ceil($timeoutMilliseconds / 1000) + 1),
+        );
+        if (! $this->acquireDistributedLock($distributedLock, $timeoutMilliseconds)) {
+            throw new RuntimeException(__('admin.theme_replication.error.package_create_failed'));
+        }
 
         try {
-            return $operation();
+            $handle = $this->acquire($replicationId, $timeoutMilliseconds);
+
+            try {
+                return $operation();
+            } finally {
+                @flock($handle, LOCK_UN);
+                fclose($handle);
+            }
         } finally {
-            @flock($handle, LOCK_UN);
-            fclose($handle);
+            $distributedLock->release();
         }
     }
 
     /** @return resource */
-    private function acquire(int $replicationId)
+    private function acquire(int $replicationId, int $timeoutMilliseconds)
     {
         $disk = Storage::disk('local');
         $lockDirectory = 'geoflow-theme-replication-package-locks';
-        $timeoutMilliseconds = $this->pathGuard->positiveInteger(
-            config('geoflow.theme_replication_package_lock_timeout_milliseconds')
-        );
-        if ($timeoutMilliseconds > 60_000) {
-            $this->reject();
-        }
         $lockDirectoryReal = $this->storageGuard->ensureStorageDirectory($lockDirectory);
         $lockAbsolutePath = $disk->path($lockDirectory.'/'.$replicationId.'.lock');
         if (is_link($lockAbsolutePath)) {
@@ -74,6 +84,34 @@ final class ThemeReplicationStorageLock
 
         fclose($handle);
         throw new RuntimeException(__('admin.theme_replication.error.package_create_failed'));
+    }
+
+    private function acquireDistributedLock(Lock $lock, int $timeoutMilliseconds): bool
+    {
+        $deadline = hrtime(true) + ($timeoutMilliseconds * 1_000_000);
+        do {
+            if ($lock->get()) {
+                return true;
+            }
+            $remainingMicroseconds = intdiv(max(0, $deadline - hrtime(true)), 1000);
+            if ($remainingMicroseconds > 0) {
+                usleep(min(10_000, $remainingMicroseconds));
+            }
+        } while (hrtime(true) < $deadline);
+
+        return false;
+    }
+
+    private function timeoutMilliseconds(): int
+    {
+        $timeout = $this->pathGuard->positiveInteger(
+            config('geoflow.theme_replication_package_lock_timeout_milliseconds')
+        );
+        if ($timeout > 60_000) {
+            $this->reject();
+        }
+
+        return $timeout;
     }
 
     /** @param resource $handle */

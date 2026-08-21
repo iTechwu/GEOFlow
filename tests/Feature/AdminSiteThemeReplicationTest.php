@@ -19,6 +19,7 @@ use App\Services\Admin\SiteThemeReplication\ThemeScaffoldWriter;
 use App\Services\Admin\SiteThemeReplicationService;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
@@ -871,14 +872,8 @@ class AdminSiteThemeReplicationTest extends TestCase
         $replication = $this->replicationWithDraftFiles('package-lock-theme');
         $existingPackage = app(ThemeReplicationPackageService::class)->createPackage($replication);
         $existingHash = hash_file('sha256', (string) $existingPackage['absolute_path']);
-        $lockDirectory = 'geoflow-theme-replication-package-locks';
-        Storage::disk('local')->makeDirectory($lockDirectory);
-        $lockHandle = fopen(
-            Storage::disk('local')->path($lockDirectory.'/'.(int) $replication->id.'.lock'),
-            'c+b',
-        );
-        $this->assertIsResource($lockHandle);
-        $this->assertTrue(flock($lockHandle, LOCK_EX | LOCK_NB));
+        $lock = Cache::lock('geoflow:theme-replication-storage:'.(int) $replication->id, 5);
+        $this->assertTrue($lock->get());
         config()->set('geoflow.theme_replication_package_lock_timeout_milliseconds', 25);
 
         try {
@@ -898,8 +893,7 @@ class AdminSiteThemeReplicationTest extends TestCase
                 Storage::disk('local')->allFiles(dirname((string) $existingPackage['relative_path']))
             );
         } finally {
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            $lock->release();
         }
 
         $retriedPackage = app(ThemeReplicationPackageService::class)->createPackage($replication);
@@ -1177,22 +1171,15 @@ class AdminSiteThemeReplicationTest extends TestCase
 
         $replication = $this->replicationWithDraftFiles('delete-drafts-lock-theme');
         $replication->forceFill(['status' => SiteThemeReplication::STATUS_ARCHIVED])->save();
-        $lockDirectory = 'geoflow-theme-replication-package-locks';
-        Storage::disk('local')->makeDirectory($lockDirectory);
-        $lockHandle = fopen(
-            Storage::disk('local')->path($lockDirectory.'/'.(int) $replication->id.'.lock'),
-            'c+b',
-        );
-        $this->assertIsResource($lockHandle);
-        $this->assertTrue(flock($lockHandle, LOCK_EX | LOCK_NB));
+        $lock = Cache::lock('geoflow:theme-replication-storage:'.(int) $replication->id, 5);
+        $this->assertTrue($lock->get());
         config()->set('geoflow.theme_replication_package_lock_timeout_milliseconds', 25);
 
         try {
             $this->expectException(RuntimeException::class);
             app(SiteThemeReplicationService::class)->deleteDrafts($replication);
         } finally {
-            flock($lockHandle, LOCK_UN);
-            fclose($lockHandle);
+            $lock->release();
             Storage::disk('local')->assertExists(
                 'geoflow-theme-replications/'.(int) $replication->id.'/draft/1/views/home.blade.php'
             );
