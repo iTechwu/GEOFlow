@@ -18,8 +18,7 @@
 - `queue`: `php artisan queue:work`
 - `scheduler`: `php artisan schedule:work`
 - `reverb`: `php artisan reverb:start`
-- `postgres`: PostgreSQL 16 + pgvector
-- `redis`: Redis 7
+- PostgreSQL/Redis：由 `../docker-helm.dofe.ai` 集中提供，GEOFlow 仅通过 `DB_*`/`REDIS_*` 连接
 
 这套方案与当前开发用 `docker-compose.yml` 分离：
 
@@ -40,7 +39,7 @@ bash geoflow-docker-deploy.sh
 - 检查 CPU、内存、磁盘、Docker、Docker Compose 与端口占用
 - 克隆或更新 GEOFlow 源码
 - 生成 `.env.prod` 并写入生产默认配置
-- 启动 PostgreSQL、Redis、Nginx、PHP-FPM、队列、调度和 Reverb
+- 连接外部 PostgreSQL/Redis，并启动 Nginx、PHP-FPM、队列、调度和 Reverb
 - 执行迁移、写入默认管理员、清理并重建 Laravel 缓存
 - 调用 `deploy-scripts/geoflow-healthcheck.sh` 做部署后自检
 
@@ -70,9 +69,15 @@ APP_KEY=base64:replace-with-generated-key
 
 DB_DATABASE=geo_flow
 DB_USERNAME=geo_user
-DB_PASSWORD=change-this-password
+DB_PASSWORD=<external-postgres-password>
+DB_HOST=postgres.shared
 
-REDIS_PASSWORD=
+REDIS_HOST=redis.shared
+REDIS_PASSWORD=<external-redis-password>
+MODELS_BASE_URL=https://models.dofe.ai/v1
+MODELS_API_KEY=<models-service-key>
+GEOFLOW_MCP_ENABLED=true
+GEOFLOW_MCP_TOKEN=<mcp-token>
 WEB_PORT=18080
 REVERB_EXPOSE_PORT=18081
 ```
@@ -85,8 +90,8 @@ REVERB_EXPOSE_PORT=18081
 - `AUTO_MIGRATE=true` 由生产 `init` 服务执行迁移；常驻服务不接收 `.env.prod` 作为容器环境变量，重启时不会重复初始化。
 - `AUTO_INSTALL_ONCE=true` 由生产 `init` 服务在迁移后运行 `php artisan geoflow:install`；该命令只在空库首次安装时执行安装填充，旧库只补初始化标记。
 - 生产镜像不会在启动时执行 `composer install`
-- **`postgres` / `redis` 凭据**：`docker-compose.prod.yml` 中 postgres 使用 `DB_DATABASE` / `DB_USERNAME` / `DB_PASSWORD` 映射为官方镜像的 `POSTGRES_*`；redis 使用 `REDIS_PASSWORD`；值均由 Compose 插值（推荐 `--env-file .env.prod`），与 Laravel 的 `DB_*` 同源、不重复定义。
-- **建议仍使用 `--env-file .env.prod`**：便于插值 `WEB_PORT`、`POSTGRES_DATA_DIR` 等与根目录 `.env` 对齐；若曾用错误密码初始化过 Postgres，须删掉 `POSTGRES_DATA_DIR` 对应数据目录后再启动。
+- **外部依赖凭据**：Compose 不创建 PostgreSQL/Redis，也不映射 `POSTGRES_*` 或持久卷；`DB_HOST`、`REDIS_HOST` 和密码必须由集中基础设施/CI Secret 提供。
+- **建议仍使用 `--env-file .env.prod`**：便于插值端口、镜像和应用配置，并确保 models/MCP 变量进入 init、app、queue 等容器。
 
 ## 3. 启动步骤
 
@@ -100,7 +105,6 @@ export COMPOSE_PROD='docker compose --env-file .env.prod -f docker-compose.prod.
 
 ```bash
 $COMPOSE_PROD build
-$COMPOSE_PROD up -d postgres redis
 $COMPOSE_PROD up -d init
 $COMPOSE_PROD up -d app web queue scheduler reverb
 ```
@@ -128,7 +132,6 @@ $COMPOSE_PROD stop app
 
 # 4. 构建新镜像，并由一次性 init 服务执行新版本迁移。
 $COMPOSE_PROD build
-$COMPOSE_PROD up -d postgres redis
 $COMPOSE_PROD up init
 
 # 5. 迁移成功后立即将一次性确认恢复为 false，再启动全部新版本进程：
@@ -213,7 +216,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm app php 
 
 ## 6. 运维建议
 
-- 不要对外暴露 `postgres` / `redis`
+- 不要在 GEOFlow Compose 中声明或对外暴露 PostgreSQL/Redis；它们属于集中基础设施
 - 建议在反向代理层只公开 `80/443`
 - 若更新了 PHP 代码，因 OPcache `validate_timestamps=0`，请重新构建镜像
 - 修改 `.env.prod` 后，执行：

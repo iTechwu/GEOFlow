@@ -212,7 +212,7 @@ cp .env.prod.example .env.prod
 vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
+# PostgreSQL and Redis are external services managed by ../docker-helm.dofe.ai.
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
@@ -224,7 +224,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web que
 
 ### Option 2: Local PHP stack
 
-**Prerequisites:** PHP **8.3+** with `pdo_pgsql`, `redis`, and other typical Laravel extensions; local **PostgreSQL** and **Redis**; **Composer 2.x**.
+**Prerequisites:** PHP **8.3+** with `pdo_pgsql`, `redis`, and other typical Laravel extensions; reachable **PostgreSQL** and **Redis** supplied by the shared infrastructure; **Composer 2.x**.
 
 ```bash
 git clone https://github.com/yaojingang/GEOFlow.git
@@ -287,17 +287,17 @@ Configure the SSO client credentials and redirect URI in `.env`. The installer n
 
 ### Development Compose services
 
+PostgreSQL and Redis are external services managed by `../docker-helm.dofe.ai`; Compose starts only the GEOFlow application processes.
+
 | Service | Role |
 |---------|------|
-| `postgres` | PostgreSQL 16 + pgvector |
-| `redis` | Redis 7 |
 | `init` | One-off bootstrap (`restart: "no"`) |
 | `app` | `php artisan serve`, maps **`${APP_PORT:-18080}:8080`** |
 | `queue` | `queue:work redis` |
 | `scheduler` | `schedule:work` |
 | `reverb` | WebSocket, maps **`${REVERB_EXPOSE_PORT:-18081}:8080`** |
 
-Optional localhost-only DB/Redis host ports: see `DB_EXPOSE_PORT` and `REDIS_EXPOSE_PORT` in `docker-compose.yml`.
+Configure external DB/Redis hosts and credentials through `.env`; this repository does not expose or persist these dependencies.
 
 ### `docker/entrypoint.sh` variables
 

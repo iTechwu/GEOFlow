@@ -192,7 +192,7 @@ cp .env.prod.example .env.prod
 vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
+# PostgreSQL и Redis являются внешними сервисами, управляемыми ../docker-helm.dofe.ai.
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
@@ -243,7 +243,7 @@ php artisan reverb:start
 
 ## Docker (кратко)
 
-**Разработка** (`docker-compose.yml`): `postgres`, `redis`, `init`, `app` (`${APP_PORT:-18080}:8080`), `queue`, `scheduler`, `reverb` (`${REVERB_EXPOSE_PORT:-18081}:8080`). Переменные `docker/entrypoint.sh` — как в [README_en.md](README_en.md).
+**Разработка** (`docker-compose.yml`): PostgreSQL и Redis являются внешними сервисами, управляемыми `../docker-helm.dofe.ai`; Compose запускает только `init`, `app`, `queue`, `scheduler` и `reverb`. Переменные `docker/entrypoint.sh` — как в [README_en.md](README_en.md).
 
 **Продакшен** (`docker-compose.prod.yml`): запуск через `docker compose --env-file .env.prod -f docker-compose.prod.yml …` (см. дополнение выше и **`../../docs/deployment/DEPLOYMENT.md`**).
 

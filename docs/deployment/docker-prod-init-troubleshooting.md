@@ -100,8 +100,8 @@ $COMPOSE_PROD config | grep -E 'APP_URL|DB_HOST|DB_DATABASE|DB_USERNAME|WEB_PORT
 ```env
 APP_URL=http://172.29.64.77:18080
 ADMIN_BASE_PATH=geo_admin
-DB_HOST=postgres
-REDIS_HOST=redis
+DB_HOST=postgres.shared
+REDIS_HOST=redis.shared
 ```
 
 这里的 `APP_URL` 要按实际访问方式填写：
@@ -139,8 +139,8 @@ $COMPOSE_PROD logs --tail=200 init
 | --- | --- |
 | 后台或首页 500 | `storage/logs/laravel.log` 中的真实错误 |
 | 页面仍跳到 `your-domain.com` | `.env.prod` 是否被读取、`APP_URL` 是否正确、容器是否重建 |
-| 数据库连接失败 | Docker 模式下 `DB_HOST` 应为 `postgres`，不是 `127.0.0.1` |
-| Redis 连接失败 | Docker 模式下 `REDIS_HOST` 应为 `redis` |
+| 数据库连接失败 | `DB_HOST` 应指向 docker-helm 提供的外部 PostgreSQL，例如 `postgres.shared` |
+| Redis 连接失败 | `REDIS_HOST` 应指向 docker-helm 提供的外部 Redis，例如 `redis.shared` |
 | 图片打不开 | 是否执行过 `storage:link`，Nginx 根目录是否指向 `public` |
 | 后台路径不对 | `ADMIN_BASE_PATH` 是否与访问路径一致 |
 
@@ -169,7 +169,7 @@ sudo ufw status
 
 ```bash
 $COMPOSE_PROD build
-$COMPOSE_PROD up -d postgres redis
+# PostgreSQL/Redis 由 ../docker-helm.dofe.ai 提供；先确认 DB_HOST/REDIS_HOST 与凭据可达。
 $COMPOSE_PROD up -d init
 $COMPOSE_PROD logs --tail=200 init
 $COMPOSE_PROD up -d app web queue scheduler reverb

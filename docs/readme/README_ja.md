@@ -192,7 +192,7 @@ cp .env.prod.example .env.prod
 vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
+# PostgreSQL と Redis は ../docker-helm.dofe.ai が管理する外部サービスです。
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
@@ -253,7 +253,7 @@ php artisan reverb:start
 
 ## Docker 補足
 
-**開発**（`docker-compose.yml`）: `postgres` / `redis` / `init` / `app`（`${APP_PORT:-18080}:8080`）/ `queue` / `scheduler` / `reverb`（`${REVERB_EXPOSE_PORT:-18081}:8080`）。`docker/entrypoint.sh` の変数は [README_en.md](README_en.md) と同趣旨です。
+**開発**（`docker-compose.yml`）: PostgreSQL と Redis は `../docker-helm.dofe.ai` 管理の外部サービスです。Compose は `init` / `app` / `queue` / `scheduler` / `reverb` のみ起動します。`docker/entrypoint.sh` の変数は [README_en.md](README_en.md) と同趣旨です。
 
 **本番**（`docker-compose.prod.yml`）: `docker compose --env-file .env.prod -f docker-compose.prod.yml …` で起動（上記「補足：Docker（本番）」および **`../../docs/deployment/DEPLOYMENT.md`**）。
 

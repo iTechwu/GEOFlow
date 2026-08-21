@@ -224,8 +224,8 @@ Se precisar de categorias e artigos demo do frontend, defina `GEOFLOW_SEED_FRONT
 
 | Serviço | Papel |
 |---------|-------|
-| `postgres` | PostgreSQL 16 + pgvector |
-| `redis` | Redis 7 |
+| PostgreSQL | Serviço externo gerenciado por `../docker-helm.dofe.ai` |
+| Redis | Serviço externo gerenciado por `../docker-helm.dofe.ai` |
 | `init` | Bootstrap único (`restart: "no"`) |
 | `app` | `php artisan serve`, mapeia **`${APP_PORT:-18080}:8080`** |
 | `queue` | `queue:work redis` |

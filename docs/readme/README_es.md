@@ -192,7 +192,7 @@ cp .env.prod.example .env.prod
 vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
+# PostgreSQL y Redis son servicios externos administrados por ../docker-helm.dofe.ai.
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
@@ -243,7 +243,7 @@ Si necesitas categorías y artículos demo del frontend, configura `GEOFLOW_SEED
 
 ## Docker (resumen)
 
-**Desarrollo** (`docker-compose.yml`): `postgres`, `redis`, `init`, `app` (`${APP_PORT:-18080}:8080`), `queue`, `scheduler`, `reverb` (`${REVERB_EXPOSE_PORT:-18081}:8080`). Variables de `docker/entrypoint.sh`: como en [README_en.md](README_en.md).
+**Desarrollo** (`docker-compose.yml`): PostgreSQL y Redis son servicios externos administrados por `../docker-helm.dofe.ai`; Compose solo inicia `init`, `app`, `queue`, `scheduler` y `reverb`. Variables de `docker/entrypoint.sh`: como en [README_en.md](README_en.md).
 
 **Producción** (`docker-compose.prod.yml`): use `docker compose --env-file .env.prod -f docker-compose.prod.yml …` (véase el suplemento arriba y `../../docs/deployment/DEPLOYMENT.md`).
 
