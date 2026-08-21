@@ -38,6 +38,9 @@
     @endphp
     <div class="tt-shell tt-layout">
         <section class="tt-feed">
+            @if($search === '' && !$category && !$categoryMissing)
+                <h1 class="tt-feed-panel-title">{{ $siteTitle }}</h1>
+            @endif
             @if($search !== '')
                 <div class="tt-page-head">
                     <div class="tt-page-kicker">{{ __('site.search_button') }}</div>

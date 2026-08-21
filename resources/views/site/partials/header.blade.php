@@ -45,7 +45,7 @@
 
             </nav>
 
-            <button type="button" class="mobile-menu-toggle md:hidden flex items-center justify-center w-11 h-11 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-50" onclick="toggleMobileMenu()">
+            <button type="button" class="mobile-menu-toggle md:hidden flex items-center justify-center w-11 h-11 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-50" onclick="toggleMobileMenu()" aria-label="{{ __('front.nav.categories') }}">
                 <i data-lucide="menu" class="w-6 h-6"></i>
             </button>
         </div>

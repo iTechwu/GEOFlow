@@ -11,7 +11,7 @@
     @if(!empty($showFeedPanel))
         <section class="tt-panel tt-feed-panel">
             <div class="tt-page-kicker">geo.dofe Feed</div>
-            <h1 class="tt-feed-panel-title">{{ $feedTitle }}</h1>
+            <h2 class="tt-feed-panel-title">{{ $feedTitle }}</h2>
             @if($feedDescription !== '')
                 <p class="tt-feed-panel-desc">{{ $feedDescription }}</p>
             @endif

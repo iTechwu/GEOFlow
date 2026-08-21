@@ -50,6 +50,24 @@ MD);
             ->assertSee(__('site.home_latest'));
     }
 
+    public function test_default_homepage_has_a_single_site_heading(): void
+    {
+        $response = $this->get(route('site.home'));
+
+        $response
+            ->assertOk()
+            ->assertSee('<h1 class="tt-feed-panel-title">geo.dofe</h1>', false);
+        $this->assertSame(1, substr_count($response->getContent(), '<h1'));
+    }
+
+    public function test_default_public_header_names_mobile_menu_button(): void
+    {
+        $this->get(route('site.archive'))
+            ->assertOk()
+            ->assertSee('class="mobile-menu-toggle', false)
+            ->assertSee('aria-label="分类"', false);
+    }
+
     public function test_published_article_page_outputs_normalized_image_url(): void
     {
         $category = Category::query()->create([
