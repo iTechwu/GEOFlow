@@ -153,4 +153,22 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('PUSH_LATEST="${PUSH_LATEST:-0}"', $script);
         $this->assertStringNotContainsString("--username='majin72'", $script);
     }
+
+    public function test_prebuilt_release_script_enforces_stopped_and_drained_upgrade_gates(): void
+    {
+        $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/deploy-prebuilt-release.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('fail "Release images must use immutable', $script);
+        $this->assertStringContainsString('php artisan down --no-interaction', $script);
+        $this->assertStringContainsString('stop -t "$DRAIN_TIMEOUT" web queue scheduler reverb', $script);
+        $this->assertStringContainsString('GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true', $script);
+        $this->assertStringContainsString('GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false', $script);
+        $this->assertStringContainsString('run --rm --no-deps', $script);
+        $this->assertStringContainsString('up -d --no-deps app queue scheduler reverb web', $script);
+        $this->assertStringContainsString('geoflow:managed-images:readiness', $script);
+        $this->assertStringContainsString('geoflow:security-audit', $script);
+        $this->assertStringContainsString('geoflow-healthcheck.sh', $script);
+        $this->assertStringNotContainsString('down -v', $script);
+    }
 }

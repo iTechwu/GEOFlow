@@ -11,6 +11,7 @@
 | `geoflow-docker-deploy.sh` | 生产 Docker 首次空库一键部署脚本。会自检服务器、准备 `.env.prod`、连接外部 PostgreSQL/Redis、部署 Web、App、队列、调度和 Reverb，并在最后执行健康检查。 |
 | `geoflow-healthcheck.sh` | 部署后健康检查脚本。可单独检查容器状态、Laravel 健康端点和数据库连接。 |
 | `build-and-push-amd64-images.sh` | 用 CI Secret 登录镜像仓库，构建并推送带不可变版本标签的 amd64 生产镜像。 |
+| `deploy-prebuilt-release.sh` | CI 机已有数据实例的停机排空发布：拉取不可变镜像、迁移、readiness、安全审计、启动与最终验收。 |
 | `start-docker-pull-tunnel.sh` | **本机 Mac**：SSH 反向隧道，把 Clash HTTP 代理暴露给 ECS。 |
 | `pull-images-once-via-tunnel.sh` | **ECS 一次性拉镜像**：经隧道 + `skopeo`，**不重启 docker**，不影响运行中容器。 |
 | `build-once-via-tunnel.sh` | **ECS 一次性 build**：临时代理仅作用于本次 `docker compose build`，**不重启 docker**。 |
@@ -109,6 +110,17 @@ bash deploy-scripts/build-and-push-amd64-images.sh
 
 默认只推送 `VERSION` 不可变标签，便于审计和回滚。仅在明确需要兼容浮动标签时设置 `PUSH_LATEST=1`。脚本通过 `--password-stdin` 登录，不会把密码写入命令行参数。
 
+## CI 发布预构建镜像
+
+先在 CI 机的部署目录准备不入库的 `.env.prod`，其中 `GEOFLOW_APP_IMAGE` 和 `GEOFLOW_WEB_IMAGE` 必须指向同一个版本的不可变标签或 digest。然后执行：
+
+```bash
+GEOFLOW_APP_DIR=/opt/geoflow \
+bash /opt/geoflow/deploy-scripts/deploy-prebuilt-release.sh
+```
+
+该脚本只管理 GEOFlow 的 `app/web/queue/scheduler/reverb/init` 容器。它不会创建、停止或删除集中管理的 PostgreSQL、Redis、RabbitMQ 服务与卷。发布失败后应用保持维护模式，需处理失败原因后重跑；数据库迁移不能通过简单切回旧镜像自动回滚。
+
 ## 执行后自删除
 
 如果你把部署脚本下载到临时目录，部署成功后希望自动删除它：
@@ -170,6 +182,7 @@ This folder contains reference scripts for technical operators who want a faster
 | `geoflow-docker-deploy.sh` | First install on a fresh empty production database. It checks the server, prepares `.env.prod`, connects to externally managed PostgreSQL/Redis, deploys web, app, queue, scheduler and Reverb, then runs a healthcheck. |
 | `geoflow-healthcheck.sh` | Post-deployment healthcheck. It validates Docker Compose services, the Laravel health endpoint and database connectivity. |
 | `build-and-push-amd64-images.sh` | Logs in with CI secrets and publishes versioned amd64 production images. |
+| `deploy-prebuilt-release.sh` | Performs a stopped-and-drained release of immutable prebuilt images with migration, readiness, audit and smoke gates. |
 
 ## Recommended Server Profile
 
