@@ -76,7 +76,7 @@ class TaskLifecycleService
     {
         $normalized = $this->normalizeTaskInput($data, false);
 
-        $taskId = DB::transaction(function () use ($normalized): int {
+        $taskId = DB::transaction(function () use ($data, $normalized): int {
             $task = Task::query()->create([
                 'name' => $normalized['name'],
                 'title_library_id' => $normalized['title_library_id'],

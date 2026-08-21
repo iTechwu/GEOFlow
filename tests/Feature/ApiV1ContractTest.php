@@ -373,6 +373,7 @@ class ApiV1ContractTest extends TestCase
             app(JobQueueService::class),
             $monitoring,
             $realtime,
+            app(\App\Services\Sso\SsoIdentityService::class),
         );
 
         $baselineTransactionLevel = DB::transactionLevel();
