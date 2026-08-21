@@ -105,6 +105,7 @@ enter_maintenance_and_drain() {
 run_upgrade() {
   log "Running migrations with a one-time drained-upgrade confirmation."
   "${COMPOSE[@]}" run --rm --no-deps \
+    -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=false \
     -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true \
     -e GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false \
     -e AUTO_INSTALL_ONCE=false \

@@ -35,7 +35,7 @@ class DistributionQueueConfigurationTest extends TestCase
     {
         $root = dirname(__DIR__, 2);
 
-        foreach (['docker-compose.yml', 'docker-compose.prod.yml'] as $composeFile) {
+        foreach (['docker-compose.yml', 'docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
             $contents = file_get_contents($root.'/'.$composeFile);
             $this->assertIsString($contents);
             $this->assertStringContainsString(
