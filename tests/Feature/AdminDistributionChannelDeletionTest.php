@@ -77,7 +77,7 @@ class AdminDistributionChannelDeletionTest extends TestCase
         ]);
     }
 
-    public function test_final_delete_requires_password_exact_name_and_relevant_acknowledgements(): void
+    public function test_final_delete_requires_exact_name_and_relevant_acknowledgements(): void
     {
         Http::fake();
         $channel = $this->channel();
@@ -97,13 +97,11 @@ class AdminDistributionChannelDeletionTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->delete(route('admin.distribution.destroy', ['channelId' => (int) $channel->id]), [
                 'confirmation_name' => '错误名称',
-                'current_password' => 'wrong-password',
                 'impact_fingerprint' => $impact['impact_fingerprint'],
             ])
             ->assertRedirect()
             ->assertSessionHasErrors([
                 'confirmation_name',
-                'current_password',
                 'ack_credentials',
                 'ack_history',
             ]);
@@ -113,7 +111,6 @@ class AdminDistributionChannelDeletionTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->delete(route('admin.distribution.destroy', ['channelId' => (int) $channel->id]), [
                 'confirmation_name' => (string) $channel->name,
-                'current_password' => 'secret-123',
                 'impact_fingerprint' => $impact['impact_fingerprint'],
                 'ack_credentials' => '1',
                 'ack_history' => '1',
@@ -192,32 +189,6 @@ class AdminDistributionChannelDeletionTest extends TestCase
             $this->assertStringContainsString("'sending_retry_blocked' =>", $translations);
             $this->assertStringContainsString("'task_update_stale_error' =>", $translations);
         }
-    }
-
-    public function test_final_delete_password_checks_are_rate_limited(): void
-    {
-        $channel = $this->channel();
-        $admin = $this->admin('super_admin');
-        $this->actingAs($admin, 'admin')
-            ->post(route('admin.distribution.delete.prepare', ['channelId' => (int) $channel->id]));
-        $impact = app(DistributionChannelDeletionService::class)->inspect($channel->fresh());
-        $payload = [
-            'confirmation_name' => (string) $channel->name,
-            'current_password' => 'wrong-password',
-            'impact_fingerprint' => $impact['impact_fingerprint'],
-            'ack_history' => '1',
-        ];
-
-        for ($attempt = 1; $attempt <= 5; $attempt++) {
-            $this->actingAs($admin, 'admin')
-                ->delete(route('admin.distribution.destroy', ['channelId' => (int) $channel->id]), $payload)
-                ->assertRedirect();
-        }
-
-        $this->actingAs($admin, 'admin')
-            ->delete(route('admin.distribution.destroy', ['channelId' => (int) $channel->id]), $payload)
-            ->assertTooManyRequests();
-        $this->assertDatabaseHas('distribution_channels', ['id' => (int) $channel->id]);
     }
 
     private function channel(): DistributionChannel

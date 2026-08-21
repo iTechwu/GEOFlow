@@ -233,8 +233,6 @@
                     @elseif ($canRevealSecret)
                         <form method="POST" action="{{ route('admin.distribution.reveal-secret', ['channelId' => (int) $channel->id]) }}" class="mt-5 border-t border-gray-200 pt-5">
                             @csrf
-                            <label for="distribution-secret-password" class="block text-sm font-medium text-gray-700">{{ __('admin.distribution.field.admin_password') }}</label>
-                            <input id="distribution-secret-password" name="password" type="password" autocomplete="current-password" required class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @error('password')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror

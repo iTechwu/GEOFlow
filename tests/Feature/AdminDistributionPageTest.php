@@ -2335,7 +2335,7 @@ class AdminDistributionPageTest extends TestCase
         $this->assertNotSame(session('distribution_secret.secret'), $newSecret->secret_ciphertext);
     }
 
-    public function test_super_admin_can_reveal_distribution_channel_secret_with_current_password(): void
+    public function test_sso_super_admin_can_reveal_distribution_channel_secret(): void
     {
         $channel = DistributionChannel::query()->create([
             'name' => '官网主站',
@@ -2352,38 +2352,11 @@ class AdminDistributionPageTest extends TestCase
         ]);
 
         $this->actingAs($this->admin(), 'admin')
-            ->post(route('admin.distribution.reveal-secret', ['channelId' => (int) $channel->id]), [
-                'password' => 'secret-123',
-            ])
+            ->post(route('admin.distribution.reveal-secret', ['channelId' => (int) $channel->id]))
             ->assertRedirect(route('admin.distribution.show', ['channelId' => (int) $channel->id]))
             ->assertSessionHas('distribution_secret.key_id', 'gfk_reveal')
             ->assertSessionHas('distribution_secret.secret', 'gfsec_reveal_secret')
             ->assertSessionHas('distribution_secret.endpoint_url', 'https://example.com');
-    }
-
-    public function test_distribution_channel_secret_reveal_requires_current_password(): void
-    {
-        $channel = DistributionChannel::query()->create([
-            'name' => '官网主站',
-            'domain' => 'example.com',
-            'endpoint_url' => 'https://example.com',
-            'status' => 'active',
-        ]);
-        DistributionChannelSecret::query()->create([
-            'distribution_channel_id' => (int) $channel->id,
-            'key_id' => 'gfk_reveal',
-            'secret_ciphertext' => app(ApiKeyCrypto::class)->encrypt('gfsec_reveal_secret'),
-            'status' => 'active',
-            'scopes' => ['article.publish'],
-        ]);
-
-        $this->actingAs($this->admin(), 'admin')
-            ->post(route('admin.distribution.reveal-secret', ['channelId' => (int) $channel->id]), [
-                'password' => 'wrong-password',
-            ])
-            ->assertRedirect()
-            ->assertSessionHasErrors('password')
-            ->assertSessionMissing('distribution_secret');
     }
 
     public function test_distribution_channel_secret_reveal_requires_super_admin(): void
@@ -2563,7 +2536,7 @@ class AdminDistributionPageTest extends TestCase
             && $request->hasHeader('X-GEOFlow-Event', 'health.check'));
     }
 
-    public function test_super_admin_can_download_channel_target_site_package_with_current_password(): void
+    public function test_sso_super_admin_can_download_channel_target_site_package(): void
     {
         SiteSetting::query()->updateOrCreate(
             ['setting_key' => 'article_detail_text_ads'],
@@ -2698,9 +2671,7 @@ class AdminDistributionPageTest extends TestCase
         ]);
 
         $response = $this->actingAs($this->admin(), 'admin')
-            ->post(route('admin.distribution.download-package', ['channelId' => (int) $channel->id]), [
-                'package_password' => 'secret-123',
-            ]);
+            ->post(route('admin.distribution.download-package', ['channelId' => (int) $channel->id]));
 
         $response->assertOk();
         $response->assertHeader('content-type', 'application/zip');
@@ -3210,7 +3181,7 @@ class AdminDistributionPageTest extends TestCase
         unlink($zipPath);
     }
 
-    public function test_channel_target_site_package_download_requires_current_password(): void
+    public function test_channel_target_site_package_download_requires_super_admin(): void
     {
         $channel = DistributionChannel::query()->create([
             'name' => '官网主站',
@@ -3226,12 +3197,18 @@ class AdminDistributionPageTest extends TestCase
             'scopes' => ['article.publish'],
         ]);
 
-        $this->actingAs($this->admin(), 'admin')
-            ->post(route('admin.distribution.download-package', ['channelId' => (int) $channel->id]), [
-                'package_password' => 'wrong-password',
-            ])
-            ->assertRedirect()
-            ->assertSessionHasErrors('package_password');
+        $admin = Admin::query()->create([
+            'username' => 'distribution_package_operator',
+            'password' => 'secret-123',
+            'email' => 'distribution-package-operator@example.com',
+            'display_name' => 'Distribution Package Operator',
+            'role' => 'admin',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->post(route('admin.distribution.download-package', ['channelId' => (int) $channel->id]))
+            ->assertForbidden();
     }
 
     public function test_admin_can_sync_channel_site_settings_to_remote_agent(): void
