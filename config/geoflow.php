@@ -105,7 +105,7 @@ return [
     // models.dofe.ai is the production model catalog and routing gateway.
     'models_base_url' => rtrim(trim((string) env('MODELS_BASE_URL', '')), '/'),
     'models_api_key' => trim((string) env('MODELS_API_KEY', '')),
-    // models /internal/* 管理端点（catalog/pricing/billing 等）的服务间 HMAC（预留，暂未接入）。
+    // models 管理端点 host（ModelsInternalClient 访问 /internal/*，服务间 HMAC）。
     // 注意：chat/embeddings 走公共 /v1 + MODELS_API_KEY，不使用此 HMAC。
     'models_internal_base_url' => rtrim(trim((string) env('MODELS_INTERNAL_BASE_URL', '')), '/'),
     'models_internal_api_secret' => trim((string) env('INTERNAL_API_SECRET', '')),
@@ -119,6 +119,8 @@ return [
     // 可选只读令牌：仅允许 catalog / tasks.list / tasks.get，拒绝所有写工具。
     'mcp_read_token' => trim((string) env('GEOFLOW_MCP_READ_TOKEN', '')),
     'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
+    // 审计租户标识（写入 mcp_audit_logs.tenant，用于按 CI 租户隔离审计与清理）。
+    'mcp_tenant' => trim((string) env('GEOFLOW_MCP_TENANT', 'default')),
     // 临时数据保留策略（geoflow:prune-transient 每日清理）。
     'mcp_audit_retention_days' => max(1, (int) env('GEOFLOW_MCP_AUDIT_RETENTION_DAYS', 30)),
     'idempotency_retention_days' => max(1, (int) env('GEOFLOW_IDEMPOTENCY_RETENTION_DAYS', 7)),

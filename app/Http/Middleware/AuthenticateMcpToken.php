@@ -28,12 +28,13 @@ final class AuthenticateMcpToken
 
         $writeToken = trim((string) config('geoflow.mcp_token', ''));
         $readToken = trim((string) config('geoflow.mcp_read_token', ''));
+        $tenant = trim((string) config('geoflow.mcp_tenant', 'default'));
 
         $context = null;
         if ($writeToken !== '' && $provided !== '' && hash_equals($writeToken, $provided)) {
-            $context = new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $writeToken));
+            $context = new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $writeToken), $tenant);
         } elseif ($readToken !== '' && $provided !== '' && hash_equals($readToken, $provided)) {
-            $context = new McpAuthContext(McpAuthContext::SCOPE_READ, hash('sha256', $readToken));
+            $context = new McpAuthContext(McpAuthContext::SCOPE_READ, hash('sha256', $readToken), $tenant);
         }
 
         if ($context === null) {

@@ -34,6 +34,7 @@ final class McpAuditLogger
                 'outcome' => $outcome,
                 'request_id' => (string) ($request->attributes->get('request_id') ?? Str::uuid()->toString()),
                 'ip_address' => (string) ($request->ip() ?? ''),
+                'tenant' => $auth->tenant,
                 'details' => self::encodeDetails(self::summarize($arguments)),
             ]);
         } catch (Throwable) {

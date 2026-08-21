@@ -100,4 +100,30 @@ class PruneTransientDataCommandTest extends TestCase
         $this->assertDatabaseHas('api_idempotency_keys', ['id' => $newCompleted->id]);
         $this->assertDatabaseHas('api_idempotency_keys', ['id' => $newOrphaned->id]);
     }
+
+    public function test_tenant_option_scopes_audit_pruning(): void
+    {
+        // 旧审计记录（2026-06-01），分属两个租户。
+        $oldTenantA = McpAuditLog::query()->create([
+            'token_hash' => str_repeat('a', 64),
+            'scope' => 'write',
+            'tool' => 'geoflow.tasks.start',
+            'outcome' => 'success',
+            'tenant' => 'tenant-a',
+        ]);
+        $oldTenantB = McpAuditLog::query()->create([
+            'token_hash' => str_repeat('b', 64),
+            'scope' => 'write',
+            'tool' => 'geoflow.tasks.start',
+            'outcome' => 'success',
+            'tenant' => 'tenant-b',
+        ]);
+
+        Carbon::setTestNow('2026-08-21 00:00:00');
+
+        $this->artisan('geoflow:prune-transient', ['--tenant' => 'tenant-a'])->assertSuccessful();
+
+        $this->assertDatabaseMissing('mcp_audit_logs', ['id' => $oldTenantA->id]);
+        $this->assertDatabaseHas('mcp_audit_logs', ['id' => $oldTenantB->id]);
+    }
 }

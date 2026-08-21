@@ -20,6 +20,7 @@ class McpAuditLog extends Model
         'outcome',
         'request_id',
         'ip_address',
+        'tenant',
         'details',
     ];
 

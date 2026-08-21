@@ -17,9 +17,11 @@ final class McpAuthContext
     /**
      * @param  'read'|'write'  $scope
      * @param  string  $tokenHash  提供令牌的 SHA-256 指纹（绝不落原始令牌）。
+     * @param  string  $tenant  调用方租户标识（用于审计隔离，默认 'default'）。
      */
     public function __construct(
         public string $scope,
-        public string $tokenHash
+        public string $tokenHash,
+        public string $tenant = 'default'
     ) {}
 }

@@ -11,7 +11,8 @@ class PruneTransientDataCommand extends Command
 {
     protected $signature = 'geoflow:prune-transient
                             {--audit-days= : Override MCP audit retention days}
-                            {--idempotency-days= : Override idempotency retention days}';
+                            {--idempotency-days= : Override idempotency retention days}
+                            {--tenant= : Scope MCP audit pruning to a single tenant}';
 
     protected $description = 'Prune expired MCP audit logs and idempotency keys';
 
@@ -25,9 +26,12 @@ class PruneTransientDataCommand extends Command
         $auditCutoff = $now->copy()->subDays(max(1, $auditDays));
         $idempotencyCutoff = $now->copy()->subDays(max(1, $idempotencyDays));
 
-        $auditDeleted = McpAuditLog::query()
-            ->where('created_at', '<', $auditCutoff)
-            ->delete();
+        $auditQuery = McpAuditLog::query()->where('created_at', '<', $auditCutoff);
+        $tenant = trim((string) $this->option('tenant'));
+        if ($tenant !== '') {
+            $auditQuery->where('tenant', $tenant);
+        }
+        $auditDeleted = $auditQuery->delete();
 
         // 已完成幂等记录：重放窗口早已结束，可安全清理。
         $completedDeleted = ApiIdempotencyKey::query()
