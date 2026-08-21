@@ -21,7 +21,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -45,7 +45,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, app(ArticleGeoFlowService::class)),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
