@@ -309,11 +309,14 @@ class IdempotencyService
         $target = '/'.ltrim($request->getPathInfo(), '/');
         $auth = $request->attributes->get('api_auth');
         $tokenId = $auth instanceof ApiAuthContext ? ($auth->token['id'] ?? null) : null;
+        $tokenIdentity = is_numeric($tokenId)
+            ? (int) $tokenId
+            : (is_string($tokenId) && $tokenId !== '' ? $tokenId : null);
         $hash = self::requestHash([
             'request' => [
                 'method' => strtoupper($request->method()),
                 'target' => $target,
-                'token_id' => is_numeric($tokenId) ? (int) $tokenId : null,
+                'token_id' => $tokenIdentity,
             ],
             'payload' => $request->all(),
         ]);

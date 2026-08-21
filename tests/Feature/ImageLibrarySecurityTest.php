@@ -41,14 +41,18 @@ class ImageLibrarySecurityTest extends TestCase
         parent::setUp();
 
         config()->set('geoflow.managed_image_deletion_enabled', true);
-        Http::fake([
-            'https://sso.ixicai.cn/api/oauth/userinfo' => Http::response([
-                'sub' => 'image-security-sso-user',
+        Http::fake(function ($request) {
+            $authorization = implode(' ', $request->header('Authorization'));
+
+            return Http::response([
+                'sub' => str_contains($authorization, 'second-sso-token')
+                    ? 'second-image-security-user'
+                    : 'image-security-sso-user',
                 'email' => 'image-security@example.com',
                 'name' => 'Image Security User',
                 'scopes' => ['materials:read', 'materials:write'],
-            ]),
-        ]);
+            ]);
+        });
     }
 
     public function test_durable_image_coordination_schema_is_installed(): void
@@ -1404,13 +1408,17 @@ class ImageLibrarySecurityTest extends TestCase
             'image' => $this->gifUpload(),
         ])->assertCreated();
 
-        $this->withHeaders([
-            'Authorization' => 'Bearer '.$this->materialsToken(),
+        $secondResponse = $this->withHeaders([
+            'Authorization' => 'Bearer second-sso-token',
             'Accept' => 'application/json',
             'X-Idempotency-Key' => $idempotencyKey,
         ])->post("/api/v1/materials/image-libraries/{$library->id}/items", [
             'image' => $this->gifUpload(),
-        ])
+        ]);
+
+        $this->assertDatabaseHas('admins', ['sso_sub' => 'image-security-sso-user']);
+        $this->assertDatabaseHas('admins', ['sso_sub' => 'second-image-security-user']);
+        $secondResponse
             ->assertStatus(409)
             ->assertJsonPath('error.code', 'idempotency_conflict');
 
