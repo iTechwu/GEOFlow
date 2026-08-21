@@ -2,13 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Admin;
 use App\Models\McpAuditLog;
 use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\TaskLifecycleService;
-use App\Services\Sso\SsoIdentityService;
-use App\Services\Sso\SsoOidcClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Mockery;
 use Mockery\MockInterface;
 use Tests\TestCase;
@@ -280,16 +278,9 @@ class McpEndpointTest extends TestCase
     {
         $this->enableMcp('ci-secret');
 
-        $oidc = Mockery::mock(SsoOidcClient::class);
-        $identities = Mockery::mock(SsoIdentityService::class);
-        $oidc->shouldReceive('userInfoClaims')
-            ->once()
-            ->with('sso-token')
-            ->andReturn(['sub' => 'user-1', 'selected_team_id' => 'team-a']);
-        $identities->shouldReceive('synchronize')->once()->andReturn(new Admin());
-        $identities->shouldReceive('selectedTeamId')->once()->andReturn('team-a');
-        app()->instance(SsoOidcClient::class, $oidc);
-        app()->instance(SsoIdentityService::class, $identities);
+        Http::fake([
+            '*oauth/userinfo' => Http::response(['sub' => 'user-1', 'selected_team_id' => 'team-a'], 200),
+        ]);
 
         [$catalog, $tasks] = $this->mockServices();
         $tasks->shouldReceive('ensureTaskInScope')->once()->with(5, 'team-a');
@@ -305,16 +296,9 @@ class McpEndpointTest extends TestCase
     {
         $this->enableMcp('ci-secret');
 
-        $oidc = Mockery::mock(SsoOidcClient::class);
-        $identities = Mockery::mock(SsoIdentityService::class);
-        $oidc->shouldReceive('userInfoClaims')
-            ->once()
-            ->with('sso-token')
-            ->andReturn(['sub' => 'user-1']);
-        $identities->shouldReceive('synchronize')->once()->andReturn(new Admin());
-        $identities->shouldReceive('selectedTeamId')->once()->andReturnNull();
-        app()->instance(SsoOidcClient::class, $oidc);
-        app()->instance(SsoIdentityService::class, $identities);
+        Http::fake([
+            '*oauth/userinfo' => Http::response(['sub' => 'user-1'], 200),
+        ]);
 
         $this->mockServices();
 
