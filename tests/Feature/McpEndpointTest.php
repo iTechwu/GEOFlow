@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Admin;
 use App\Models\McpAuditLog;
 use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\TaskLifecycleService;
@@ -285,7 +286,7 @@ class McpEndpointTest extends TestCase
             ->once()
             ->with('sso-token')
             ->andReturn(['sub' => 'user-1', 'selected_team_id' => 'team-a']);
-        $identities->shouldReceive('synchronize')->once()->andReturnNull();
+        $identities->shouldReceive('synchronize')->once()->andReturn(new Admin());
         $identities->shouldReceive('selectedTeamId')->once()->andReturn('team-a');
         app()->instance(SsoOidcClient::class, $oidc);
         app()->instance(SsoIdentityService::class, $identities);
@@ -310,7 +311,7 @@ class McpEndpointTest extends TestCase
             ->once()
             ->with('sso-token')
             ->andReturn(['sub' => 'user-1']);
-        $identities->shouldReceive('synchronize')->once()->andReturnNull();
+        $identities->shouldReceive('synchronize')->once()->andReturn(new Admin());
         $identities->shouldReceive('selectedTeamId')->once()->andReturnNull();
         app()->instance(SsoOidcClient::class, $oidc);
         app()->instance(SsoIdentityService::class, $identities);
