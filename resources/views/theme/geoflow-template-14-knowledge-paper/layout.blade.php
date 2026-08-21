@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     @include('site.partials.seo-head')
     @stack('head')
-    <script src="{{ asset('js/tailwindcss.play-cdn.js') }}"></script>
+    @vite('resources/css/app.css')
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
     <link rel="stylesheet" href="{{ asset('themes/geoflow-template-14-knowledge-paper/theme.css') }}">

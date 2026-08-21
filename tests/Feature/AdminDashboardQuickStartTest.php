@@ -11,6 +11,24 @@ class AdminDashboardQuickStartTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_layout_uses_compiled_tailwind_assets(): void
+    {
+        $admin = Admin::query()->create([
+            'username' => 'compiled_assets_admin',
+            'password' => 'secret-123',
+            'email' => 'compiled-assets@example.com',
+            'display_name' => 'Compiled Assets Admin',
+            'role' => 'super_admin',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('build/assets/app-', false)
+            ->assertDontSee('js/tailwindcss.play-cdn.js', false);
+    }
+
     public function test_dashboard_shows_scenario_navigation_without_data_widgets(): void
     {
         $admin = Admin::query()->create([
