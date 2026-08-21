@@ -135,6 +135,7 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('fail "Required services did not become ready:', $healthcheck);
         $this->assertStringContainsString('fail "HTTP health endpoint failed:', $healthcheck);
         $this->assertStringContainsString('php artisan geoflow:models-internal-check --no-interaction', $healthcheck);
+        $this->assertStringContainsString('php artisan geoflow:models-gateway-check --no-interaction', $healthcheck);
         $this->assertStringContainsString('GEOFLOW_HEALTHCHECK_REQUIRE_MODELS_INTERNAL:-1', $healthcheck);
         $this->assertStringContainsString('"method":"initialize"', $healthcheck);
         $this->assertStringContainsString('"method":"tools/list"', $healthcheck);

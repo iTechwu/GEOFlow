@@ -90,6 +90,8 @@ bash geoflow-docker-deploy.sh
 | `GEOFLOW_DB_PASSWORD` | 必填 | 外部 PostgreSQL 密码，不由本脚本创建 |
 | `GEOFLOW_REDIS_PASSWORD` | 必填 | 外部 Redis 密码，不由本脚本创建 |
 | `MODELS_API_KEY` | 必填 | models.dofe.ai 服务密钥 |
+| `MODELS_CHAT_SMOKE_MODEL` | 必填 | 部署验收使用的 models Chat 模型 ID |
+| `MODELS_EMBEDDING_SMOKE_MODEL` | 必填 | 部署验收使用的 models Embedding 模型 ID |
 | `MODELS_INTERNAL_BASE_URL` | `https://models.dofe.ai` | models 管理面地址 |
 | `MODELS_INTERNAL_API_SECRET` | 必填 | models 管理面服务间 HMAC 密钥 |
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` 默认值 | 是否开放 `/mcp`；开启时必须同时提供 Token |
@@ -268,6 +270,8 @@ Optional variables:
 | `GEOFLOW_DB_PASSWORD` | required | External PostgreSQL password, not created by this script |
 | `GEOFLOW_REDIS_PASSWORD` | required | External Redis password, not created by this script |
 | `MODELS_API_KEY` | required | models.dofe.ai service key |
+| `MODELS_CHAT_SMOKE_MODEL` | required | models Chat model ID used by the deployment gate |
+| `MODELS_EMBEDDING_SMOKE_MODEL` | required | models Embedding model ID used by the deployment gate |
 | `MODELS_INTERNAL_BASE_URL` | `https://models.dofe.ai` | models management-plane base URL |
 | `MODELS_INTERNAL_API_SECRET` | required | models management-plane service-to-service HMAC secret |
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` default | Whether to open `/mcp`; a Token is required when enabled |

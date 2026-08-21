@@ -105,6 +105,8 @@ return [
     // models.dofe.ai is the production model catalog and routing gateway.
     'models_base_url' => rtrim(trim((string) env('MODELS_BASE_URL', '')), '/'),
     'models_api_key' => trim((string) env('MODELS_API_KEY', '')),
+    'models_chat_smoke_model' => trim((string) env('MODELS_CHAT_SMOKE_MODEL', '')),
+    'models_embedding_smoke_model' => trim((string) env('MODELS_EMBEDDING_SMOKE_MODEL', '')),
     // models 管理端点 host（ModelsInternalClient 访问 /internal/*，服务间 HMAC）。
     // 注意：chat/embeddings 走公共 /v1 + MODELS_API_KEY，不使用此 HMAC。
     'models_internal_base_url' => rtrim(trim((string) env('MODELS_INTERNAL_BASE_URL', '')), '/'),

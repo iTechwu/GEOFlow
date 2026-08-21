@@ -69,7 +69,9 @@ jobs:
           php -l app/Models/McpAuditLog.php
           php -l app/Support/ModelsInternalAuth.php
           php -l app/Services/Models/ModelsInternalClient.php
+          php -l app/Services/Models/ModelsGatewayClient.php
           php -l app/Console/Commands/ModelsInternalCheckCommand.php
+          php -l app/Console/Commands/ModelsGatewayCheckCommand.php
 
       - name: Run focused integration tests
         run: php artisan test --filter='ModelsInternalClientTest|McpEndpointTest'
@@ -177,6 +179,8 @@ jobs:
           REDIS_PASSWORD: ${{ secrets.GEOFLOW_REDIS_PASSWORD }}
           MODELS_BASE_URL: ${{ vars.MODELS_BASE_URL || 'https://models.dofe.ai/v1' }}
           MODELS_API_KEY: ${{ secrets.MODELS_API_KEY }}
+          MODELS_CHAT_SMOKE_MODEL: ${{ vars.MODELS_CHAT_SMOKE_MODEL }}
+          MODELS_EMBEDDING_SMOKE_MODEL: ${{ vars.MODELS_EMBEDDING_SMOKE_MODEL }}
           MODELS_INTERNAL_BASE_URL: ${{ vars.MODELS_INTERNAL_BASE_URL || 'https://models.dofe.ai' }}
           MODELS_INTERNAL_API_SECRET: ${{ secrets.MODELS_INTERNAL_API_SECRET }}
           MODELS_SERVICE_NAME: geoflow

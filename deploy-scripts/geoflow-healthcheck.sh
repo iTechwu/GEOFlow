@@ -118,6 +118,11 @@ check_models_internal() {
   "${COMPOSE[@]}" exec -T app php artisan geoflow:models-internal-check --no-interaction
 }
 
+check_models_gateway() {
+  log "Checking models public Chat and Embedding connectivity."
+  "${COMPOSE[@]}" exec -T app php artisan geoflow:models-gateway-check --no-interaction
+}
+
 assert_mcp_response() {
   local check="$1"
 
@@ -220,6 +225,7 @@ main() {
     fail "Laravel cannot read migration status or still has pending migrations. Run the gated migration step before releasing services."
   fi
 
+  check_models_gateway
   check_models_internal
   check_mcp
 
