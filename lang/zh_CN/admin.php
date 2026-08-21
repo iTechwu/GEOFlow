@@ -884,6 +884,8 @@ return [
             'selected' => '已选择 :count 篇文章',
             'selected_prefix' => '已选择',
             'selected_suffix' => '篇文章',
+            'select_all' => '选择全部文章',
+            'select_article' => '选择文章：:title',
             'select_action' => '选择操作',
             'update_status' => '更改发布状态',
             'update_review' => '更改审核结果',

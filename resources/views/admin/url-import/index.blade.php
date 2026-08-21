@@ -4,7 +4,7 @@
     <div class="px-4 sm:px-0 space-y-8">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div class="flex items-start gap-4">
-                <a href="{{ route('admin.materials.index') }}" class="mt-1 text-gray-400 hover:text-gray-600">
+                <a href="{{ route('admin.materials.index') }}" class="mt-1 text-gray-400 hover:text-gray-600" aria-label="{{ __('admin.common.back') }}">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </a>
                 <div>
@@ -91,15 +91,15 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.url_import.field.project_name') }}</label>
-                            <input name="project_name" value="{{ old('project_name') }}" placeholder="{{ __('admin.url_import.placeholder.project_name') }}" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <input aria-label="{{ __('admin.url_import.field.project_name') }}" name="project_name" value="{{ old('project_name') }}" placeholder="{{ __('admin.url_import.placeholder.project_name') }}" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.url_import.field.source_label') }}</label>
-                            <input name="source_label" value="{{ old('source_label') }}" placeholder="{{ __('admin.url_import.placeholder.source_label') }}" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <input aria-label="{{ __('admin.url_import.field.source_label') }}" name="source_label" value="{{ old('source_label') }}" placeholder="{{ __('admin.url_import.placeholder.source_label') }}" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.url_import.field.content_language') }}</label>
-                            <select name="content_language" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            <select aria-label="{{ __('admin.url_import.field.content_language') }}" name="content_language" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.url_import.option.auto_detect') }}</option>
                                 <option value="zh-CN">中文</option>
                                 <option value="en">English</option>
@@ -107,7 +107,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.url_import.field.author') }}</label>
-                            <select disabled class="mt-2 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
+                            <select aria-label="{{ __('admin.url_import.field.author') }}" disabled class="mt-2 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm">
                                 <option>{{ __('admin.url_import.option.not_specified') }}</option>
                             </select>
                         </div>
@@ -115,7 +115,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700">{{ __('admin.url_import.field.notes') }}</label>
-                        <textarea name="notes" rows="3" placeholder="{{ __('admin.url_import.placeholder.notes') }}" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">{{ old('notes') }}</textarea>
+                        <textarea aria-label="{{ __('admin.url_import.field.notes') }}" name="notes" rows="3" placeholder="{{ __('admin.url_import.placeholder.notes') }}" class="mt-2 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">{{ old('notes') }}</textarea>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">

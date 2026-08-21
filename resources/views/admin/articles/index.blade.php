@@ -278,7 +278,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.task') }}</label>
-                            <select name="task_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <select aria-label="{{ __('admin.articles.filters.task') }}" name="task_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_tasks') }}</option>
                                 @foreach($tasks as $task)
                                     <option value="{{ (int) $task['id'] }}" @selected($selectedTaskId === (int) $task['id'])>{{ $task['name'] }}</option>
@@ -288,7 +288,7 @@
                         @if(!$isTrashView)
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.status') }}</label>
-                            <select name="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <select aria-label="{{ __('admin.articles.filters.status') }}" name="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_status') }}</option>
                                 <option value="draft" @selected($selectedStatus === 'draft')>{{ __('admin.articles.status.draft') }}</option>
                                 <option value="published" @selected($selectedStatus === 'published')>{{ __('admin.articles.status.published') }}</option>
@@ -297,7 +297,7 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.review_status') }}</label>
-                            <select name="review_status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <select aria-label="{{ __('admin.articles.filters.review_status') }}" name="review_status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_review') }}</option>
                                 <option value="pending" @selected($selectedReviewStatus === 'pending')>{{ __('admin.articles.review.pending') }}</option>
                                 <option value="approved" @selected($selectedReviewStatus === 'approved')>{{ __('admin.articles.review.approved') }}</option>
@@ -308,7 +308,7 @@
                         @endif
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.author') }}</label>
-                            <select name="author_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <select aria-label="{{ __('admin.articles.filters.author') }}" name="author_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_authors') }}</option>
                                 @foreach($authors as $author)
                                     <option value="{{ (int) $author['id'] }}" @selected($selectedAuthorId === (int) $author['id'])>{{ $author['name'] }}</option>
@@ -317,11 +317,11 @@
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.date_from') }}</label>
-                            <input type="date" name="date_from" value="{{ $selectedDateFrom }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input aria-label="{{ __('admin.articles.filters.date_from') }}" type="date" name="date_from" value="{{ $selectedDateFrom }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.date_to') }}</label>
-                            <input type="date" name="date_to" value="{{ $selectedDateTo }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input aria-label="{{ __('admin.articles.filters.date_to') }}" type="date" name="date_to" value="{{ $selectedDateTo }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                     </div>
                     @if(!empty($distributionChannels))
@@ -369,7 +369,7 @@
                     <div class="flex items-end space-x-4">
                         <div class="flex-1">
                             <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.search') }}</label>
-                            <input type="text" name="search" value="{{ $selectedSearch }}" placeholder="{{ __('admin.articles.filters.search_placeholder') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <input aria-label="{{ __('admin.articles.filters.search') }}" type="text" name="search" value="{{ $selectedSearch }}" placeholder="{{ __('admin.articles.filters.search_placeholder') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div class="flex space-x-2">
                             <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
@@ -446,7 +446,7 @@
                                 <span id="selected-count">0</span>
                                 <span>{{ __('admin.articles.bulk.selected_suffix') }}</span>
                             </span>
-                            <select name="action" id="batch-action" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <select name="action" id="batch-action" aria-label="{{ __('admin.articles.bulk.select_action') }}" class="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
                                 <option value="">{{ __('admin.articles.bulk.select_action') }}</option>
                                 @if($isTrashView)
                                     <option value="batch_restore">{{ __('admin.articles.trash.action_restore') }}</option>
@@ -458,12 +458,12 @@
                                 @endif
                             </select>
                             @if(!$isTrashView)
-                            <select name="new_status" id="status-select" class="hidden border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <select name="new_status" id="status-select" aria-label="{{ __('admin.articles.bulk.status_to') }}" class="hidden border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
                                 <option value="draft">{{ __('admin.articles.status.draft') }}</option>
                                 <option value="published">{{ __('admin.articles.status.published') }}</option>
                                 <option value="private">{{ __('admin.articles.status.private') }}</option>
                             </select>
-                            <select name="review_status" id="review-select" class="hidden border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <select name="review_status" id="review-select" aria-label="{{ __('admin.articles.bulk.review_to') }}" class="hidden border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm">
                                 <option value="pending">{{ __('admin.articles.review.pending') }}</option>
                                 <option value="approved">{{ __('admin.articles.review.approved') }}</option>
                                 <option value="rejected">{{ __('admin.articles.review.rejected') }}</option>
@@ -485,7 +485,7 @@
                         <thead class="bg-gray-50">
                         <tr>
                             <th class="batch-checkbox hidden px-6 py-3 text-left">
-                                <input type="checkbox" id="select-all" class="rounded border-gray-300 text-blue-600 shadow-sm">
+                                <input type="checkbox" id="select-all" aria-label="{{ __('admin.articles.bulk.select_all') }}" class="rounded border-gray-300 text-blue-600 shadow-sm">
                             </th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('admin.articles.column.id') }}</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{{ __('admin.articles.column.info') }}</th>
@@ -600,7 +600,7 @@
                             @endphp
                             <tr class="hover:bg-gray-50">
                                 <td class="batch-checkbox hidden px-6 py-4">
-                                    <input type="checkbox" value="{{ (int) $article->id }}" class="article-checkbox rounded border-gray-300 text-blue-600 shadow-sm">
+                                    <input type="checkbox" value="{{ (int) $article->id }}" aria-label="{{ __('admin.articles.bulk.select_article', ['title' => $article->title]) }}" class="article-checkbox rounded border-gray-300 text-blue-600 shadow-sm">
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-mono">#{{ (int) $article->id }}</td>
                                 <td class="px-6 py-4">

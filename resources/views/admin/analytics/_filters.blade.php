@@ -49,16 +49,16 @@
         <div class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.date_from') }}</label>
-                <input type="date" name="date_from" value="{{ $filterData['date_from'] }}" data-analytics-custom-date class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <input aria-label="{{ __('admin.analytics.filters.date_from') }}" type="date" name="date_from" value="{{ $filterData['date_from'] }}" data-analytics-custom-date class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.date_to') }}</label>
-                <input type="date" name="date_to" value="{{ $filterData['date_to'] }}" data-analytics-custom-date class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <input aria-label="{{ __('admin.analytics.filters.date_to') }}" type="date" name="date_to" value="{{ $filterData['date_to'] }}" data-analytics-custom-date class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
             </div>
             @if ($canManageProtectedWorkflows)
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.channel') }}</label>
-                <select name="channel_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select aria-label="{{ __('admin.analytics.filters.channel') }}" name="channel_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <option value="">{{ __('admin.analytics.filters.all') }}</option>
                     @foreach ($filterOptions['channels'] as $channel)
                         <option value="{{ $channel->id }}" @selected((int) $filterData['channel_id'] === (int) $channel->id)>{{ $channel->name }}</option>
@@ -68,7 +68,7 @@
             @endif
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.task') }}</label>
-                <select name="task_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select aria-label="{{ __('admin.analytics.filters.task') }}" name="task_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <option value="">{{ __('admin.analytics.filters.all') }}</option>
                     @foreach ($filterOptions['tasks'] as $task)
                         <option value="{{ $task->id }}" @selected((int) $filterData['task_id'] === (int) $task->id)>{{ $task->name }}</option>
@@ -77,7 +77,7 @@
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.category') }}</label>
-                <select name="category_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select aria-label="{{ __('admin.analytics.filters.category') }}" name="category_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <option value="">{{ __('admin.analytics.filters.all') }}</option>
                     @foreach ($filterOptions['categories'] as $category)
                         <option value="{{ $category->id }}" @selected((int) $filterData['category_id'] === (int) $category->id)>{{ $category->name }}</option>
@@ -86,7 +86,7 @@
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.article') }}</label>
-                <select name="article_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select aria-label="{{ __('admin.analytics.filters.article') }}" name="article_id" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <option value="">{{ __('admin.analytics.filters.all') }}</option>
                     @foreach ($filterOptions['articles'] as $article)
                         <option value="{{ $article->id }}" @selected((int) $filterData['article_id'] === (int) $article->id)>{{ $article->title }}</option>
@@ -95,7 +95,7 @@
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.traffic_type') }}</label>
-                <select name="traffic_type" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select aria-label="{{ __('admin.analytics.filters.traffic_type') }}" name="traffic_type" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     @foreach ($trafficOptions as $option)
                         <option value="{{ $option }}" @selected($filterData['traffic_type'] === $option)>{{ __('admin.analytics.filters.'.$option) }}</option>
                     @endforeach
@@ -103,7 +103,7 @@
             </div>
             <div>
                 <label class="mb-1 block text-sm font-medium text-gray-700">{{ __('admin.analytics.filters.log_source') }}</label>
-                <select name="log_source" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select aria-label="{{ __('admin.analytics.filters.log_source') }}" name="log_source" class="block w-full rounded-md border-gray-300 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     @foreach ($logSourceOptions as $option)
                         @php
                             $sourceDisabled = in_array($option, ['server', 'channel'], true);

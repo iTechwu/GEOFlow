@@ -884,6 +884,8 @@ return [
             'selected' => ':count articles selected',
             'selected_prefix' => '',
             'selected_suffix' => ' articles selected',
+            'select_all' => 'Select all articles',
+            'select_article' => 'Select article: :title',
             'select_action' => 'Select Action',
             'update_status' => 'Change Publish Status',
             'update_review' => 'Change Review Result',

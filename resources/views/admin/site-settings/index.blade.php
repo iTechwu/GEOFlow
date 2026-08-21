@@ -131,7 +131,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_site_name') }}</label>
-                            <input type="text" name="site_name" required
+                            <input aria-label="{{ __('admin.site_settings.field_site_name') }}" type="text" name="site_name" required
                                    value="{{ $settings['site_name'] }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                    placeholder="{{ __('admin.site_settings.placeholder_site_name') }}">
@@ -139,7 +139,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_logo') }}</label>
-                            <input type="url" name="site_logo"
+                            <input aria-label="{{ __('admin.site_settings.field_logo') }}" type="url" name="site_logo"
                                    value="{{ $settings['site_logo'] }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                    placeholder="https://example.com/logo.png">
@@ -150,7 +150,7 @@
                         <label class="block text-sm font-medium text-gray-900 mb-2">{{ __('admin.site_settings.field_admin_base_path') }}</label>
                         <div class="flex rounded-md shadow-sm">
                             <span class="inline-flex items-center rounded-l-md border border-r-0 border-gray-300 bg-white px-3 text-sm text-gray-500">{{ rtrim(url('/'), '/') }}/</span>
-                            <input type="text" name="admin_base_path" required
+                            <input aria-label="{{ __('admin.site_settings.field_admin_base_path') }}" type="text" name="admin_base_path" required
                                    value="{{ $settings['admin_base_path'] }}"
                                    class="w-full min-w-0 flex-1 rounded-none rounded-r-md border border-gray-300 px-3 py-2 focus:ring-blue-500 focus:border-blue-500"
                                    placeholder="{{ __('admin.site_settings.placeholder_admin_base_path') }}">
@@ -160,14 +160,14 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_description') }}</label>
-                        <textarea name="site_description" rows="3"
+                        <textarea aria-label="{{ __('admin.site_settings.field_description') }}" name="site_description" rows="3"
                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                   placeholder="{{ __('admin.site_settings.placeholder_description') }}">{{ $settings['site_description'] }}</textarea>
                     </div>
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_subtitle') }}</label>
-                        <input type="text" name="site_subtitle"
+                        <input aria-label="{{ __('admin.site_settings.field_subtitle') }}" type="text" name="site_subtitle"
                                value="{{ $settings['site_subtitle'] }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                placeholder="{{ __('admin.site_settings.placeholder_subtitle') }}">
@@ -175,7 +175,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_keywords') }}</label>
-                        <input type="text" name="site_keywords"
+                        <input aria-label="{{ __('admin.site_settings.field_keywords') }}" type="text" name="site_keywords"
                                value="{{ $settings['site_keywords'] }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                placeholder="{{ __('admin.site_settings.placeholder_keywords') }}">
@@ -184,7 +184,7 @@
 
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_copyright') }}</label>
-                        <input type="text" name="copyright_info"
+                        <input aria-label="{{ __('admin.site_settings.field_copyright') }}" type="text" name="copyright_info"
                                value="{{ $settings['copyright_info'] }}"
                                class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                placeholder="© 2024 Site Name. All rights reserved.">
@@ -193,7 +193,7 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_featured_limit') }}</label>
-                            <input type="number" name="featured_limit" min="1"
+                            <input aria-label="{{ __('admin.site_settings.field_featured_limit') }}" type="number" name="featured_limit" min="1"
                                    value="{{ $settings['featured_limit'] }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                    placeholder="6">
@@ -201,7 +201,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_per_page') }}</label>
-                            <input type="number" name="per_page" min="1"
+                            <input aria-label="{{ __('admin.site_settings.field_per_page') }}" type="number" name="per_page" min="1"
                                    value="{{ $settings['per_page'] }}"
                                    class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                    placeholder="12">
@@ -237,21 +237,21 @@
                                     <div class="space-y-3">
                                         <div>
                                             <label class="block text-xs font-medium text-gray-600 mb-1">{{ __('admin.site_settings.field_home_carousel_image') }}</label>
-                                            <input type="text" name="home_carousel_slides[{{ $slideIndex }}][image_url]"
+                                            <input aria-label="{{ __('admin.site_settings.field_home_carousel_image') }}" type="text" name="home_carousel_slides[{{ $slideIndex }}][image_url]"
                                                    value="{{ $slide['image_url'] ?? '' }}"
                                                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                                    placeholder="{{ __('admin.site_settings.placeholder_home_carousel_image') }}">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-600 mb-1">{{ __('admin.site_settings.field_home_carousel_title') }}</label>
-                                            <input type="text" name="home_carousel_slides[{{ $slideIndex }}][title]"
+                                            <input aria-label="{{ __('admin.site_settings.field_home_carousel_title') }}" type="text" name="home_carousel_slides[{{ $slideIndex }}][title]"
                                                    value="{{ $slide['title'] ?? '' }}"
                                                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                                    placeholder="{{ __('admin.site_settings.placeholder_home_carousel_title') }}">
                                         </div>
                                         <div>
                                             <label class="block text-xs font-medium text-gray-600 mb-1">{{ __('admin.site_settings.field_home_carousel_link') }}</label>
-                                            <input type="text" name="home_carousel_slides[{{ $slideIndex }}][link_url]"
+                                            <input aria-label="{{ __('admin.site_settings.field_home_carousel_link') }}" type="text" name="home_carousel_slides[{{ $slideIndex }}][link_url]"
                                                    value="{{ $slide['link_url'] ?? '' }}"
                                                    class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500"
                                                    placeholder="{{ __('admin.site_settings.placeholder_home_carousel_link') }}">
@@ -268,7 +268,7 @@
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_seo_title_template') }}</label>
-                                <input type="text" name="seo_title_template"
+                                <input aria-label="{{ __('admin.site_settings.field_seo_title_template') }}" type="text" name="seo_title_template"
                                        value="{{ $settings['seo_title_template'] }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="{title} - {site_name}">
@@ -277,7 +277,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_seo_description_template') }}</label>
-                                <input type="text" name="seo_description_template"
+                                <input aria-label="{{ __('admin.site_settings.field_seo_description_template') }}" type="text" name="seo_description_template"
                                        value="{{ $settings['seo_description_template'] }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="{description}">
@@ -286,7 +286,7 @@
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_favicon') }}</label>
-                                <input type="url" name="site_favicon"
+                                <input aria-label="{{ __('admin.site_settings.field_favicon') }}" type="url" name="site_favicon"
                                        value="{{ $settings['site_favicon'] }}"
                                        class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                                        placeholder="https://example.com/favicon.ico">
@@ -299,7 +299,7 @@
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.field_analytics') }}</label>
-                            <textarea name="analytics_code" rows="4"
+                            <textarea aria-label="{{ __('admin.site_settings.field_analytics') }}" name="analytics_code" rows="4"
                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 font-mono text-sm disabled:bg-gray-100 disabled:cursor-not-allowed"
                                       @disabled(!($canEditAnalytics ?? false))
                                       placeholder="{{ __('admin.site_settings.placeholder_analytics') }}">{{ $settings['analytics_code'] }}</textarea>
@@ -349,7 +349,7 @@
                         <div class="grid w-full grid-cols-1 gap-3 md:grid-cols-[minmax(0,1fr)_180px_auto] xl:max-w-3xl">
                             <div>
                                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.preset_field') }}</label>
-                                <select name="homepage_preset" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select aria-label="{{ __('admin.site_settings.homepage.preset_field') }}" name="homepage_preset" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @foreach ($homepagePresets as $preset)
                                         <option value="{{ $preset }}">{{ __('admin.site_settings.homepage.preset_'.$preset) }}</option>
                                     @endforeach
@@ -357,7 +357,7 @@
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.preset_mode') }}</label>
-                                <select name="preset_mode" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select aria-label="{{ __('admin.site_settings.homepage.preset_mode') }}" name="preset_mode" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @foreach ($homepagePresetModes as $mode)
                                         <option value="{{ $mode }}">{{ __('admin.site_settings.homepage.preset_mode_'.$mode) }}</option>
                                     @endforeach
@@ -383,7 +383,7 @@
                             </div>
                             <p class="mt-3 text-sm leading-6 text-gray-600">{{ __('admin.site_settings.homepage.import_desc') }}</p>
                             <label class="mt-4 mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.import_field') }}</label>
-                            <textarea name="homepage_design_json" rows="5" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs leading-5 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.homepage.import_placeholder') }}">{{ old('homepage_design_json') }}</textarea>
+                            <textarea aria-label="{{ __('admin.site_settings.homepage.import_field') }}" name="homepage_design_json" rows="5" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs leading-5 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.homepage.import_placeholder') }}">{{ old('homepage_design_json') }}</textarea>
                             @error('homepage_design_json')
                                 <p class="mt-2 text-sm text-red-600">{{ $message }}</p>
                             @enderror
@@ -391,7 +391,7 @@
                         <div class="flex flex-col justify-end gap-3">
                             <div>
                                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.import_mode') }}</label>
-                                <select name="import_mode" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select aria-label="{{ __('admin.site_settings.homepage.import_mode') }}" name="import_mode" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @foreach ($homepagePresetModes as $mode)
                                         <option value="{{ $mode }}" @selected(old('import_mode', 'replace') === $mode)>{{ __('admin.site_settings.homepage.preset_mode_'.$mode) }}</option>
                                     @endforeach
@@ -446,16 +446,16 @@
                             @foreach (['accent_color', 'background_color', 'surface_color', 'text_color'] as $styleField)
                                 <div>
                                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.style_'.$styleField) }}</label>
-                                    <input type="text" name="homepage_style[{{ $styleField }}]" value="{{ $homepageFormStyle[$styleField] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#2563eb">
+                                    <input aria-label="{{ __('admin.site_settings.homepage.style_'.$styleField) }}" type="text" name="homepage_style[{{ $styleField }}]" value="{{ $homepageFormStyle[$styleField] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#2563eb">
                                 </div>
                             @endforeach
                             <div>
                                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.style_muted_color') }}</label>
-                                <input type="text" name="homepage_style[muted_color]" value="{{ $homepageFormStyle['muted_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#6b7280">
+                                <input aria-label="{{ __('admin.site_settings.homepage.style_muted_color') }}" type="text" name="homepage_style[muted_color]" value="{{ $homepageFormStyle['muted_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#6b7280">
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.container_width') }}</label>
-                                <select name="homepage_style[container_width]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select aria-label="{{ __('admin.site_settings.homepage.container_width') }}" name="homepage_style[container_width]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @foreach ($homepageContainerWidths as $option)
                                         <option value="{{ $option }}" @selected(($homepageFormStyle['container_width'] ?? 'default') === $option)>{{ __('admin.site_settings.homepage.container_width_'.$option) }}</option>
                                     @endforeach
@@ -463,7 +463,7 @@
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.section_spacing') }}</label>
-                                <select name="homepage_style[section_spacing]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select aria-label="{{ __('admin.site_settings.homepage.section_spacing') }}" name="homepage_style[section_spacing]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @foreach ($homepageSpacings as $option)
                                         <option value="{{ $option }}" @selected(($homepageFormStyle['section_spacing'] ?? 'normal') === $option)>{{ __('admin.site_settings.homepage.spacing_'.$option) }}</option>
                                     @endforeach
@@ -471,7 +471,7 @@
                             </div>
                             <div>
                                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.radius') }}</label>
-                                <select name="homepage_style[radius]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                <select aria-label="{{ __('admin.site_settings.homepage.radius') }}" name="homepage_style[radius]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     @foreach ($homepageRadii as $option)
                                         <option value="{{ $option }}" @selected(($homepageFormStyle['radius'] ?? 'soft') === $option)>{{ __('admin.site_settings.homepage.radius_'.$option) }}</option>
                                     @endforeach
@@ -497,7 +497,7 @@
                                 <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_type') }}</label>
-                                        <select name="homepage_modules[{{ $index }}][type]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <select aria-label="{{ __('admin.site_settings.homepage.field_type') }}" name="homepage_modules[{{ $index }}][type]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                             @foreach ($homepageModuleTypes as $type)
                                                 <option value="{{ $type }}" @selected(($module['type'] ?? 'rich_text') === $type)>{{ __('admin.site_settings.homepage.type_'.$type) }}</option>
                                             @endforeach
@@ -505,7 +505,7 @@
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_layout') }}</label>
-                                        <select name="homepage_modules[{{ $index }}][layout]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <select aria-label="{{ __('admin.site_settings.homepage.field_layout') }}" name="homepage_modules[{{ $index }}][layout]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                             @foreach ($homepageModuleLayouts as $layout)
                                                 <option value="{{ $layout }}" @selected(($module['layout'] ?? 'single') === $layout)>{{ __('admin.site_settings.homepage.layout_'.$layout) }}</option>
                                             @endforeach
@@ -513,7 +513,7 @@
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_source') }}</label>
-                                        <select name="homepage_modules[{{ $index }}][data_source]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <select aria-label="{{ __('admin.site_settings.homepage.field_source') }}" name="homepage_modules[{{ $index }}][data_source]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                             @foreach ($homepageArticleSources as $source)
                                                 <option value="{{ $source }}" @selected(($module['data_source'] ?? 'latest') === $source)>{{ __('admin.site_settings.homepage.source_'.$source) }}</option>
                                             @endforeach
@@ -522,11 +522,11 @@
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_limit') }}</label>
-                                            <input type="number" min="1" max="12" name="homepage_modules[{{ $index }}][limit]" value="{{ $module['limit'] ?? 4 }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <input aria-label="{{ __('admin.site_settings.homepage.field_limit') }}" type="number" min="1" max="12" name="homepage_modules[{{ $index }}][limit]" value="{{ $module['limit'] ?? 4 }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         </div>
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_sort') }}</label>
-                                            <input type="number" min="0" max="10000" name="homepage_modules[{{ $index }}][sort_order]" value="{{ $module['sort_order'] ?? (($index + 1) * 10) }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <input aria-label="{{ __('admin.site_settings.homepage.field_sort') }}" type="number" min="0" max="10000" name="homepage_modules[{{ $index }}][sort_order]" value="{{ $module['sort_order'] ?? (($index + 1) * 10) }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         </div>
                                     </div>
                                 </div>
@@ -536,7 +536,7 @@
                                     <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-5">
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_alignment') }}</label>
-                                            <select name="homepage_modules[{{ $index }}][alignment]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <select aria-label="{{ __('admin.site_settings.homepage.field_alignment') }}" name="homepage_modules[{{ $index }}][alignment]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                                 @foreach ($homepageAlignments as $alignment)
                                                     <option value="{{ $alignment }}" @selected(($module['alignment'] ?? 'left') === $alignment)>{{ __('admin.site_settings.homepage.alignment_'.$alignment) }}</option>
                                                 @endforeach
@@ -544,53 +544,53 @@
                                         </div>
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_accent_color') }}</label>
-                                            <input type="text" name="homepage_modules[{{ $index }}][accent_color]" value="{{ $module['accent_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#2563eb">
+                                            <input aria-label="{{ __('admin.site_settings.homepage.field_accent_color') }}" type="text" name="homepage_modules[{{ $index }}][accent_color]" value="{{ $module['accent_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#2563eb">
                                         </div>
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_surface_color') }}</label>
-                                            <input type="text" name="homepage_modules[{{ $index }}][surface_color]" value="{{ $module['surface_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#ffffff">
+                                            <input aria-label="{{ __('admin.site_settings.homepage.field_surface_color') }}" type="text" name="homepage_modules[{{ $index }}][surface_color]" value="{{ $module['surface_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#ffffff">
                                         </div>
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_text_color') }}</label>
-                                            <input type="text" name="homepage_modules[{{ $index }}][text_color]" value="{{ $module['text_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#111827">
+                                            <input aria-label="{{ __('admin.site_settings.homepage.field_text_color') }}" type="text" name="homepage_modules[{{ $index }}][text_color]" value="{{ $module['text_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#111827">
                                         </div>
                                         <div>
                                             <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_muted_color') }}</label>
-                                            <input type="text" name="homepage_modules[{{ $index }}][muted_color]" value="{{ $module['muted_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#6b7280">
+                                            <input aria-label="{{ __('admin.site_settings.homepage.field_muted_color') }}" type="text" name="homepage_modules[{{ $index }}][muted_color]" value="{{ $module['muted_color'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#6b7280">
                                         </div>
                                     </div>
                                 </details>
                                 <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_title') }}</label>
-                                        <input type="text" name="homepage_modules[{{ $index }}][title]" value="{{ $module['title'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <input aria-label="{{ __('admin.site_settings.homepage.field_title') }}" type="text" name="homepage_modules[{{ $index }}][title]" value="{{ $module['title'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_subtitle') }}</label>
-                                        <input type="text" name="homepage_modules[{{ $index }}][subtitle]" value="{{ $module['subtitle'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <input aria-label="{{ __('admin.site_settings.homepage.field_subtitle') }}" type="text" name="homepage_modules[{{ $index }}][subtitle]" value="{{ $module['subtitle'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     </div>
                                 </div>
                                 <div class="mt-4">
                                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_body') }}</label>
-                                    <textarea name="homepage_modules[{{ $index }}][body]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.homepage.placeholder_body') }}">{{ $module['body'] ?? '' }}</textarea>
+                                    <textarea aria-label="{{ __('admin.site_settings.homepage.field_body') }}" name="homepage_modules[{{ $index }}][body]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.homepage.placeholder_body') }}">{{ $module['body'] ?? '' }}</textarea>
                                 </div>
                                 <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_image_url') }}</label>
-                                        <input type="text" name="homepage_modules[{{ $index }}][image_url]" value="{{ $module['image_url'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/storage/hero.jpg">
+                                        <input aria-label="{{ __('admin.site_settings.homepage.field_image_url') }}" type="text" name="homepage_modules[{{ $index }}][image_url]" value="{{ $module['image_url'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/storage/hero.jpg">
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_link_text') }}</label>
-                                        <input type="text" name="homepage_modules[{{ $index }}][link_text]" value="{{ $module['link_text'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <input aria-label="{{ __('admin.site_settings.homepage.field_link_text') }}" type="text" name="homepage_modules[{{ $index }}][link_text]" value="{{ $module['link_text'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_link_url') }}</label>
-                                        <input type="text" name="homepage_modules[{{ $index }}][link_url]" value="{{ $module['link_url'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/category/demo">
+                                        <input aria-label="{{ __('admin.site_settings.homepage.field_link_url') }}" type="text" name="homepage_modules[{{ $index }}][link_url]" value="{{ $module['link_url'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/category/demo">
                                     </div>
                                 </div>
                                 <div class="mt-4">
                                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_lead_form') }}</label>
-                                    <select name="homepage_modules[{{ $index }}][lead_form_slug]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                    <select aria-label="{{ __('admin.site_settings.homepage.field_lead_form') }}" name="homepage_modules[{{ $index }}][lead_form_slug]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                         <option value="">{{ __('admin.site_settings.homepage.lead_form_none') }}</option>
                                         @foreach ($leadForms as $leadForm)
                                             <option value="{{ $leadForm->slug }}" @selected(($module['lead_form_slug'] ?? '') === $leadForm->slug)>{{ $leadForm->name }} (/forms/{{ $leadForm->slug }})</option>
@@ -600,7 +600,7 @@
                                 </div>
                                 <div class="mt-4">
                                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_custom_html') }}</label>
-                                    <textarea name="homepage_modules[{{ $index }}][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>HTML snippet</p>">{{ $module['custom_html'] ?? '' }}</textarea>
+                                    <textarea aria-label="{{ __('admin.site_settings.homepage.field_custom_html') }}" name="homepage_modules[{{ $index }}][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>HTML snippet</p>">{{ $module['custom_html'] ?? '' }}</textarea>
                                 </div>
                                 <label class="mt-4 flex items-center gap-2 text-sm font-medium text-gray-700">
                                     <input type="checkbox" name="homepage_modules[{{ $index }}][enabled]" value="1" @checked(!empty($module['enabled'])) class="rounded border-gray-300 text-blue-600">
@@ -769,32 +769,32 @@
                                 <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_name') }}</label>
-                                        <input type="text" name="ads[{{ $index }}][name]" value="{{ $ad['name'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_name') }}">
+                                        <input aria-label="{{ __('admin.site_settings.ads.field_name') }}" type="text" name="ads[{{ $index }}][name]" value="{{ $ad['name'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_name') }}">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_badge') }}</label>
-                                        <input type="text" name="ads[{{ $index }}][badge]" value="{{ $ad['badge'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_badge') }}">
+                                        <input aria-label="{{ __('admin.site_settings.ads.field_badge') }}" type="text" name="ads[{{ $index }}][badge]" value="{{ $ad['badge'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_badge') }}">
                                     </div>
                                 </div>
 
                                 <div class="mt-5">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_title') }}</label>
-                                    <input type="text" name="ads[{{ $index }}][title]" value="{{ $ad['title'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_title') }}">
+                                    <input aria-label="{{ __('admin.site_settings.ads.field_title') }}" type="text" name="ads[{{ $index }}][title]" value="{{ $ad['title'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_title') }}">
                                 </div>
 
                                 <div class="mt-5">
                                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_copy') }}</label>
-                                    <textarea name="ads[{{ $index }}][copy]" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_copy') }}">{{ $ad['copy'] }}</textarea>
+                                    <textarea aria-label="{{ __('admin.site_settings.ads.field_copy') }}" name="ads[{{ $index }}][copy]" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_copy') }}">{{ $ad['copy'] }}</textarea>
                                 </div>
 
                                 <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_button_text') }}</label>
-                                        <input type="text" name="ads[{{ $index }}][button_text]" value="{{ $ad['button_text'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_text') }}">
+                                        <input aria-label="{{ __('admin.site_settings.ads.field_button_text') }}" type="text" name="ads[{{ $index }}][button_text]" value="{{ $ad['button_text'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_text') }}">
                                     </div>
                                     <div>
                                         <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_button_url') }}</label>
-                                        <input type="text" name="ads[{{ $index }}][button_url]" value="{{ $ad['button_url'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_url') }}">
+                                        <input aria-label="{{ __('admin.site_settings.ads.field_button_url') }}" type="text" name="ads[{{ $index }}][button_url]" value="{{ $ad['button_url'] }}" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_url') }}">
                                     </div>
                                 </div>
 
@@ -861,18 +861,18 @@
                                 <div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-4">
                                     <div class="lg:col-span-2">
                                         <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_name') }}</label>
-                                        <input type="text" name="text_ad_modules[{{ $index }}][name]" value="{{ $textAd['name'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_name') }}">
+                                        <input aria-label="{{ __('admin.site_settings.ads.text_field_name') }}" type="text" name="text_ad_modules[{{ $index }}][name]" value="{{ $textAd['name'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_name') }}">
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_position') }}</label>
-                                        <select name="text_ad_modules[{{ $index }}][placement]" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <select aria-label="{{ __('admin.site_settings.ads.text_field_position') }}" name="text_ad_modules[{{ $index }}][placement]" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                             <option value="content_top" @selected(($textAd['placement'] ?? 'content_top') === 'content_top')>{{ __('admin.site_settings.ads.text_position_top') }}</option>
                                             <option value="content_bottom" @selected(($textAd['placement'] ?? 'content_top') === 'content_bottom')>{{ __('admin.site_settings.ads.text_position_bottom') }}</option>
                                         </select>
                                     </div>
                                     <div>
                                         <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_sort') }}</label>
-                                        <input type="number" min="0" max="10000" name="text_ad_modules[{{ $index }}][sort_order]" value="{{ $textAd['sort_order'] ?? (($index + 1) * 10) }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <input aria-label="{{ __('admin.site_settings.ads.text_field_sort') }}" type="number" min="0" max="10000" name="text_ad_modules[{{ $index }}][sort_order]" value="{{ $textAd['sort_order'] ?? (($index + 1) * 10) }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                     </div>
                                 </div>
 
@@ -907,11 +907,11 @@
                                                 <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
                                                     <div class="lg:col-span-2">
                                                         <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_text') }}</label>
-                                                        <input type="text" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][text]" value="{{ $link['text'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_text') }}">
+                                                        <input aria-label="{{ __('admin.site_settings.ads.text_field_text') }}" type="text" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][text]" value="{{ $link['text'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_text') }}">
                                                     </div>
                                                     <div class="lg:col-span-2">
                                                         <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_url') }}</label>
-                                                        <input type="text" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][url]" value="{{ $link['url'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_url') }}">
+                                                        <input aria-label="{{ __('admin.site_settings.ads.text_field_url') }}" type="text" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][url]" value="{{ $link['url'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_url') }}">
                                                     </div>
                                                 </div>
                                                 <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
@@ -924,11 +924,11 @@
                                                     </div>
                                                     <div class="lg:col-span-2">
                                                         <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_tracking') }}</label>
-                                                        <input type="text" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][tracking_param]" value="{{ $link['tracking_param'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="utm_source=geoflow&utm_medium=article_text_ad">
+                                                        <input aria-label="{{ __('admin.site_settings.ads.text_field_tracking') }}" type="text" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][tracking_param]" value="{{ $link['tracking_param'] ?? '' }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="utm_source=geoflow&utm_medium=article_text_ad">
                                                     </div>
                                                     <div>
                                                         <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_sort') }}</label>
-                                                        <input type="number" min="0" max="10000" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][sort_order]" value="{{ $link['sort_order'] ?? (($linkIndex + 1) * 10) }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                                        <input aria-label="{{ __('admin.site_settings.ads.text_field_sort') }}" type="number" min="0" max="10000" name="text_ad_modules[{{ $index }}][links][{{ $linkIndex }}][sort_order]" value="{{ $link['sort_order'] ?? (($linkIndex + 1) * 10) }}" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                                                     </div>
                                                 </div>
                                                 <div class="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
@@ -1010,7 +1010,7 @@
             <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_type') }}</label>
-                    <select name="homepage_modules[__INDEX__][type]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select aria-label="{{ __('admin.site_settings.homepage.field_type') }}" name="homepage_modules[__INDEX__][type]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @foreach ($homepageModuleTypes as $type)
                             <option value="{{ $type }}" @selected($type === 'rich_text')>{{ __('admin.site_settings.homepage.type_'.$type) }}</option>
                         @endforeach
@@ -1018,7 +1018,7 @@
                 </div>
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_layout') }}</label>
-                    <select name="homepage_modules[__INDEX__][layout]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select aria-label="{{ __('admin.site_settings.homepage.field_layout') }}" name="homepage_modules[__INDEX__][layout]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @foreach ($homepageModuleLayouts as $layout)
                             <option value="{{ $layout }}" @selected($layout === 'single')>{{ __('admin.site_settings.homepage.layout_'.$layout) }}</option>
                         @endforeach
@@ -1026,7 +1026,7 @@
                 </div>
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_source') }}</label>
-                    <select name="homepage_modules[__INDEX__][data_source]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select aria-label="{{ __('admin.site_settings.homepage.field_source') }}" name="homepage_modules[__INDEX__][data_source]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         @foreach ($homepageArticleSources as $source)
                             <option value="{{ $source }}" @selected($source === 'latest')>{{ __('admin.site_settings.homepage.source_'.$source) }}</option>
                         @endforeach
@@ -1035,11 +1035,11 @@
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_limit') }}</label>
-                        <input type="number" min="1" max="12" name="homepage_modules[__INDEX__][limit]" value="4" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input aria-label="{{ __('admin.site_settings.homepage.field_limit') }}" type="number" min="1" max="12" name="homepage_modules[__INDEX__][limit]" value="4" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                     <div>
                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_sort') }}</label>
-                        <input type="number" min="0" max="10000" name="homepage_modules[__INDEX__][sort_order]" value="__SORT__" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <input aria-label="{{ __('admin.site_settings.homepage.field_sort') }}" type="number" min="0" max="10000" name="homepage_modules[__INDEX__][sort_order]" value="__SORT__" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     </div>
                 </div>
             </div>
@@ -1049,7 +1049,7 @@
                 <div class="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-5">
                     <div>
                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_alignment') }}</label>
-                        <select name="homepage_modules[__INDEX__][alignment]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                        <select aria-label="{{ __('admin.site_settings.homepage.field_alignment') }}" name="homepage_modules[__INDEX__][alignment]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                             @foreach ($homepageAlignments as $alignment)
                                 <option value="{{ $alignment }}" @selected($alignment === 'left')>{{ __('admin.site_settings.homepage.alignment_'.$alignment) }}</option>
                             @endforeach
@@ -1057,53 +1057,53 @@
                     </div>
                     <div>
                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_accent_color') }}</label>
-                        <input type="text" name="homepage_modules[__INDEX__][accent_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#2563eb">
+                        <input aria-label="{{ __('admin.site_settings.homepage.field_accent_color') }}" type="text" name="homepage_modules[__INDEX__][accent_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#2563eb">
                     </div>
                     <div>
                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_surface_color') }}</label>
-                        <input type="text" name="homepage_modules[__INDEX__][surface_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#ffffff">
+                        <input aria-label="{{ __('admin.site_settings.homepage.field_surface_color') }}" type="text" name="homepage_modules[__INDEX__][surface_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#ffffff">
                     </div>
                     <div>
                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_text_color') }}</label>
-                        <input type="text" name="homepage_modules[__INDEX__][text_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#111827">
+                        <input aria-label="{{ __('admin.site_settings.homepage.field_text_color') }}" type="text" name="homepage_modules[__INDEX__][text_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#111827">
                     </div>
                     <div>
                         <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_muted_color') }}</label>
-                        <input type="text" name="homepage_modules[__INDEX__][muted_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#6b7280">
+                        <input aria-label="{{ __('admin.site_settings.homepage.field_muted_color') }}" type="text" name="homepage_modules[__INDEX__][muted_color]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="#6b7280">
                     </div>
                 </div>
             </details>
             <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_title') }}</label>
-                    <input type="text" name="homepage_modules[__INDEX__][title]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input aria-label="{{ __('admin.site_settings.homepage.field_title') }}" type="text" name="homepage_modules[__INDEX__][title]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_subtitle') }}</label>
-                    <input type="text" name="homepage_modules[__INDEX__][subtitle]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input aria-label="{{ __('admin.site_settings.homepage.field_subtitle') }}" type="text" name="homepage_modules[__INDEX__][subtitle]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
             </div>
             <div class="mt-4">
                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_body') }}</label>
-                <textarea name="homepage_modules[__INDEX__][body]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.homepage.placeholder_body') }}"></textarea>
+                <textarea aria-label="{{ __('admin.site_settings.homepage.field_body') }}" name="homepage_modules[__INDEX__][body]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.homepage.placeholder_body') }}"></textarea>
             </div>
             <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_image_url') }}</label>
-                    <input type="text" name="homepage_modules[__INDEX__][image_url]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/storage/hero.jpg">
+                    <input aria-label="{{ __('admin.site_settings.homepage.field_image_url') }}" type="text" name="homepage_modules[__INDEX__][image_url]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/storage/hero.jpg">
                 </div>
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_link_text') }}</label>
-                    <input type="text" name="homepage_modules[__INDEX__][link_text]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input aria-label="{{ __('admin.site_settings.homepage.field_link_text') }}" type="text" name="homepage_modules[__INDEX__][link_text]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 <div>
                     <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_link_url') }}</label>
-                    <input type="text" name="homepage_modules[__INDEX__][link_url]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/category/demo">
+                    <input aria-label="{{ __('admin.site_settings.homepage.field_link_url') }}" type="text" name="homepage_modules[__INDEX__][link_url]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="/category/demo">
                 </div>
             </div>
             <div class="mt-4">
                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_lead_form') }}</label>
-                <select name="homepage_modules[__INDEX__][lead_form_slug]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                <select aria-label="{{ __('admin.site_settings.homepage.field_lead_form') }}" name="homepage_modules[__INDEX__][lead_form_slug]" class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-blue-500 focus:ring-blue-500">
                     <option value="">{{ __('admin.site_settings.homepage.lead_form_none') }}</option>
                     @foreach ($leadForms as $leadForm)
                         <option value="{{ $leadForm->slug }}">{{ $leadForm->name }} (/forms/{{ $leadForm->slug }})</option>
@@ -1113,7 +1113,7 @@
             </div>
             <div class="mt-4">
                 <label class="mb-2 block text-xs font-medium text-gray-600">{{ __('admin.site_settings.homepage.field_custom_html') }}</label>
-                <textarea name="homepage_modules[__INDEX__][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>HTML snippet</p>"></textarea>
+                <textarea aria-label="{{ __('admin.site_settings.homepage.field_custom_html') }}" name="homepage_modules[__INDEX__][custom_html]" rows="3" class="w-full rounded-md border border-gray-300 px-3 py-2 font-mono text-xs shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="<p>HTML snippet</p>"></textarea>
             </div>
             <label class="mt-4 flex items-center gap-2 text-sm font-medium text-gray-700">
                 <input type="checkbox" name="homepage_modules[__INDEX__][enabled]" value="1" checked class="rounded border-gray-300 text-blue-600">
@@ -1206,32 +1206,32 @@
             <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_name') }}</label>
-                    <input type="text" name="ads[__INDEX__][name]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_name') }}">
+                    <input aria-label="{{ __('admin.site_settings.ads.field_name') }}" type="text" name="ads[__INDEX__][name]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_name') }}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_badge') }}</label>
-                    <input type="text" name="ads[__INDEX__][badge]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_badge') }}">
+                    <input aria-label="{{ __('admin.site_settings.ads.field_badge') }}" type="text" name="ads[__INDEX__][badge]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_badge') }}">
                 </div>
             </div>
 
             <div class="mt-5">
                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_title') }}</label>
-                <input type="text" name="ads[__INDEX__][title]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_title') }}">
+                <input aria-label="{{ __('admin.site_settings.ads.field_title') }}" type="text" name="ads[__INDEX__][title]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_title') }}">
             </div>
 
             <div class="mt-5">
                 <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_copy') }}</label>
-                <textarea name="ads[__INDEX__][copy]" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_copy') }}"></textarea>
+                <textarea aria-label="{{ __('admin.site_settings.ads.field_copy') }}" name="ads[__INDEX__][copy]" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_copy') }}"></textarea>
             </div>
 
             <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_button_text') }}</label>
-                    <input type="text" name="ads[__INDEX__][button_text]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_text') }}">
+                    <input aria-label="{{ __('admin.site_settings.ads.field_button_text') }}" type="text" name="ads[__INDEX__][button_text]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_text') }}">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">{{ __('admin.site_settings.ads.field_button_url') }}</label>
-                    <input type="text" name="ads[__INDEX__][button_url]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_url') }}">
+                    <input aria-label="{{ __('admin.site_settings.ads.field_button_url') }}" type="text" name="ads[__INDEX__][button_url]" value="" class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="{{ __('admin.site_settings.ads.placeholder_button_url') }}">
                 </div>
             </div>
 
@@ -1314,11 +1314,11 @@
             <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
                 <div class="lg:col-span-2">
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_text') }}</label>
-                    <input type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][text]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_text') }}">
+                    <input aria-label="{{ __('admin.site_settings.ads.text_field_text') }}" type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][text]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_text') }}">
                 </div>
                 <div class="lg:col-span-2">
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_url') }}</label>
-                    <input type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][url]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_url') }}">
+                    <input aria-label="{{ __('admin.site_settings.ads.text_field_url') }}" type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][url]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_url') }}">
                 </div>
             </div>
             <div class="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-4">
@@ -1326,16 +1326,16 @@
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_color') }}</label>
                     <div class="flex overflow-hidden rounded-md border border-gray-300 bg-white shadow-sm focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500">
                         <input type="color" value="#2563eb" class="h-10 w-12 border-0 bg-white p-1" aria-label="{{ __('admin.site_settings.ads.text_field_color') }}">
-                        <input type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][text_color]" value="#2563eb" class="min-w-0 flex-1 border-0 px-3 py-2 focus:ring-0" placeholder="#2563eb">
+                        <input aria-label="{{ __('admin.site_settings.ads.text_field_color') }}" type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][text_color]" value="#2563eb" class="min-w-0 flex-1 border-0 px-3 py-2 focus:ring-0" placeholder="#2563eb">
                     </div>
                 </div>
                 <div class="lg:col-span-2">
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_tracking') }}</label>
-                    <input type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][tracking_param]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="utm_source=geoflow&utm_medium=article_text_ad">
+                    <input aria-label="{{ __('admin.site_settings.ads.text_field_tracking') }}" type="text" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][tracking_param]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="utm_source=geoflow&utm_medium=article_text_ad">
                 </div>
                 <div>
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_sort') }}</label>
-                    <input type="number" min="0" max="10000" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][sort_order]" value="__LINK_SORT__" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input aria-label="{{ __('admin.site_settings.ads.text_field_sort') }}" type="number" min="0" max="10000" name="text_ad_modules[__INDEX__][links][__LINK_INDEX__][sort_order]" value="__LINK_SORT__" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
             </div>
             <div class="mt-4 grid grid-cols-3 gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
@@ -1376,18 +1376,18 @@
             <div class="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-4">
                 <div class="lg:col-span-2">
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_name') }}</label>
-                    <input type="text" name="text_ad_modules[__INDEX__][name]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_name') }}">
+                    <input aria-label="{{ __('admin.site_settings.ads.text_field_name') }}" type="text" name="text_ad_modules[__INDEX__][name]" value="" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500" placeholder="{{ __('admin.site_settings.ads.text_placeholder_name') }}">
                 </div>
                 <div>
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_position') }}</label>
-                    <select name="text_ad_modules[__INDEX__][placement]" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <select aria-label="{{ __('admin.site_settings.ads.text_field_position') }}" name="text_ad_modules[__INDEX__][placement]" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                         <option value="content_top">{{ __('admin.site_settings.ads.text_position_top') }}</option>
                         <option value="content_bottom">{{ __('admin.site_settings.ads.text_position_bottom') }}</option>
                     </select>
                 </div>
                 <div>
                     <label class="mb-2 block text-sm font-medium text-gray-700">{{ __('admin.site_settings.ads.text_field_sort') }}</label>
-                    <input type="number" min="0" max="10000" name="text_ad_modules[__INDEX__][sort_order]" value="__SORT__" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <input aria-label="{{ __('admin.site_settings.ads.text_field_sort') }}" type="number" min="0" max="10000" name="text_ad_modules[__INDEX__][sort_order]" value="__SORT__" class="w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500">
                 </div>
             </div>
 
@@ -1396,7 +1396,7 @@
                     <div class="text-sm font-medium text-gray-900">{{ __('admin.site_settings.ads.text_enabled') }}</div>
                     <div class="text-xs text-gray-500">{{ __('admin.site_settings.ads.text_module_enabled_help') }}</div>
                 </div>
-                <input type="checkbox" name="text_ad_modules[__INDEX__][enabled]" value="1" checked class="rounded border-gray-300 text-blue-600">
+                <input type="checkbox" name="text_ad_modules[__INDEX__][enabled]" value="1" checked aria-label="{{ __('admin.site_settings.ads.text_enabled') }}" class="rounded border-gray-300 text-blue-600">
             </div>
 
             <div class="mt-5 rounded-2xl border border-gray-200 bg-gray-50/70 p-4">

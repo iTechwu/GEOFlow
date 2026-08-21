@@ -4,7 +4,7 @@
     <div class="px-4 sm:px-0">
         <div class="flex items-center justify-between mb-8">
             <div class="flex items-center space-x-4">
-                <a href="{{ route('admin.ai.configurator') }}" class="text-gray-400 hover:text-gray-600">
+                <a href="{{ route('admin.ai.configurator') }}" class="text-gray-400 hover:text-gray-600" aria-label="{{ __('admin.common.back') }}">
                     <i data-lucide="arrow-left" class="w-5 h-5"></i>
                 </a>
                 <div>
@@ -205,12 +205,12 @@
         </div>
     </div>
 
-    <div id="modelModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+    <div id="modelModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
         <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-medium text-gray-900" id="modalTitle">{{ __('admin.ai_models.modal_create') }}</h3>
-                    <button type="button" onclick="closeModelModal()" class="text-gray-400 hover:text-gray-600">
+                    <button type="button" onclick="closeModelModal()" class="text-gray-400 hover:text-gray-600" aria-label="{{ __('admin.common.close') }}">
                         <i data-lucide="x" class="w-6 h-6"></i>
                     </button>
                 </div>
