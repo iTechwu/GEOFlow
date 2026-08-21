@@ -79,9 +79,9 @@ final class McpController extends Controller
         $name = (string) ($params['name'] ?? '');
         $arguments = is_array($params['arguments'] ?? null) ? $params['arguments'] : [];
         $data = match ($name) {
-            'geoflow.catalog' => $catalog->getCatalog(),
-            'geoflow.tasks.list' => $tasks->listTasks((int) ($arguments['page'] ?? 1), (int) ($arguments['per_page'] ?? 20), array_filter(['status' => $arguments['status'] ?? null, 'search' => $arguments['search'] ?? null], static fn ($value) => $value !== null && $value !== '')),
-            'geoflow.tasks.get' => $tasks->getTask($this->taskId($arguments)),
+            'geoflow.catalog' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $catalog->getCatalog()),
+            'geoflow.tasks.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTasks((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), array_filter(['status' => $args['status'] ?? null, 'search' => $args['search'] ?? null], static fn ($value) => $value !== null && $value !== ''))),
+            'geoflow.tasks.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getTask($this->taskId($args))),
             'geoflow.tasks.start' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->startTask($this->taskId($args), (bool) ($args['enqueue_now'] ?? false))),
             'geoflow.tasks.stop' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->stopTask($this->taskId($args))),
             'geoflow.tasks.enqueue' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->enqueueTask($this->taskId($args), (string) ($args['job_type'] ?? 'generate_article'), is_array($args['payload'] ?? null) ? $args['payload'] : [])),
@@ -113,11 +113,33 @@ final class McpController extends Controller
                 ? McpIdempotencyService::execute($idempotencyKey, $tool, $stripped, fn (): array => $operation($stripped))
                 : $operation($stripped);
 
-            McpAuditLogger::logWrite($request, $auth, $tool, $arguments, 'success');
+            McpAuditLogger::log($request, $auth, $tool, $arguments, 'success');
 
             return $data;
         } catch (Throwable $exception) {
-            McpAuditLogger::logWrite($request, $auth, $tool, $arguments, 'error');
+            McpAuditLogger::log($request, $auth, $tool, $arguments, 'error');
+
+            throw $exception;
+        }
+    }
+
+    /**
+     * 读工具统一入口：记录审计日志（成功/失败）。
+     *
+     * @param  Closure(array<string,mixed>): array<string,mixed>  $operation
+     * @return array<string,mixed>
+     */
+    private function runReadTool(Request $request, string $tool, array $arguments, Closure $operation): array
+    {
+        $auth = $this->mcpAuth($request);
+
+        try {
+            $data = $operation($arguments);
+            McpAuditLogger::log($request, $auth, $tool, $arguments, 'success');
+
+            return $data;
+        } catch (Throwable $exception) {
+            McpAuditLogger::log($request, $auth, $tool, $arguments, 'error');
 
             throw $exception;
         }

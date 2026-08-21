@@ -47,7 +47,7 @@ MCP 是部署级无状态令牌，不绑定 SSO 管理员，因此**不按 `sso_
 
 ### 审计
 
-写工具每次调用写入 `mcp_audit_logs`：令牌 SHA-256 指纹、作用域、工具名、目标 `task_id`、
+读 + 写工具每次调用都写入 `mcp_audit_logs`：令牌 SHA-256 指纹、作用域、工具名、目标 `task_id`、
 幂等键、结果（success/error）、请求 IP，以及 `task_id`/`enqueue_now`/`job_type` 白名单字段与
 参数整体 SHA-256 哈希。不落原始 Bearer Token，也不落 `payload`/Prompt/正文原文。
 

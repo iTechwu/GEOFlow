@@ -255,4 +255,21 @@ class McpEndpointTest extends TestCase
         $this->assertStringNotContainsString('TOP-SECRET-PROMPT', $details);
         $this->assertStringNotContainsString('prompt', $details);
     }
+
+    public function test_read_tool_records_audit_log(): void
+    {
+        $this->enableMcp();
+        [$catalog] = $this->mockServices();
+        $catalog->shouldReceive('getCatalog')->once()->andReturn(['models' => []]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.catalog', []))
+            ->assertOk();
+
+        $this->assertDatabaseHas('mcp_audit_logs', [
+            'tool' => 'geoflow.catalog',
+            'scope' => 'write',
+            'outcome' => 'success',
+        ]);
+    }
 }

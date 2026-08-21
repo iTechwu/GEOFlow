@@ -9,7 +9,7 @@ use Illuminate\Support\Str;
 use Throwable;
 
 /**
- * MCP 写工具审计日志记录器。
+ * MCP 工具审计日志记录器（读 + 写工具）。
  *
  * 与 {@see AdminActivityLogger} 分离：MCP 是无状态部署令牌，不绑定任何 SSO 管理员，
  * 因此只记录令牌指纹、作用域、工具、目标与脱敏后的参数，不记录管理员归属。
@@ -19,15 +19,17 @@ use Throwable;
  */
 final class McpAuditLogger
 {
-    public static function logWrite(Request $request, McpAuthContext $auth, string $tool, array $arguments, string $outcome): void
+    public static function log(Request $request, McpAuthContext $auth, string $tool, array $arguments, string $outcome): void
     {
         try {
+            $targetId = is_numeric($arguments['task_id'] ?? null) ? (int) $arguments['task_id'] : null;
+
             McpAuditLog::query()->create([
                 'token_hash' => $auth->tokenHash,
                 'scope' => $auth->scope,
                 'tool' => $tool,
-                'target_type' => str_starts_with($tool, 'geoflow.tasks.') ? 'task' : '',
-                'target_id' => is_numeric($arguments['task_id'] ?? null) ? (int) $arguments['task_id'] : null,
+                'target_type' => $targetId !== null ? 'task' : '',
+                'target_id' => $targetId,
                 'idempotency_key' => is_string($arguments['idempotency_key'] ?? null) && ($arguments['idempotency_key'] ?? '') !== '' ? (string) $arguments['idempotency_key'] : null,
                 'outcome' => $outcome,
                 'request_id' => (string) ($request->attributes->get('request_id') ?? Str::uuid()->toString()),
