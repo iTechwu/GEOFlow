@@ -11,8 +11,8 @@ use Throwable;
 /**
  * MCP 工具审计日志记录器（读 + 写工具）。
  *
- * 与 {@see AdminActivityLogger} 分离：MCP 是无状态部署令牌，不绑定任何 SSO 管理员，
- * 因此只记录令牌指纹、作用域、工具、目标与脱敏后的参数，不记录管理员归属。
+ * 与 {@see AdminActivityLogger} 分离：MCP 记录令牌指纹、作用域、工具、目标与脱敏后的参数；
+ * 通过 tenant 列区分系统令牌（NULL，跨租户）与 SSO 令牌（selected_team_id，按租户隔离）。
  *
  * 敏感面控制：details 只保存白名单标量（task_id / enqueue_now / job_type）与参数整体
  * SHA-256 哈希，绝不落 payload / Prompt / 正文原文，避免审计表扩大密钥与业务内容暴露面。
@@ -34,7 +34,7 @@ final class McpAuditLogger
                 'outcome' => $outcome,
                 'request_id' => (string) ($request->attributes->get('request_id') ?? Str::uuid()->toString()),
                 'ip_address' => (string) ($request->ip() ?? ''),
-                'tenant' => $auth->tenant,
+                'tenant' => $auth->tenantId,
                 'details' => self::encodeDetails(self::summarize($arguments)),
             ]);
         } catch (Throwable) {
