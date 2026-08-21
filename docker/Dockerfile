@@ -19,6 +19,7 @@ RUN apt-get update \
         curl \
         git \
         libfreetype6-dev \
+        libicu-dev \
         libjpeg62-turbo-dev \
         libonig-dev \
         libpng-dev \
@@ -30,6 +31,7 @@ RUN apt-get update \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install \
         gd \
+        intl \
         mbstring \
         pdo_pgsql \
         pdo_sqlite \
