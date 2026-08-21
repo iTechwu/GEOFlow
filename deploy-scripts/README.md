@@ -12,6 +12,7 @@
 | `geoflow-healthcheck.sh` | 部署后健康检查脚本。可单独检查容器状态、Laravel 健康端点和数据库连接。 |
 | `build-and-push-amd64-images.sh` | 用 CI Secret 登录镜像仓库，构建并推送带不可变版本标签的 amd64 生产镜像。 |
 | `deploy-prebuilt-release.sh` | CI 机已有数据实例的停机排空发布：拉取不可变镜像、迁移、readiness、安全审计、启动与最终验收。 |
+| `render-prod-env.sh` | 从模板和 CI Secret 白名单生成权限为 `0600` 的 `.env.prod`，不打印机密值。 |
 | `start-docker-pull-tunnel.sh` | **本机 Mac**：SSH 反向隧道，把 Clash HTTP 代理暴露给 ECS。 |
 | `pull-images-once-via-tunnel.sh` | **ECS 一次性拉镜像**：经隧道 + `skopeo`，**不重启 docker**，不影响运行中容器。 |
 | `build-once-via-tunnel.sh` | **ECS 一次性 build**：临时代理仅作用于本次 `docker compose build`，**不重启 docker**。 |
@@ -121,6 +122,14 @@ bash /opt/geoflow/deploy-scripts/deploy-prebuilt-release.sh
 
 该脚本只管理 GEOFlow 的 `app/web/queue/scheduler/reverb/init` 容器。它不会创建、停止或删除集中管理的 PostgreSQL、Redis、RabbitMQ 服务与卷。发布失败后应用保持维护模式，需处理失败原因后重跑；数据库迁移不能通过简单切回旧镜像自动回滚。
 
+CI 可先将生产 Secret 映射为同名环境变量，再生成配置：
+
+```bash
+bash deploy-scripts/render-prod-env.sh /opt/geoflow/.env.prod
+```
+
+生成器会拒绝缺少 APP、外部 PostgreSQL/Redis、models 公共与管理面、SSO、Reverb、镜像和外部 Docker 网络配置的发布。值必须是单行字符串，生成过程不会输出 Secret。
+
 ## 执行后自删除
 
 如果你把部署脚本下载到临时目录，部署成功后希望自动删除它：
@@ -183,6 +192,7 @@ This folder contains reference scripts for technical operators who want a faster
 | `geoflow-healthcheck.sh` | Post-deployment healthcheck. It validates Docker Compose services, the Laravel health endpoint and database connectivity. |
 | `build-and-push-amd64-images.sh` | Logs in with CI secrets and publishes versioned amd64 production images. |
 | `deploy-prebuilt-release.sh` | Performs a stopped-and-drained release of immutable prebuilt images with migration, readiness, audit and smoke gates. |
+| `render-prod-env.sh` | Renders a mode-0600 production environment file from an allowlist of CI variables without printing secrets. |
 
 ## Recommended Server Profile
 

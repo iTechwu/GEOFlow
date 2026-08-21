@@ -171,4 +171,21 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('geoflow-healthcheck.sh', $script);
         $this->assertStringNotContainsString('down -v', $script);
     }
+
+    public function test_ci_environment_renderer_requires_external_services_models_and_sso(): void
+    {
+        $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/render-prod-env.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('chmod 600 "$WORK_FILE"', $script);
+        $this->assertStringContainsString('DB_HOST DB_DATABASE DB_USERNAME DB_PASSWORD', $script);
+        $this->assertStringContainsString('REDIS_HOST REDIS_PASSWORD', $script);
+        $this->assertStringContainsString('MODELS_BASE_URL MODELS_API_KEY', $script);
+        $this->assertStringContainsString('MODELS_INTERNAL_BASE_URL MODELS_INTERNAL_API_SECRET', $script);
+        $this->assertStringContainsString('SSO_API_URL SSO_ISSUER SSO_CLIENT_ID SSO_CLIENT_SECRET SSO_REDIRECT_URI', $script);
+        $this->assertStringContainsString('GEOFLOW_APP_IMAGE GEOFLOW_WEB_IMAGE', $script);
+        $this->assertStringContainsString('WORK_FILE="$(mktemp', $script);
+        $this->assertStringContainsString('mv "$WORK_FILE" "$TARGET"', $script);
+        $this->assertStringNotContainsString('echo "$value"', $script);
+    }
 }
