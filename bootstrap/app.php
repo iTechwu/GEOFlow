@@ -11,6 +11,7 @@ use App\Http\Middleware\AdminWebLocale;
 use App\Http\Middleware\AssignApiRequestId;
 use App\Http\Middleware\AuthenticateAdminWeb;
 use App\Http\Middleware\AuthenticateApiToken;
+use App\Http\Middleware\AuthenticateMcpToken;
 use App\Http\Middleware\EnsureApiScope;
 use App\Http\Middleware\EnsureSuperAdmin;
 use App\Http\Middleware\LogAdminActivity;
@@ -40,6 +41,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'api.request_id' => AssignApiRequestId::class,
             // Authorization: Bearer，解析 Sanctum token 并注入 ApiAuthContext
             'api.auth' => AuthenticateApiToken::class,
+            'mcp.auth' => AuthenticateMcpToken::class,
             // 校验 Token scopes，如 api.scope:catalog:read
             'api.scope' => EnsureApiScope::class,
             // Blade 后台：管理员会话鉴权（失败跳转 admin.login）

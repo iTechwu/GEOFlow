@@ -102,6 +102,18 @@ return [
     'ai_base_url' => trim((string) env('GEOFLOW_AI_BASE_URL', '')),
     'ai_api_key' => trim((string) env('GEOFLOW_AI_API_KEY', '')),
 
+    // models.dofe.ai is the production model catalog and routing gateway.
+    'models_base_url' => rtrim(trim((string) env('MODELS_BASE_URL', '')), '/'),
+    'models_api_key' => trim((string) env('MODELS_API_KEY', '')),
+
+    // Streamable HTTP MCP endpoint; disabled when no explicit token is configured.
+    'mcp_enabled' => filter_var(env('GEOFLOW_MCP_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
+    // 全量（读+写）令牌；未配置 read token 时，也是唯一的访问令牌。
+    'mcp_token' => trim((string) env('GEOFLOW_MCP_TOKEN', '')),
+    // 可选只读令牌：仅允许 catalog / tasks.list / tasks.get，拒绝所有写工具。
+    'mcp_read_token' => trim((string) env('GEOFLOW_MCP_READ_TOKEN', '')),
+    'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
+
     // 本地上传根目录（绝对路径）
     'upload_path' => env('GEOFLOW_UPLOAD_PATH', public_path('assets/images')),
     // 上传资源对外访问 URL 前缀
