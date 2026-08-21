@@ -119,8 +119,6 @@ return [
     // 可选只读令牌：仅允许 catalog / tasks.list / tasks.get，拒绝所有写工具。
     'mcp_read_token' => trim((string) env('GEOFLOW_MCP_READ_TOKEN', '')),
     'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
-    // 审计租户标识（写入 mcp_audit_logs.tenant，用于按 CI 租户隔离审计与清理）。
-    'mcp_tenant' => trim((string) env('GEOFLOW_MCP_TENANT', 'default')),
     // 临时数据保留策略（geoflow:prune-transient 每日清理）。
     'mcp_audit_retention_days' => max(1, (int) env('GEOFLOW_MCP_AUDIT_RETENTION_DAYS', 30)),
     'idempotency_retention_days' => max(1, (int) env('GEOFLOW_IDEMPOTENCY_RETENTION_DAYS', 7)),
