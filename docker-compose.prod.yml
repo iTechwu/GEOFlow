@@ -10,8 +10,13 @@ x-prod-app-build-args: &prod_app_build_args
   HTTPS_PROXY: ${DOCKER_BUILD_HTTPS_PROXY:-${DOCKER_BUILD_HTTP_PROXY:-}}
   NO_PROXY: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1,::1,dofe-postgres,dofe-redis}
 
+# The production images are published for amd64; keep local arm64 runs
+# explicit so CI and developer Compose resolve the same platform.
+x-prod-platform: &prod_platform linux/amd64
+
 services:
   init:
+    platform: *prod_platform
     image: geoflow-app-prod:latest
     build:
       context: .
@@ -31,6 +36,7 @@ services:
     restart: "no"
 
   app:
+    platform: *prod_platform
     image: geoflow-app-prod:latest
     build:
       context: .
@@ -55,6 +61,7 @@ services:
     restart: unless-stopped
 
   web:
+    platform: *prod_platform
     image: geoflow-web-prod:latest
     build:
       context: .
@@ -80,6 +87,7 @@ services:
     restart: unless-stopped
 
   queue:
+    platform: *prod_platform
     image: geoflow-app-prod:latest
     build:
       context: .
@@ -100,6 +108,7 @@ services:
     restart: unless-stopped
 
   scheduler:
+    platform: *prod_platform
     image: geoflow-app-prod:latest
     build:
       context: .
@@ -120,6 +129,7 @@ services:
     restart: unless-stopped
 
   reverb:
+    platform: *prod_platform
     image: geoflow-app-prod:latest
     build:
       context: .
