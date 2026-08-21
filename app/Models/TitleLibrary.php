@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class TitleLibrary extends Model
 {
     protected $table = 'title_libraries';
+    use \App\Models\Concerns\StampsSsoTeam;
 
     protected $fillable = [
         'name',
@@ -20,6 +21,7 @@ class TitleLibrary extends Model
         'prompt_id',
         'generation_rounds',
         'is_ai_generated',
+        'sso_team_id',
     ];
 
     protected function casts(): array

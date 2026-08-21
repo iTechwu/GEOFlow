@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Author extends Model
 {
     protected $table = 'authors';
+    use \App\Models\Concerns\StampsSsoTeam;
 
     protected $fillable = [
         'name',
@@ -16,6 +17,7 @@ class Author extends Model
         'avatar',
         'website',
         'social_links',
+        'sso_team_id',
     ];
 
     public function articles(): HasMany

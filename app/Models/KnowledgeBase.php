@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class KnowledgeBase extends Model
 {
     protected $table = 'knowledge_bases';
+    use \App\Models\Concerns\StampsSsoTeam;
 
     protected $fillable = [
         'name',
@@ -27,6 +28,7 @@ class KnowledgeBase extends Model
         'effective_date',
         'risk_level',
         'review_status',
+        'sso_team_id',
     ];
 
     protected function casts(): array

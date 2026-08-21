@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class ImageLibrary extends Model
 {
     protected $table = 'image_libraries';
+    use \App\Models\Concerns\StampsSsoTeam;
 
     protected $fillable = [
         'name',
         'description',
         'image_count',
         'used_task_count',
+        'sso_team_id',
     ];
 
     protected function casts(): array

@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Category extends Model
 {
     public const UPDATED_AT = null;
+    use \App\Models\Concerns\StampsSsoTeam;
 
     protected $table = 'categories';
 
@@ -16,6 +17,7 @@ class Category extends Model
         'slug',
         'description',
         'sort_order',
+        'sso_team_id',
     ];
 
     protected function casts(): array

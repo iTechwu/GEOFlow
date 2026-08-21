@@ -8,12 +8,14 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Prompt extends Model
 {
     protected $table = 'prompts';
+    use \App\Models\Concerns\StampsSsoTeam;
 
     protected $fillable = [
         'name',
         'type',
         'content',
         'variables',
+        'sso_team_id',
     ];
 
     public function titleLibraries(): HasMany
