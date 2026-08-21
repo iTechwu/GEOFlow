@@ -175,7 +175,9 @@ final class McpController extends Controller
      */
     private function scopedTaskId(TaskLifecycleService $tasks, McpAuthContext $auth, int $taskId): int
     {
-        $tasks->ensureTaskInScope($taskId, $auth->tenantId);
+        if ($auth->tenantId !== null && $auth->tenantId !== '') {
+            $tasks->ensureTaskInScope($taskId, $auth->tenantId);
+        }
 
         return $taskId;
     }
