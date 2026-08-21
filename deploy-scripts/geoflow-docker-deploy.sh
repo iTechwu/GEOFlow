@@ -235,6 +235,17 @@ set_env_value() {
   fi
 }
 
+unset_env_value() {
+  local file="$1"
+  local key="$2"
+  local tmp
+
+  [ -f "$file" ] || return 0
+  tmp="$(mktemp)"
+  awk -F= -v k="$key" '$1 != k { print }' "$file" > "$tmp"
+  mv "$tmp" "$file"
+}
+
 get_env_value() {
   local file="$1"
   local key="$2"
@@ -315,6 +326,7 @@ prepare_env() {
   set_env_value .env.prod DB_DATABASE "${GEOFLOW_DB_DATABASE:-geo_flow}"
   set_env_value .env.prod DB_USERNAME "${GEOFLOW_DB_USERNAME:-geo_user}"
   set_env_value .env.prod DB_PASSWORD "$db_password"
+  unset_env_value .env.prod REDIS_URL
   set_env_value .env.prod REDIS_HOST "$redis_host"
   set_env_value .env.prod REDIS_PASSWORD "$redis_password"
   set_env_value .env.prod MODELS_BASE_URL "$models_base"

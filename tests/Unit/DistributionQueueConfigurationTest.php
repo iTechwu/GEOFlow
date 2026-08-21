@@ -192,4 +192,13 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('mv "$WORK_FILE" "$TARGET"', $script);
         $this->assertStringNotContainsString('echo "$value"', $script);
     }
+
+    public function test_interactive_deployment_removes_redis_url_that_overrides_external_host(): void
+    {
+        $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-docker-deploy.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('unset_env_value .env.prod REDIS_URL', $script);
+        $this->assertStringContainsString('set_env_value .env.prod REDIS_HOST "$redis_host"', $script);
+    }
 }
