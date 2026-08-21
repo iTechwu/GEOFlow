@@ -455,6 +455,12 @@ MD);
                     'link_url' => '/article/demo',
                     'enabled' => true,
                 ],
+                [
+                    'image_url' => 'https://example.com/banner-two.jpg',
+                    'title' => 'Banner Two',
+                    'link_url' => '/article/demo-two',
+                    'enabled' => true,
+                ],
             ], JSON_UNESCAPED_UNICODE)]
         );
         SiteSettingsBag::forget();
@@ -464,6 +470,9 @@ MD);
             ->assertSee('data-home-poster-carousel', false)
             ->assertSee('https://example.com/banner-one.jpg', false)
             ->assertSee('Banner One')
+            ->assertSee('<h1 class="tt-feed-panel-title">GEOFlow Demo</h1>', false)
+            ->assertSee('data-home-poster-dot aria-label="Banner One" aria-current="true"', false)
+            ->assertSee('data-home-poster-dot aria-label="Banner Two" aria-current="false"', false)
             ->assertSee('geo.dofe Feed')
             ->assertSee('GEOFlow Demo')
             ->assertSee('Demo homepage description');

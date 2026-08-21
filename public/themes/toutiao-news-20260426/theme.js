@@ -25,6 +25,7 @@
                 });
                 dots.forEach(function (dot, dotIndex) {
                     dot.classList.toggle('is-active', dotIndex === index);
+                    dot.setAttribute('aria-current', dotIndex === index ? 'true' : 'false');
                 });
             };
 
@@ -60,6 +61,7 @@
                 });
                 dots.forEach(function (dot, dotIndex) {
                     dot.classList.toggle('is-active', dotIndex === index);
+                    dot.setAttribute('aria-current', dotIndex === index ? 'true' : 'false');
                 });
             };
 

@@ -52,7 +52,7 @@
                 </div>
             @else
                 @if($homepageSlides->isNotEmpty())
-                    <section class="tt-home-poster-carousel" data-home-poster-carousel>
+                    <section class="tt-home-poster-carousel" data-home-poster-carousel aria-label="{{ $siteTitle }}">
                         @foreach($homepageSlides as $slide)
                             @php
                                 $slideTitle = trim((string) ($slide['title'] ?? ''));
@@ -76,16 +76,19 @@
                             @endif
                         @endforeach
                         @if($homepageSlides->count() > 1)
-                            <div class="tt-home-poster-dots" aria-hidden="true">
+                            <div class="tt-home-poster-dots">
                                 @foreach($homepageSlides as $slide)
-                                    <button type="button" class="{{ $loop->first ? 'is-active' : '' }}" data-home-poster-dot></button>
+                                    @php
+                                        $dotLabel = trim((string) ($slide['title'] ?? '')) ?: $siteTitle;
+                                    @endphp
+                                    <button type="button" class="{{ $loop->first ? 'is-active' : '' }}" data-home-poster-dot aria-label="{{ $dotLabel }}" aria-current="{{ $loop->first ? 'true' : 'false' }}"></button>
                                 @endforeach
                             </div>
                         @endif
                     </section>
                 @endif
                 @if($homepageHotArticles->isNotEmpty())
-                    <div class="tt-hot-carousel" data-hot-carousel>
+                    <div class="tt-hot-carousel" data-hot-carousel role="region" aria-label="{{ __('site.home_hot') }}">
                         @foreach($homepageHotArticles as $hotArticle)
                             <a href="{{ route('site.article', $hotArticle->slug) }}" class="tt-breaking {{ $loop->first ? 'is-active' : '' }}" data-hot-slide>
                                 <strong>{{ __('site.home_hot_badge') }}</strong>
@@ -93,9 +96,9 @@
                             </a>
                         @endforeach
                         @if($homepageHotArticles->count() > 1)
-                            <div class="tt-hot-dots" aria-hidden="true">
+                            <div class="tt-hot-dots">
                                 @foreach($homepageHotArticles as $hotArticle)
-                                    <button type="button" class="{{ $loop->first ? 'is-active' : '' }}" data-hot-dot></button>
+                                    <button type="button" class="{{ $loop->first ? 'is-active' : '' }}" data-hot-dot aria-label="{{ $hotArticle->title }}" aria-current="{{ $loop->first ? 'true' : 'false' }}"></button>
                                 @endforeach
                             </div>
                         @endif
