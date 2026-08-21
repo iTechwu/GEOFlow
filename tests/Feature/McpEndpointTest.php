@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\McpAuditLog;
 use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\TaskLifecycleService;
+use App\Services\Sso\SsoIdentityService;
+use App\Services\Sso\SsoOidcClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Mockery;
 use Mockery\MockInterface;
@@ -271,5 +273,53 @@ class McpEndpointTest extends TestCase
             'scope' => 'write',
             'outcome' => 'success',
         ]);
+    }
+
+    public function test_sso_token_scopes_task_tools_by_selected_team(): void
+    {
+        $this->enableMcp('ci-secret');
+
+        $oidc = Mockery::mock(SsoOidcClient::class);
+        $identities = Mockery::mock(SsoIdentityService::class);
+        $oidc->shouldReceive('userInfoClaims')
+            ->once()
+            ->with('sso-token')
+            ->andReturn(['sub' => 'user-1', 'selected_team_id' => 'team-a']);
+        $identities->shouldReceive('synchronize')->once()->andReturnNull();
+        $identities->shouldReceive('selectedTeamId')->once()->andReturn('team-a');
+        app()->instance(SsoOidcClient::class, $oidc);
+        app()->instance(SsoIdentityService::class, $identities);
+
+        [$catalog, $tasks] = $this->mockServices();
+        $tasks->shouldReceive('ensureTaskInScope')->once()->with(5, 'team-a');
+        $tasks->shouldReceive('getTask')->once()->with(5)->andReturn(['id' => 5, 'name' => 'T']);
+
+        $this->withHeader('Authorization', 'Bearer sso-token')
+            ->postJson('/mcp', $this->toolCall('geoflow.tasks.get', ['task_id' => 5]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.id', 5);
+    }
+
+    public function test_sso_token_without_team_is_rejected(): void
+    {
+        $this->enableMcp('ci-secret');
+
+        $oidc = Mockery::mock(SsoOidcClient::class);
+        $identities = Mockery::mock(SsoIdentityService::class);
+        $oidc->shouldReceive('userInfoClaims')
+            ->once()
+            ->with('sso-token')
+            ->andReturn(['sub' => 'user-1']);
+        $identities->shouldReceive('synchronize')->once()->andReturnNull();
+        $identities->shouldReceive('selectedTeamId')->once()->andReturnNull();
+        app()->instance(SsoOidcClient::class, $oidc);
+        app()->instance(SsoIdentityService::class, $identities);
+
+        $this->mockServices();
+
+        $this->withHeader('Authorization', 'Bearer sso-token')
+            ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
+            ->assertUnauthorized()
+            ->assertJsonPath('error.code', -32001);
     }
 }
