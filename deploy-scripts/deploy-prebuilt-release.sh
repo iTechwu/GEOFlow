@@ -6,6 +6,7 @@ set -Eeuo pipefail
 
 APP_DIR="${GEOFLOW_APP_DIR:-$(pwd)}"
 DRAIN_TIMEOUT="${GEOFLOW_DRAIN_TIMEOUT_SECONDS:-300}"
+RELEASE_MODE="${GEOFLOW_RELEASE_MODE:-upgrade}"
 RELEASE_STARTED="0"
 
 log() {
@@ -74,6 +75,11 @@ validate_release() {
   esac
   [ "$DRAIN_TIMEOUT" -gt 0 ] || fail "GEOFLOW_DRAIN_TIMEOUT_SECONDS must be a positive integer"
 
+  case "$RELEASE_MODE" in
+    fresh|upgrade) ;;
+    *) fail "GEOFLOW_RELEASE_MODE must be fresh or upgrade" ;;
+  esac
+
   bash "${APP_DIR}/deploy-scripts/check-compose-boundaries.sh"
   docker compose --env-file "${APP_DIR}/.env.prod" -f "${APP_DIR}/docker-compose.prebuilt.yml" config --quiet
 }
@@ -112,6 +118,22 @@ run_upgrade() {
     init php artisan about
 }
 
+run_fresh_install() {
+  local service
+
+  for service in app web queue scheduler reverb; do
+    if service_is_running "$service"; then
+      fail "Fresh install requires all GEOFlow services to be stopped: ${service} is running"
+    fi
+  done
+
+  log "Running the one-time fresh database installation."
+  "${COMPOSE[@]}" run --rm --no-deps \
+    -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
+    -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
+    init php artisan about
+}
+
 run_readiness_gates() {
   log "Checking managed-image readiness."
   "${COMPOSE[@]}" run --rm --no-deps app php artisan geoflow:managed-images:readiness --no-interaction
@@ -137,8 +159,12 @@ main() {
   "${COMPOSE[@]}" pull
 
   RELEASE_STARTED="1"
-  enter_maintenance_and_drain
-  run_upgrade
+  if [ "$RELEASE_MODE" = "fresh" ]; then
+    run_fresh_install
+  else
+    enter_maintenance_and_drain
+    run_upgrade
+  fi
   run_readiness_gates
   start_release
 

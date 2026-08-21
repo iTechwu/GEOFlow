@@ -164,6 +164,9 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('stop -t "$DRAIN_TIMEOUT" web queue scheduler reverb', $script);
         $this->assertStringContainsString('GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true', $script);
         $this->assertStringContainsString('GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false', $script);
+        $this->assertStringContainsString('GEOFLOW_RELEASE_MODE:-upgrade', $script);
+        $this->assertStringContainsString('fresh|upgrade', $script);
+        $this->assertStringContainsString('GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true', $script);
         $this->assertStringContainsString('run --rm --no-deps', $script);
         $this->assertStringContainsString('up -d --no-deps app queue scheduler reverb web', $script);
         $this->assertStringContainsString('geoflow:managed-images:readiness', $script);
