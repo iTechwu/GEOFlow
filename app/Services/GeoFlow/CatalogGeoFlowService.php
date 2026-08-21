@@ -14,10 +14,18 @@ use App\Models\TitleLibrary;
 class CatalogGeoFlowService
 {
     /**
+     * 聚合目录（models/prompts/素材库/知识库/作者/分类）。
+     *
+     * @param  string|null  $teamId  SSO selected_team_id；非空时内容实体按租户过滤，
+     *                              为空（系统/跨租户）时不过滤。模型（ai_models）始终全局共享。
      * @return array<string, mixed>
      */
-    public function getCatalog(): array
+    public function getCatalog(?string $teamId = null): array
     {
+        $scoped = static function ($q) use ($teamId) {
+            return $teamId !== null && $teamId !== '' ? $q->where('sso_team_id', $teamId) : $q;
+        };
+
         $models = AiModel::query()
             ->where('status', 'active')
             ->where(function ($q) {
@@ -36,14 +44,14 @@ class CatalogGeoFlowService
             ])
             ->all();
 
-        $prompts = Prompt::query()
+        $prompts = $scoped(Prompt::query())
             ->where('type', 'content')
             ->orderBy('name')
             ->get(['id', 'name', 'type'])
             ->map(fn (Prompt $p) => $p->getAttributes())
             ->all();
 
-        $titleLibraries = TitleLibrary::query()
+        $titleLibraries = $scoped(TitleLibrary::query())
             ->withCount(['titles as title_count'])
             ->orderBy('name')
             ->get(['id', 'name'])
@@ -54,7 +62,7 @@ class CatalogGeoFlowService
             ])
             ->all();
 
-        $keywordLibraries = KeywordLibrary::query()
+        $keywordLibraries = $scoped(KeywordLibrary::query())
             ->withCount(['keywords as keyword_count'])
             ->orderBy('name')
             ->get(['id', 'name'])
@@ -65,7 +73,7 @@ class CatalogGeoFlowService
             ])
             ->all();
 
-        $imageLibraries = ImageLibrary::query()
+        $imageLibraries = $scoped(ImageLibrary::query())
             ->withCount(['images as image_count'])
             ->orderBy('name')
             ->get(['id', 'name'])
@@ -76,19 +84,19 @@ class CatalogGeoFlowService
             ])
             ->all();
 
-        $knowledgeBases = KnowledgeBase::query()
+        $knowledgeBases = $scoped(KnowledgeBase::query())
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn (KnowledgeBase $k) => $k->getAttributes())
             ->all();
 
-        $authors = Author::query()
+        $authors = $scoped(Author::query())
             ->orderBy('name')
             ->get(['id', 'name'])
             ->map(fn (Author $a) => $a->getAttributes())
             ->all();
 
-        $categories = Category::query()
+        $categories = $scoped(Category::query())
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get(['id', 'name', 'slug'])
