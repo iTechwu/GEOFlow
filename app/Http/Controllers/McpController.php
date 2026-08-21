@@ -76,15 +76,18 @@ final class McpController extends Controller
 
     private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks): JsonResponse
     {
+        $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
         $arguments = is_array($params['arguments'] ?? null) ? $params['arguments'] : [];
+        $scoped = fn (int $taskId): int => $this->scopedTaskId($tasks, $auth, $taskId);
+
         $data = match ($name) {
             'geoflow.catalog' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $catalog->getCatalog()),
-            'geoflow.tasks.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTasks((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), array_filter(['status' => $args['status'] ?? null, 'search' => $args['search'] ?? null], static fn ($value) => $value !== null && $value !== ''))),
-            'geoflow.tasks.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getTask($this->taskId($args))),
-            'geoflow.tasks.start' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->startTask($this->taskId($args), (bool) ($args['enqueue_now'] ?? false))),
-            'geoflow.tasks.stop' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->stopTask($this->taskId($args))),
-            'geoflow.tasks.enqueue' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->enqueueTask($this->taskId($args), (string) ($args['job_type'] ?? 'generate_article'), is_array($args['payload'] ?? null) ? $args['payload'] : [])),
+            'geoflow.tasks.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTasks((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), $this->scopeFilters($auth, $args))),
+            'geoflow.tasks.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getTask($scoped($this->taskId($args)))),
+            'geoflow.tasks.start' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->startTask($scoped($this->taskId($args)), (bool) ($args['enqueue_now'] ?? false))),
+            'geoflow.tasks.stop' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->stopTask($scoped($this->taskId($args)))),
+            'geoflow.tasks.enqueue' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->enqueueTask($scoped($this->taskId($args)), (string) ($args['job_type'] ?? 'generate_article'), is_array($args['payload'] ?? null) ? $args['payload'] : [])),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -110,7 +113,7 @@ final class McpController extends Controller
 
         try {
             $data = $idempotencyKey !== ''
-                ? McpIdempotencyService::execute($idempotencyKey, $tool, $stripped, fn (): array => $operation($stripped))
+                ? McpIdempotencyService::execute($idempotencyKey, $tool, $stripped, fn (): array => $operation($stripped), $auth->tenantId)
                 : $operation($stripped);
 
             McpAuditLogger::log($request, $auth, $tool, $arguments, 'success');
@@ -163,6 +166,37 @@ final class McpController extends Controller
         }
 
         return $taskId;
+    }
+
+    /**
+     * 租户作用域守卫：系统令牌（tenantId 为空）不限制；
+     * SSO 令牌仅能访问归属其 selected_team_id 的任务，越权统一返回任务不存在。
+     */
+    private function scopedTaskId(TaskLifecycleService $tasks, McpAuthContext $auth, int $taskId): int
+    {
+        $tasks->ensureTaskInScope($taskId, $auth->tenantId);
+
+        return $taskId;
+    }
+
+    /**
+     * 任务列表过滤：在用户过滤之上，按 SSO 租户追加 sso_team_id 过滤（系统令牌不追加）。
+     *
+     * @param  array<string,mixed>  $args
+     * @return array<string,mixed>
+     */
+    private function scopeFilters(McpAuthContext $auth, array $args): array
+    {
+        $filters = array_filter([
+            'status' => $args['status'] ?? null,
+            'search' => $args['search'] ?? null,
+        ], static fn ($value) => $value !== null && $value !== '');
+
+        if ($auth->tenantId !== null && $auth->tenantId !== '') {
+            $filters['sso_team_id'] = $auth->tenantId;
+        }
+
+        return $filters;
     }
 
     private function result(mixed $id, mixed $result): JsonResponse

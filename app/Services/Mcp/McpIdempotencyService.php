@@ -26,13 +26,19 @@ final class McpIdempotencyService
     /**
      * 执行一次带幂等保护的工具调用。命中缓存时直接返回上次结果，不重复执行业务。
      *
+     * 幂等键命名空间按租户隔离（$tenantId 非空时在 route_key 追加租户指纹），
+     * 避免不同租户使用相同 idempotency_key 时互相命中或冲突。
+     *
      * @param  Closure(): array<string,mixed>  $operation
      * @return array<string,mixed>
      */
-    public static function execute(string $idempotencyKey, string $toolName, array $arguments, Closure $operation): array
+    public static function execute(string $idempotencyKey, string $toolName, array $arguments, Closure $operation, ?string $tenantId = null): array
     {
         self::assertValidKey($idempotencyKey);
         $routeKey = 'mcp:tools.call:'.$toolName;
+        if ($tenantId !== null && $tenantId !== '') {
+            $routeKey .= ':tenant:'.substr(hash('sha256', $tenantId), 0, 32);
+        }
         $requestHash = IdempotencyService::requestHash(['tool' => $toolName, 'arguments' => $arguments]);
 
         $lock = Cache::lock(self::lockName($idempotencyKey, $routeKey), self::LEASE_SECONDS);
