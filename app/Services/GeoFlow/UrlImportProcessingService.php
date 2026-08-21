@@ -538,7 +538,9 @@ final class UrlImportProcessingService
             throw new \RuntimeException(__('admin.url_import.error.ai_url_missing'));
         }
 
-        $apiKey = $this->apiKeyCrypto->decrypt((string) ($model->getRawOriginal('api_key') ?? ''));
+        $apiKey = OpenAiRuntimeProvider::hasUnifiedOverride()
+            ? OpenAiRuntimeProvider::unifiedApiKey()
+            : $this->apiKeyCrypto->decrypt((string) ($model->getRawOriginal('api_key') ?? ''));
         if ($apiKey === '') {
             throw new \RuntimeException(__('admin.url_import.error.ai_key_missing'));
         }

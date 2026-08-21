@@ -26,7 +26,7 @@ final class IxicaiRuntimeCredentials
     /** @return array{base_url:string,api_key:string} */
     public function forAdmin(Admin $admin): array
     {
-        // 统一网关覆盖启用时，直接返回统一 base + key，跳过每用户 key 查询与「无 key」抛错。
+        // models.dofe.ai is the shared gateway for CI and production workers.
         if (OpenAiRuntimeProvider::hasUnifiedOverride()) {
             return [
                 'base_url' => OpenAiRuntimeProvider::unifiedBaseUrl(),

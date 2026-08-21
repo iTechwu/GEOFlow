@@ -20,18 +20,30 @@ final class OpenAiRuntimeProvider
     }
 
     /**
-     * 统一 AI 网关 base URL（来自 GEOFLOW_AI_BASE_URL，trim 后原样使用）。
+     * 统一 AI 网关 base URL（优先来自 models.dofe.ai，兼容回退到 GEOFLOW_AI_BASE_URL）。
      */
     public static function unifiedBaseUrl(): string
     {
+        $modelsBase = trim((string) config('geoflow.models_base_url', ''));
+        $modelsKey = trim((string) config('geoflow.models_api_key', ''));
+        if ($modelsBase !== '' && $modelsKey !== '') {
+            return $modelsBase;
+        }
+
         return trim((string) config('geoflow.ai_base_url', ''));
     }
 
     /**
-     * 统一 AI 网关 API Key（来自 GEOFLOW_AI_API_KEY）。
+     * 统一 AI 网关 API Key（优先来自 MODELS_API_KEY，兼容回退到 GEOFLOW_AI_API_KEY）。
      */
     public static function unifiedApiKey(): string
     {
+        $modelsBase = trim((string) config('geoflow.models_base_url', ''));
+        $modelsKey = trim((string) config('geoflow.models_api_key', ''));
+        if ($modelsBase !== '' && $modelsKey !== '') {
+            return $modelsKey;
+        }
+
         return trim((string) config('geoflow.ai_api_key', ''));
     }
 

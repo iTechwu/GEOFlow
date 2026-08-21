@@ -529,7 +529,9 @@ class KnowledgeChunkSyncService
 
         foreach ($models as $model) {
             $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl((string) ($model->api_url ?? ''));
-            $apiKey = $this->decryptApiKey((string) ($model->getRawOriginal('api_key') ?? ''));
+            $apiKey = OpenAiRuntimeProvider::hasUnifiedOverride()
+                ? OpenAiRuntimeProvider::unifiedApiKey()
+                : $this->decryptApiKey((string) ($model->getRawOriginal('api_key') ?? ''));
             $modelId = trim((string) ($model->model_id ?? ''));
             if ($providerUrl === '' || $apiKey === '' || $modelId === '') {
                 Log::info('geoflow.knowledge_semantic_chunking_model_skipped', [
@@ -961,7 +963,9 @@ class KnowledgeChunkSyncService
     private function modelToEmbeddingMetadata(AiModel $model): ?array
     {
         $providerUrl = OpenAiRuntimeProvider::resolveEmbeddingBaseUrl((string) ($model->api_url ?? ''));
-        $apiKey = $this->decryptApiKey((string) ($model->getRawOriginal('api_key') ?? ''));
+        $apiKey = OpenAiRuntimeProvider::hasUnifiedOverride()
+            ? OpenAiRuntimeProvider::unifiedApiKey()
+            : $this->decryptApiKey((string) ($model->getRawOriginal('api_key') ?? ''));
         $modelName = trim((string) ($model->model_id ?? ''));
         if ($providerUrl === '' || $apiKey === '' || $modelName === '') {
             return null;
