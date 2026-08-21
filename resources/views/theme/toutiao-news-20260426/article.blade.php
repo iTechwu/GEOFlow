@@ -16,10 +16,6 @@
                 $schemaAtType => 'WebPage',
                 $schemaAtId => $canonicalUrl ?? route('site.article', $article->slug),
             ],
-            'author' => [
-                $schemaAtType => 'Person',
-                'name' => $article->author?->name ?? $siteTitle,
-            ],
             'publisher' => [
                 $schemaAtType => 'Organization',
                 'name' => $siteTitle,
@@ -54,9 +50,6 @@
                 <time datetime="{{ ($article->published_at ?? $article->created_at)?->toAtomString() }}">
                     {{ ($article->published_at ?? $article->created_at)?->format('Y-m-d') }}
                 </time>
-                @if($article->author)
-                    <span>{{ $article->author->name }}</span>
-                @endif
                 <span>{{ (int) $article->view_count }} views</span>
             </div>
 

@@ -16,7 +16,7 @@
     ],
     "visual_strategy": {
         "reference_site": "Substack",
-        "summary": "A newsletter-style variant with authorial warmth, simple modules, and letter-like spacing.",
+        "summary": "A newsletter-style variant with editorial warmth, simple modules, and letter-like spacing.",
         "css_focus": "Typography, color tokens, spacing density, card rhythm, navigation treatment, and article prose styling."
     },
     "edited_files": [

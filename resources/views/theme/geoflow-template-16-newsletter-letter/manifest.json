@@ -2,7 +2,7 @@
     "id": "geoflow-template-16-newsletter-letter",
     "name": "geo.dofe 16 Newsletter Letter",
     "version": "1.0.0",
-    "description": "A newsletter-style variant with authorial warmth, simple modules, and letter-like spacing. Preserves geo.dofe frontend data contracts and derives from the NetEase News Inspired base theme.",
+    "description": "A newsletter-style variant with editorial warmth, simple modules, and letter-like spacing. Preserves geo.dofe frontend data contracts and derives from the NetEase News Inspired base theme.",
     "templates": [
         "layout",
         "home",
