@@ -762,7 +762,7 @@ class AdminMaterialsPagesTest extends TestCase
             'normalized_url' => 'https://example.test/report',
             'source_domain' => 'example.test',
             'status' => 'queued',
-            'created_by' => 'url_import_admin',
+            'created_by' => 'Url Import Admin',
         ]);
 
         $job = UrlImportJob::query()->firstOrFail();

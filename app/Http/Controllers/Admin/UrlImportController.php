@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Admin;
 use App\Models\KeywordLibrary;
 use App\Models\KnowledgeBase;
 use App\Models\TitleLibrary;
@@ -57,6 +58,10 @@ class UrlImportController extends Controller
                 ->withErrors(['ai_model' => $exception->getMessage()]);
         }
 
+        /** @var Admin|null $admin */
+        $admin = Auth::guard('admin')->user();
+        $createdBy = trim((string) ($admin?->sso_sub ?: $admin?->name));
+
         $job = UrlImportJob::query()->create([
             'url' => $validated['url'],
             'normalized_url' => $normalized['url'],
@@ -74,7 +79,7 @@ class UrlImportController extends Controller
             ], JSON_UNESCAPED_UNICODE),
             'result_json' => '',
             'error_message' => '',
-            'created_by' => Auth::guard('admin')->user()?->username ?? '',
+            'created_by' => $createdBy,
         ]);
 
         UrlImportJobLog::query()->create([
