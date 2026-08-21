@@ -18,8 +18,20 @@ WORKDIR /app
 
 # composer:2 基于 Alpine；国内 ECS 需替换 apk 源（与 dev Dockerfile 的 Debian 镜像策略一致）
 RUN set -eux; \
-    if [ -f /etc/apk/repositories ]; then \
-        sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories; \
+    curl -fsSL https://getcomposer.org/download/latest-stable/composer.phar -o /usr/local/bin/composer; \
+    chmod 0755 /usr/local/bin/composer; \
+    if command -v apk >/dev/null 2>&1; then \
+        if [ -f /etc/apk/repositories ]; then \
+            sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories; \
+        fi; \
+        apk add --no-cache unzip; \
+    elif command -v apt-get >/dev/null 2>&1; then \
+        apt-get update; \
+        apt-get install -y --no-install-recommends unzip; \
+        rm -rf /var/lib/apt/lists/*; \
+    else \
+        echo 'No supported package manager found for Composer dependencies' >&2; \
+        exit 1; \
     fi
 
 ARG COMPOSER_PACKAGIST_MIRROR=
@@ -107,7 +119,7 @@ RUN apt-get update \
         postgresql-client \
         unzip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install \
+    && docker-php-ext-install -j"$(nproc)" \
         gd \
         intl \
         mbstring \
