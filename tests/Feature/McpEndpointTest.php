@@ -237,4 +237,22 @@ class McpEndpointTest extends TestCase
             ->assertOk()
             ->assertJsonPath('error.code', -32000);
     }
+
+    public function test_write_tool_audit_does_not_leak_payload_content(): void
+    {
+        $this->enableMcp();
+        [$catalog, $tasks] = $this->mockServices();
+        $tasks->shouldReceive('enqueueTask')
+            ->once()
+            ->with(5, 'generate_article', ['prompt' => 'TOP-SECRET-PROMPT'])
+            ->andReturn(['task_id' => 5, 'job_id' => 42, 'status' => 'pending']);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.tasks.enqueue', ['task_id' => 5, 'payload' => ['prompt' => 'TOP-SECRET-PROMPT']]))
+            ->assertOk();
+
+        $details = McpAuditLog::query()->firstOrFail()->details;
+        $this->assertStringNotContainsString('TOP-SECRET-PROMPT', $details);
+        $this->assertStringNotContainsString('prompt', $details);
+    }
 }
