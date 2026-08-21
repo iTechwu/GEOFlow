@@ -4,6 +4,19 @@ on:
   push:
     branches: [main]
   pull_request:
+  workflow_dispatch:
+    inputs:
+      release_mode:
+        description: Production release mode; use fresh only for the first empty database deployment
+        required: true
+        default: upgrade
+        type: choice
+        options:
+          - upgrade
+          - fresh
+
+permissions:
+  contents: read
 
 jobs:
   test:
@@ -36,6 +49,15 @@ jobs:
       - name: Compose boundary check
         run: bash deploy-scripts/check-compose-boundaries.sh
 
+      - name: Deployment script syntax check
+        run: bash -n deploy-scripts/*.sh
+
+      - name: Prebuilt Compose config check
+        env:
+          GEOFLOW_APP_IMAGE: registry.invalid/geoflow-app:test
+          GEOFLOW_WEB_IMAGE: registry.invalid/geoflow-web:test
+        run: docker compose -f docker-compose.prebuilt.yml config --no-env-resolution --quiet
+
       - name: PHP syntax check (MCP files)
         run: |
           php -l app/Http/Controllers/McpController.php
@@ -57,3 +79,130 @@ jobs:
 
       - name: Whitespace check
         run: git diff --check
+
+  build-images:
+    name: Build immutable production images
+    needs: test
+    if: >-
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    outputs:
+      app_image: ${{ steps.image_refs.outputs.app_image }}
+      web_image: ${{ steps.image_refs.outputs.web_image }}
+    steps:
+      - name: Checkout tested revision
+        uses: actions/checkout@v4
+
+      - name: Validate registry configuration
+        env:
+          REGISTRY: ${{ vars.GEOFLOW_REGISTRY }}
+          REGISTRY_NAMESPACE: ${{ vars.GEOFLOW_REGISTRY_NAMESPACE }}
+        run: |
+          test -n "$REGISTRY" || { echo 'GEOFLOW_REGISTRY repository variable is required.' >&2; exit 1; }
+          test -n "$REGISTRY_NAMESPACE" || { echo 'GEOFLOW_REGISTRY_NAMESPACE repository variable is required.' >&2; exit 1; }
+
+      - name: Build and push production images
+        env:
+          REGISTRY: ${{ vars.GEOFLOW_REGISTRY }}
+          NS: ${{ vars.GEOFLOW_REGISTRY_NAMESPACE }}
+          VERSION: ${{ github.sha }}
+          REGISTRY_USERNAME: ${{ secrets.GEOFLOW_REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.GEOFLOW_REGISTRY_PASSWORD }}
+        run: bash deploy-scripts/build-and-push-amd64-images.sh
+
+      - name: Export immutable image references
+        id: image_refs
+        env:
+          REGISTRY: ${{ vars.GEOFLOW_REGISTRY }}
+          NS: ${{ vars.GEOFLOW_REGISTRY_NAMESPACE }}
+          VERSION: ${{ github.sha }}
+        run: |
+          echo "app_image=${REGISTRY}/${NS}/geoflow-app-prod:${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "web_image=${REGISTRY}/${NS}/geoflow-web-prod:${VERSION}" >> "$GITHUB_OUTPUT"
+
+  deploy-production:
+    name: Deploy production on CI host
+    needs: build-images
+    runs-on: [self-hosted, linux, geoflow-production]
+    environment: production
+    concurrency:
+      group: geoflow-production
+      cancel-in-progress: false
+    steps:
+      - name: Checkout release revision
+        uses: actions/checkout@v4
+
+      - name: Prepare persistent deployment directory
+        env:
+          DEPLOY_DIR: ${{ vars.GEOFLOW_DEPLOY_DIR }}
+        run: |
+          case "$DEPLOY_DIR" in
+            /*) ;;
+            *) echo 'GEOFLOW_DEPLOY_DIR must be an absolute path writable by the runner.' >&2; exit 1 ;;
+          esac
+          mkdir -p "$DEPLOY_DIR/deploy-scripts" "$DEPLOY_DIR/storage"
+          install -m 0644 docker-compose.yml "$DEPLOY_DIR/docker-compose.yml"
+          install -m 0644 docker-compose.prod.yml "$DEPLOY_DIR/docker-compose.prod.yml"
+          install -m 0644 docker-compose.prebuilt.yml "$DEPLOY_DIR/docker-compose.prebuilt.yml"
+          install -m 0644 .env.prod.example "$DEPLOY_DIR/.env.prod.example"
+          install -m 0755 deploy-scripts/check-compose-boundaries.sh "$DEPLOY_DIR/deploy-scripts/check-compose-boundaries.sh"
+          install -m 0755 deploy-scripts/geoflow-healthcheck.sh "$DEPLOY_DIR/deploy-scripts/geoflow-healthcheck.sh"
+          install -m 0755 deploy-scripts/deploy-prebuilt-release.sh "$DEPLOY_DIR/deploy-scripts/deploy-prebuilt-release.sh"
+
+      - name: Login to production registry
+        env:
+          REGISTRY: ${{ vars.GEOFLOW_REGISTRY }}
+          REGISTRY_USERNAME: ${{ secrets.GEOFLOW_REGISTRY_USERNAME }}
+          REGISTRY_PASSWORD: ${{ secrets.GEOFLOW_REGISTRY_PASSWORD }}
+        run: printf '%s' "$REGISTRY_PASSWORD" | docker login --username "$REGISTRY_USERNAME" --password-stdin "$REGISTRY"
+
+      - name: Render production environment
+        env:
+          APP_KEY: ${{ secrets.GEOFLOW_APP_KEY }}
+          APP_URL: ${{ vars.GEOFLOW_APP_URL }}
+          APP_DEBUG: 'false'
+          TRUSTED_PROXIES: ${{ vars.GEOFLOW_TRUSTED_PROXIES || '*' }}
+          ADMIN_BASE_PATH: ${{ vars.GEOFLOW_ADMIN_BASE_PATH || 'geo_admin' }}
+          WEB_PORT: ${{ vars.GEOFLOW_WEB_PORT || '18080' }}
+          REVERB_EXPOSE_PORT: ${{ vars.GEOFLOW_REVERB_PORT || '18081' }}
+          REVERB_APP_SECRET: ${{ secrets.GEOFLOW_REVERB_APP_SECRET }}
+          DB_HOST: ${{ vars.GEOFLOW_DB_HOST }}
+          DB_PORT: ${{ vars.GEOFLOW_DB_PORT || '5432' }}
+          DB_DATABASE: ${{ vars.GEOFLOW_DB_DATABASE }}
+          DB_USERNAME: ${{ secrets.GEOFLOW_DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.GEOFLOW_DB_PASSWORD }}
+          REDIS_HOST: ${{ vars.GEOFLOW_REDIS_HOST }}
+          REDIS_PORT: ${{ vars.GEOFLOW_REDIS_PORT || '6379' }}
+          REDIS_PASSWORD: ${{ secrets.GEOFLOW_REDIS_PASSWORD }}
+          MODELS_BASE_URL: ${{ vars.MODELS_BASE_URL || 'https://models.dofe.ai/v1' }}
+          MODELS_API_KEY: ${{ secrets.MODELS_API_KEY }}
+          MODELS_INTERNAL_BASE_URL: ${{ vars.MODELS_INTERNAL_BASE_URL || 'https://models.dofe.ai' }}
+          MODELS_INTERNAL_API_SECRET: ${{ secrets.MODELS_INTERNAL_API_SECRET }}
+          MODELS_SERVICE_NAME: geoflow
+          SSO_API_URL: ${{ vars.SSO_API_URL }}
+          SSO_INTERNAL_API_URL: ${{ vars.SSO_INTERNAL_API_URL }}
+          SSO_ISSUER: ${{ vars.SSO_ISSUER }}
+          SSO_CLIENT_ID: ${{ secrets.SSO_CLIENT_ID }}
+          SSO_CLIENT_SECRET: ${{ secrets.SSO_CLIENT_SECRET }}
+          SSO_SERVICE_NAME: ${{ vars.SSO_SERVICE_NAME || 'geo.dofe.ai' }}
+          SSO_REDIRECT_URI: ${{ vars.SSO_REDIRECT_URI }}
+          SSO_DISCOVERY_URL: ${{ vars.SSO_DISCOVERY_URL }}
+          SSO_SCOPE: 'openid profile email tenant'
+          GEOFLOW_MCP_ENABLED: ${{ vars.GEOFLOW_MCP_ENABLED || 'true' }}
+          GEOFLOW_MCP_TOKEN: ${{ secrets.GEOFLOW_MCP_TOKEN }}
+          GEOFLOW_MCP_READ_TOKEN: ${{ secrets.GEOFLOW_MCP_READ_TOKEN }}
+          GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN: ${{ vars.GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN || 'true' }}
+          GEOFLOW_MCP_SERVER_NAME: geoflow
+          GEOFLOW_APP_IMAGE: ${{ needs.build-images.outputs.app_image }}
+          GEOFLOW_WEB_IMAGE: ${{ needs.build-images.outputs.web_image }}
+          DOCKER_COMMON_NETWORK_NAME: ${{ vars.DOCKER_COMMON_NETWORK_NAME || 'common_network' }}
+          DEPLOY_DIR: ${{ vars.GEOFLOW_DEPLOY_DIR }}
+        run: GEOFLOW_ENV_TEMPLATE="$GITHUB_WORKSPACE/.env.prod.example" bash deploy-scripts/render-prod-env.sh "$DEPLOY_DIR/.env.prod"
+
+      - name: Release and run production gates
+        env:
+          GEOFLOW_APP_DIR: ${{ vars.GEOFLOW_DEPLOY_DIR }}
+          GEOFLOW_RELEASE_MODE: ${{ inputs.release_mode || 'upgrade' }}
+          GEOFLOW_MCP_SMOKE_TOKEN: ${{ secrets.GEOFLOW_MCP_SMOKE_TOKEN }}
+        run: bash "$GEOFLOW_APP_DIR/deploy-scripts/deploy-prebuilt-release.sh"
