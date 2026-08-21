@@ -2,8 +2,10 @@
 
 namespace App\Services\Models;
 
+use App\Services\Outbound\SafeOutboundHttpClient;
 use App\Support\ModelsInternalAuth;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -35,16 +37,29 @@ final class ModelsInternalClient
         return trim((string) config('geoflow.models_service_name', 'geoflow'));
     }
 
-    private static function client(): PendingRequest
+    private static function request(): PendingRequest
     {
         if (! self::isConfigured()) {
             throw new RuntimeException('models internal HMAC 未配置：需 MODELS_INTERNAL_BASE_URL 与 MODELS_INTERNAL_API_SECRET（兼容 INTERNAL_API_SECRET）同时非空。');
         }
 
         return Http::withHeaders(ModelsInternalAuth::headers(self::secret(), self::serviceName()))
-            ->baseUrl(self::baseUrl())
             ->acceptJson()
+            ->connectTimeout(5)
             ->timeout(30);
+    }
+
+    /**
+     * @param  array<string,mixed>  $query
+     */
+    private static function get(string $path, array $query = []): Response
+    {
+        return app(SafeOutboundHttpClient::class)->get(
+            self::request(),
+            self::baseUrl().$path,
+            (int) config('geoflow.outbound_json_max_bytes', 4 * 1024 * 1024),
+            query: $query,
+        )->throw();
     }
 
     /**
@@ -55,7 +70,7 @@ final class ModelsInternalClient
      */
     public static function listModels(array $query = []): array
     {
-        $response = self::client()->get('/internal/models', $query)->throw();
+        $response = self::get('/internal/models', $query);
 
         return $response->json() ?? [];
     }
@@ -67,7 +82,7 @@ final class ModelsInternalClient
      */
     public static function getModel(string $modelId): array
     {
-        $response = self::client()->get('/internal/models/'.rawurlencode($modelId))->throw();
+        $response = self::get('/internal/models/'.rawurlencode($modelId));
 
         return $response->json() ?? [];
     }
