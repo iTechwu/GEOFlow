@@ -64,7 +64,8 @@ final class AuthenticateMcpToken
         $readToken = trim((string) config('geoflow.mcp_read_token', ''));
 
         if ($writeToken !== '' && hash_equals($writeToken, $provided)) {
-            return new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $writeToken), null);
+            $auditAdminId = (int) config('geoflow.mcp_audit_admin_id', 0);
+            return new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $writeToken), null, $auditAdminId > 0 ? $auditAdminId : null);
         }
         if ($readToken !== '' && hash_equals($readToken, $provided)) {
             return new McpAuthContext(McpAuthContext::SCOPE_READ, hash('sha256', $readToken), null);
@@ -93,7 +94,7 @@ final class AuthenticateMcpToken
             return null;
         }
 
-        return new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $provided), $teamId);
+        return new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $provided), $teamId, (int) $admin->getKey());
     }
 
     private function unauthorized(): Response

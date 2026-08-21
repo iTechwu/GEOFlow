@@ -25,10 +25,18 @@
 | --- | --- | --- |
 | `geoflow.catalog` | 读取模型、Prompt、素材库、知识库、作者和分类 | 否 |
 | `geoflow.tasks.list` | 按状态/关键词分页读取任务及队列进度 | 否 |
+| `geoflow.tasks.create` | 按目录引用创建 GEOFlow 任务 | 是 |
 | `geoflow.tasks.get` | 读取单任务监控详情 | 否 |
 | `geoflow.tasks.start` | 激活任务，可立即入队一条生成任务 | 是 |
 | `geoflow.tasks.stop` | 暂停任务并取消待处理工作 | 是 |
 | `geoflow.tasks.enqueue` | 入队一条任务 Job | 是 |
+| `geoflow.articles.list` | 按任务/状态读取文章列表 | 否 |
+| `geoflow.articles.get` | 读取文章正文、元数据和工作流状态 | 否 |
+| `geoflow.articles.create` | 创建 GEO 草稿文章 | 是 |
+| `geoflow.articles.update` | 更新文章内容或元数据，内容变更回到待审核 | 是 |
+| `geoflow.articles.review` | 审核文章并执行风险门 | 是 |
+| `geoflow.articles.publish` | 发布已审核通过的文章 | 是 |
+| `geoflow.articles.trash` | 将文章移入回收站 | 是 |
 
 写工具应由 CI Agent 做人工审批或策略审批；写 Token 等同于任务写权限。
 
@@ -42,6 +50,7 @@
 ### 权限模型（任务租户隔离）
 
 - **部署令牌（系统/跨租户）**：不受租户限制，可读取与操作该部署内全部 GEOFlow 任务，等价于「部署管理员全局权限」。必须配合反向代理 IP 白名单、短期令牌轮换和 CI 策略审批使用。
+- 系统令牌执行文章风险扫描、审核或发布时必须配置 `GEOFLOW_MCP_AUDIT_ADMIN_ID`；未配置时这些需要管理员审计身份的工具会被拒绝。SSO 令牌自动使用同步后的管理员身份。
 - **SSO 令牌（按租户）**：租户取自 SSO `selected_team_id`，任务工具（list/get/start/stop/enqueue）按 `tasks.sso_team_id` 隔离；跨租户访问统一返回「任务不存在」（不泄露存在性）。`sso_team_id` 在任务创建时按创建者 SSO 身份落库，并对历史任务回填。
 - **目录工具 `geoflow.catalog`（按租户）**：内容实体（提示词/标题库/关键词库/图片库/知识库/作者/分类）按 `sso_team_id` 隔离，创建时按当前 SSO 上下文自动落库；模型（`ai_models`）为共享引用数据，始终全局返回。
 

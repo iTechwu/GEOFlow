@@ -40,6 +40,11 @@ class ArticleGeoFlowService
             });
         }
 
+        if (! empty($filters['sso_team_id'])) {
+            $teamId = (string) $filters['sso_team_id'];
+            $query->whereHas('task', static fn ($q) => $q->where('sso_team_id', $teamId));
+        }
+
         $total = (clone $query)->count();
 
         $items = $query
@@ -64,7 +69,27 @@ class ArticleGeoFlowService
         ];
     }
 
-    public function createArticle(array $data, int $auditAdminId): array
+    /**
+     * MCP tenant fence: articles are tenant-owned through their task.
+     * Untasked articles remain available only to the deployment-level system token.
+     */
+    public function ensureArticleInScope(int $articleId, ?string $teamId): void
+    {
+        if ($teamId === null || $teamId === '') {
+            return;
+        }
+
+        $exists = Article::query()
+            ->whereKey($articleId)
+            ->whereHas('task', static fn ($query) => $query->where('sso_team_id', $teamId))
+            ->exists();
+
+        if (! $exists) {
+            throw new ApiException('article_not_found', '文章不存在', 404);
+        }
+    }
+
+    public function createArticle(array $data, ?int $auditAdminId): array
     {
         $normalized = $this->normalizeCreateInput($data);
         $workflowState = ArticleWorkflow::normalizeState(
@@ -181,7 +206,7 @@ class ArticleGeoFlowService
         ];
     }
 
-    public function updateArticle(int $articleId, array $data, int $auditAdminId): array
+    public function updateArticle(int $articleId, array $data, ?int $auditAdminId): array
     {
         $existing = $this->getArticleRecord($articleId);
         $normalized = $this->normalizeUpdateInput($data, $existing);

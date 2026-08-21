@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\McpAuthContext;
+use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpIdempotencyService;
@@ -44,7 +45,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, app(ArticleGeoFlowService::class)),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -63,32 +64,67 @@ final class McpController extends Controller
     {
         $empty = ['type' => 'object', 'properties' => [], 'additionalProperties' => false];
         $taskId = ['type' => 'object', 'properties' => ['task_id' => ['type' => 'integer']], 'required' => ['task_id'], 'additionalProperties' => false];
+        $articleId = ['type' => 'object', 'properties' => ['article_id' => ['type' => 'integer']], 'required' => ['article_id'], 'additionalProperties' => false];
         $idempotency = ['idempotency_key' => ['type' => 'string', 'description' => 'Optional idempotency key; retries with the same key return the cached result.']];
 
         return [
             ['name' => 'geoflow.catalog', 'description' => 'Read available GEOFlow models, prompts, libraries, knowledge bases and categories.', 'inputSchema' => $empty],
             ['name' => 'geoflow.tasks.list', 'description' => 'List GEOFlow tasks with status and queue progress.', 'inputSchema' => ['type' => 'object', 'properties' => ['status' => ['type' => 'string'], 'search' => ['type' => 'string'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
+            ['name' => 'geoflow.tasks.create', 'description' => 'Create a GEOFlow task from catalog references and scheduling options.', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'title_library_id' => ['type' => 'integer'], 'image_library_id' => ['type' => ['integer', 'null']], 'prompt_id' => ['type' => 'integer'], 'ai_model_id' => ['type' => 'integer'], 'author_id' => ['type' => ['integer', 'null']], 'knowledge_base_id' => ['type' => ['integer', 'null']], 'knowledge_base_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'status' => ['type' => 'string', 'enum' => ['active', 'paused']], 'need_review' => ['type' => 'boolean'], 'article_limit' => ['type' => 'integer'], 'draft_limit' => ['type' => 'integer'], 'sso_team_id' => ['type' => 'string'], ...$idempotency], 'required' => ['name', 'title_library_id', 'prompt_id', 'ai_model_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.tasks.get', 'description' => 'Read one GEOFlow task and its monitoring summary.', 'inputSchema' => $taskId],
             ['name' => 'geoflow.tasks.start', 'description' => 'Activate a task; optionally enqueue one generation job.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['task_id' => ['type' => 'integer'], 'enqueue_now' => ['type' => 'boolean']], $idempotency), 'required' => ['task_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.tasks.stop', 'description' => 'Pause a task and cancel pending work.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['task_id' => ['type' => 'integer']], $idempotency), 'required' => ['task_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.tasks.enqueue', 'description' => 'Enqueue one task job.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['task_id' => ['type' => 'integer'], 'job_type' => ['type' => 'string'], 'payload' => ['type' => 'object']], $idempotency), 'required' => ['task_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.articles.list', 'description' => 'List GEOFlow articles and workflow status.', 'inputSchema' => ['type' => 'object', 'properties' => ['task_id' => ['type' => 'integer'], 'status' => ['type' => 'string'], 'review_status' => ['type' => 'string'], 'search' => ['type' => 'string'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
+            ['name' => 'geoflow.articles.get', 'description' => 'Read one article including workflow status and metadata.', 'inputSchema' => $articleId],
+            ['name' => 'geoflow.articles.create', 'description' => 'Create a draft article after GEO content generation.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['title' => ['type' => 'string'], 'content' => ['type' => 'string'], 'excerpt' => ['type' => 'string'], 'keywords' => ['type' => 'string'], 'meta_description' => ['type' => 'string'], 'category_id' => ['type' => 'integer'], 'author_id' => ['type' => 'integer'], 'task_id' => ['type' => ['integer', 'null']], 'is_ai_generated' => ['type' => 'boolean']], $idempotency), 'required' => ['title', 'content', 'category_id', 'author_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.articles.update', 'description' => 'Update article content or metadata; content changes return it to pending review.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['article_id' => ['type' => 'integer'], 'title' => ['type' => 'string'], 'content' => ['type' => 'string'], 'excerpt' => ['type' => 'string'], 'keywords' => ['type' => 'string'], 'meta_description' => ['type' => 'string'], 'category_id' => ['type' => 'integer'], 'author_id' => ['type' => 'integer'], 'slug' => ['type' => 'string']], $idempotency), 'required' => ['article_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.articles.review', 'description' => 'Review an article; approved content can proceed to publish.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['article_id' => ['type' => 'integer'], 'review_status' => ['type' => 'string', 'enum' => ['pending', 'approved', 'rejected', 'auto_approved']], 'review_note' => ['type' => 'string'], 'risk_override_reason' => ['type' => 'string']], $idempotency), 'required' => ['article_id', 'review_status'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.articles.publish', 'description' => 'Publish an approved article.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['article_id' => ['type' => 'integer']], $idempotency), 'required' => ['article_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.articles.trash', 'description' => 'Move an article to the trash.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['article_id' => ['type' => 'integer']], $idempotency), 'required' => ['article_id'], 'additionalProperties' => false]],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
         $arguments = is_array($params['arguments'] ?? null) ? $params['arguments'] : [];
         $scoped = fn (int $taskId): int => $this->scopedTaskId($tasks, $auth, $taskId);
+        $scopedArticle = fn (int $articleId): int => $this->scopedArticleId($articles, $auth, $articleId);
 
         $data = match ($name) {
             'geoflow.catalog' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $catalog->getCatalog($auth->tenantId)),
             'geoflow.tasks.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTasks((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), $this->scopeFilters($auth, $args))),
+            'geoflow.tasks.create' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->createTask($this->scopedTaskCreateArguments($auth, $args))),
             'geoflow.tasks.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getTask($scoped($this->taskId($args)))),
             'geoflow.tasks.start' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->startTask($scoped($this->taskId($args)), (bool) ($args['enqueue_now'] ?? false))),
             'geoflow.tasks.stop' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->stopTask($scoped($this->taskId($args)))),
             'geoflow.tasks.enqueue' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->enqueueTask($scoped($this->taskId($args)), (string) ($args['job_type'] ?? 'generate_article'), is_array($args['payload'] ?? null) ? $args['payload'] : [])),
+            'geoflow.articles.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $articles->listArticles((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), $this->articleFilters($auth, $args))),
+            'geoflow.articles.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $articles->getArticle($scopedArticle($this->articleId($args)))),
+            'geoflow.articles.create' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $tasks, $auth): array {
+                if ($auth->tenantId !== null && (! isset($args['task_id']) || $args['task_id'] === null)) {
+                    throw new McpToolException('SSO 租户文章必须绑定 task_id');
+                }
+                if (isset($args['task_id']) && $args['task_id'] !== null) {
+                    $this->scopedTaskId($tasks, $auth, (int) $args['task_id']);
+                }
+                return $articles->createArticle($args, $auth->auditAdminId);
+            }),
+            'geoflow.articles.update' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $auth): array {
+                $articleId = $this->articleId($args);
+                $this->scopedArticleId($articles, $auth, $articleId);
+                unset($args['article_id']);
+                return $articles->updateArticle($articleId, $args, $auth->auditAdminId);
+            }),
+            'geoflow.articles.review' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $auth): array {
+                $articleId = $this->articleId($args);
+                $this->scopedArticleId($articles, $auth, $articleId);
+                return $articles->reviewArticle($articleId, (string) ($args['review_status'] ?? ''), (string) ($args['review_note'] ?? ''), (string) ($args['risk_override_reason'] ?? ''), $this->requiredAuditAdminId($auth));
+            }),
+            'geoflow.articles.publish' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $articles->publishArticle($scopedArticle($this->articleId($args)), $this->requiredAuditAdminId($auth))),
+            'geoflow.articles.trash' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $articles->trashArticle($scopedArticle($this->articleId($args)))),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -167,6 +203,59 @@ final class McpController extends Controller
         }
 
         return $taskId;
+    }
+
+    private function articleId(array $arguments): int
+    {
+        $articleId = (int) ($arguments['article_id'] ?? 0);
+        if ($articleId <= 0) {
+            throw new \InvalidArgumentException('article_id must be a positive integer');
+        }
+
+        return $articleId;
+    }
+
+    private function scopedArticleId(ArticleGeoFlowService $articles, McpAuthContext $auth, int $articleId): int
+    {
+        $articles->ensureArticleInScope($articleId, $auth->tenantId);
+
+        return $articleId;
+    }
+
+    /** @param array<string,mixed> $arguments */
+    private function scopedTaskCreateArguments(McpAuthContext $auth, array $arguments): array
+    {
+        unset($arguments['idempotency_key'], $arguments['sso_owner_admin_id']);
+        if ($auth->tenantId !== null && $auth->tenantId !== '') {
+            $arguments['sso_team_id'] = $auth->tenantId;
+        }
+
+        return $arguments;
+    }
+
+    private function requiredAuditAdminId(McpAuthContext $auth): int
+    {
+        if ($auth->auditAdminId === null || $auth->auditAdminId <= 0) {
+            throw new McpToolException('该 MCP 令牌未配置文章审计管理员，不能执行审核或发布');
+        }
+
+        return $auth->auditAdminId;
+    }
+
+    /** @param array<string,mixed> $arguments */
+    private function articleFilters(McpAuthContext $auth, array $arguments): array
+    {
+        $filters = array_filter([
+            'task_id' => $arguments['task_id'] ?? null,
+            'status' => $arguments['status'] ?? null,
+            'review_status' => $arguments['review_status'] ?? null,
+            'search' => $arguments['search'] ?? null,
+        ], static fn ($value) => $value !== null && $value !== '');
+        if ($auth->tenantId !== null && $auth->tenantId !== '') {
+            $filters['sso_team_id'] = $auth->tenantId;
+        }
+
+        return $filters;
     }
 
     /**

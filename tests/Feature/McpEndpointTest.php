@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\McpAuditLog;
 use App\Services\GeoFlow\CatalogGeoFlowService;
+use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -95,7 +96,8 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list'])
             ->assertOk()
             ->assertJsonPath('result.tools.0.name', 'geoflow.catalog')
-            ->assertJsonPath('result.tools.5.name', 'geoflow.tasks.enqueue');
+            ->assertJsonPath('result.tools.6.name', 'geoflow.tasks.enqueue')
+            ->assertJsonPath('result.tools.7.name', 'geoflow.articles.list');
     }
 
     public function test_read_token_allows_read_tools(): void
@@ -132,6 +134,19 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', $this->toolCall('geoflow.tasks.start', ['task_id' => 5]))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.id', 5);
+    }
+
+    public function test_tasks_create_is_exposed_as_an_idempotent_mcp_write_tool(): void
+    {
+        $this->enableMcp();
+        [$catalog, $tasks] = $this->mockServices();
+        app()->instance(ArticleGeoFlowService::class, Mockery::mock(ArticleGeoFlowService::class));
+        $tasks->shouldReceive('createTask')->once()->with(Mockery::on(static fn (array $input): bool => $input['name'] === 'GEO smoke task' && ! array_key_exists('idempotency_key', $input)))->andReturn(['id' => 11, 'name' => 'GEO smoke task']);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.tasks.create', ['name' => 'GEO smoke task', 'idempotency_key' => 'task-create-11']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.id', 11);
     }
 
     public function test_write_tool_with_idempotency_key_replays_cached_result(): void

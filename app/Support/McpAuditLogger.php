@@ -22,13 +22,15 @@ final class McpAuditLogger
     public static function log(Request $request, McpAuthContext $auth, string $tool, array $arguments, string $outcome): void
     {
         try {
-            $targetId = is_numeric($arguments['task_id'] ?? null) ? (int) $arguments['task_id'] : null;
+            $taskId = is_numeric($arguments['task_id'] ?? null) ? (int) $arguments['task_id'] : null;
+            $articleId = is_numeric($arguments['article_id'] ?? null) ? (int) $arguments['article_id'] : null;
+            $targetId = $taskId ?? $articleId;
 
             McpAuditLog::query()->create([
                 'token_hash' => $auth->tokenHash,
                 'scope' => $auth->scope,
                 'tool' => $tool,
-                'target_type' => $targetId !== null ? 'task' : '',
+                'target_type' => $taskId !== null ? 'task' : ($articleId !== null ? 'article' : ''),
                 'target_id' => $targetId,
                 'idempotency_key' => is_string($arguments['idempotency_key'] ?? null) && ($arguments['idempotency_key'] ?? '') !== '' ? (string) $arguments['idempotency_key'] : null,
                 'outcome' => $outcome,
@@ -56,7 +58,7 @@ final class McpAuditLogger
             'arguments_sha256' => hash('sha256', is_string($encoded) ? $encoded : ''),
         ];
 
-        foreach (['task_id', 'enqueue_now', 'job_type'] as $key) {
+        foreach (['task_id', 'article_id', 'enqueue_now', 'job_type'] as $key) {
             if (! array_key_exists($key, $arguments) || (! is_scalar($arguments[$key]) && $arguments[$key] !== null)) {
                 continue;
             }

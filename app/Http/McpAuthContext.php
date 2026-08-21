@@ -21,10 +21,12 @@ final class McpAuthContext
      * @param  'read'|'write'  $scope
      * @param  string  $tokenHash  提供令牌的 SHA-256 指纹（绝不落原始令牌）。
      * @param  string|null  $tenantId  SSO selected_team_id；null 表示系统/跨租户令牌。
+     * @param  int|null  $auditAdminId  用于文章风险/审核审计的管理员 ID。
      */
     public function __construct(
         public string $scope,
         public string $tokenHash,
-        public ?string $tenantId = null
+        public ?string $tenantId = null,
+        public ?int $auditAdminId = null
     ) {}
 }
