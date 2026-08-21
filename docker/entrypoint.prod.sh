@@ -83,6 +83,8 @@ if [ "${AUTO_INSTALL_ONCE:-false}" = "true" ]; then
 fi
 
 if [ "${AUTO_OPTIMIZE:-true}" = "true" ]; then
+  # The image is built without the runtime .env; clear any stale cache before rebuilding it.
+  php artisan config:clear --no-interaction
   echo "[entrypoint-prod] php artisan optimize"
   php artisan optimize --no-interaction
 fi

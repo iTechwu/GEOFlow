@@ -201,4 +201,13 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('unset_env_value .env.prod REDIS_URL', $script);
         $this->assertStringContainsString('set_env_value .env.prod REDIS_HOST "$redis_host"', $script);
     }
+
+    public function test_production_image_makes_application_sources_readable_by_php_fpm(): void
+    {
+        $dockerfile = file_get_contents(dirname(__DIR__, 2).'/docker/Dockerfile.prod');
+
+        $this->assertIsString($dockerfile);
+        $this->assertStringContainsString('find app config database resources routes -type d -exec chmod 755 {} +', $dockerfile);
+        $this->assertStringContainsString('find app config database resources routes -type f -exec chmod 644 {} +', $dockerfile);
+    }
 }

@@ -59,7 +59,8 @@ RUN composer dump-autoload \
     --no-interaction \
     --classmap-authoritative \
     --no-scripts \
- && BROADCAST_CONNECTION=null php artisan package:discover --ansi
+ && BROADCAST_CONNECTION=null php artisan package:discover --ansi \
+ && rm -f bootstrap/cache/config.php bootstrap/cache/routes*.php
 
 FROM uhub.service.ucloud.cn/techwu/node:25-bookworm-slim AS assets
 
@@ -143,6 +144,11 @@ RUN chmod +x /usr/local/bin/geoflow-entrypoint-prod
 
 COPY --from=vendor /app /var/www/html
 COPY --from=assets /app/public/build /var/www/html/public/build
+
+# Source files may arrive from a host checkout with restrictive modes (for example 0600).
+# PHP-FPM runs as www-data, so keep application code readable without making it writable.
+RUN find app config database resources routes -type d -exec chmod 755 {} + \
+ && find app config database resources routes -type f -exec chmod 644 {} +
 
 ENTRYPOINT ["/usr/local/bin/geoflow-entrypoint-prod"]
 CMD ["php-fpm", "-F"]
