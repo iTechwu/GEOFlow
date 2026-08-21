@@ -74,9 +74,10 @@ class TaskLifecycleService
      */
     public function createTask(array $data): array
     {
-        $normalized = $this->normalizeTaskInput($data, false);
+        $teamId = $this->resolveTeamId($data);
+        $normalized = $this->normalizeTaskInput($data, false, $teamId);
 
-        $taskId = DB::transaction(function () use ($data, $normalized): int {
+        $taskId = DB::transaction(function () use ($data, $normalized, $teamId): int {
             $task = Task::query()->create([
                 'name' => $normalized['name'],
                 'title_library_id' => $normalized['title_library_id'],
@@ -101,7 +102,7 @@ class TaskLifecycleService
                 'category_mode' => $normalized['category_mode'],
                 'fixed_category_id' => $normalized['fixed_category_id'],
                 'sso_owner_admin_id' => isset($data['sso_owner_admin_id']) ? (int) $data['sso_owner_admin_id'] : null,
-                'sso_team_id' => $this->resolveTeamId($data),
+                'sso_team_id' => $teamId,
             ]);
 
             $taskId = (int) $task->id;
@@ -214,7 +215,8 @@ class TaskLifecycleService
     public function updateTask(int $taskId, array $data): array
     {
         $this->ensureTaskExists($taskId);
-        $normalized = $this->normalizeTaskInput($data, true);
+        $teamId = Task::query()->whereKey($taskId)->value('sso_team_id');
+        $normalized = $this->normalizeTaskInput($data, true, $teamId);
         if (empty($normalized)) {
             throw new ApiException('validation_failed', '没有可更新的字段', 422);
         }
@@ -469,11 +471,13 @@ class TaskLifecycleService
      *
      * @param  array<string,mixed>  $data
      * @param  bool  $isUpdate  true=更新，false=创建
+     * @param  string|null  $teamId  任务归属的 SSO 团队；非空时目录引用需同团队，
+     *                               为空（系统/未分配任务）时不施加租户限制。
      * @return array<string,mixed>
      *
      * @throws ApiException 字段校验失败时抛 422，并附带 field_errors
      */
-    private function normalizeTaskInput(array $data, bool $isUpdate): array
+    private function normalizeTaskInput(array $data, bool $isUpdate, ?string $teamId = null): array
     {
         $output = [];
         $fieldErrors = [];
@@ -501,7 +505,7 @@ class TaskLifecycleService
         $knowledgeBaseIdsProvided = array_key_exists('knowledge_base_ids', $data);
 
         if ($knowledgeBaseIdsProvided) {
-            $knowledgeBaseIds = $this->normalizeKnowledgeBaseIds($data['knowledge_base_ids'], $fieldErrors);
+            $knowledgeBaseIds = $this->normalizeKnowledgeBaseIds($data['knowledge_base_ids'], $fieldErrors, $teamId);
             $output['knowledge_base_ids'] = $knowledgeBaseIds;
             $output['knowledge_base_id'] = $knowledgeBaseIds[0] ?? null;
         }
@@ -535,8 +539,13 @@ class TaskLifecycleService
             $modelClass = $config['model'];
             $exists = false;
             // prompt 与 ai_model 的校验规则与普通外键不同，这里单独处理业务约束。
+            // 内容实体（prompt/标题库/图片库/知识库/作者/分类）按租户校验，ai_model 为共享引用数据不校验租户。
             if (! empty($config['prompt_content'])) {
-                $exists = Prompt::query()->whereKey($id)->where('type', 'content')->exists();
+                $exists = Prompt::query()
+                    ->whereKey($id)
+                    ->where('type', 'content')
+                    ->when($teamId !== null && $teamId !== '', fn ($q) => $q->where('sso_team_id', $teamId))
+                    ->exists();
             } elseif (! empty($config['ai_active_chat'])) {
                 $exists = AiModel::query()
                     ->whereKey($id)
@@ -548,7 +557,10 @@ class TaskLifecycleService
                     })
                     ->exists();
             } else {
-                $exists = $modelClass::query()->whereKey($id)->exists();
+                $exists = $modelClass::query()
+                    ->whereKey($id)
+                    ->when($teamId !== null && $teamId !== '', fn ($q) => $q->where('sso_team_id', $teamId))
+                    ->exists();
             }
 
             if (! $exists) {
@@ -737,9 +749,10 @@ class TaskLifecycleService
 
     /**
      * @param  array<string,string>  $fieldErrors
+     * @param  string|null  $teamId  非空时知识库需同团队
      * @return list<int>
      */
-    private function normalizeKnowledgeBaseIds(mixed $value, array &$fieldErrors): array
+    private function normalizeKnowledgeBaseIds(mixed $value, array &$fieldErrors, ?string $teamId = null): array
     {
         if ($value === null || $value === '') {
             return [];
@@ -769,6 +782,7 @@ class TaskLifecycleService
 
         $existingIds = KnowledgeBase::query()
             ->whereIn('id', $ids->all())
+            ->when($teamId !== null && $teamId !== '', fn ($q) => $q->where('sso_team_id', $teamId))
             ->pluck('id')
             ->map(static fn ($id): int => (int) $id)
             ->all();
