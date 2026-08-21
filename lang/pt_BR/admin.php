@@ -28,6 +28,8 @@ return array_replace_recursive($base, [
         'language_switch_label' => 'Interface',
         'language_switch_hint' => 'Português / English',
         'language_switch_to' => 'Mudar para :language',
+        'account_menu' => 'Menu da conta',
+        'mobile_menu' => 'Abrir menu de navegação',
         'notifications' => [
             'label' => 'Notificações',
             'title' => 'Notificações',
@@ -1194,6 +1196,8 @@ return array_replace_recursive($base, [
             'selected' => ':count artigos selecionados',
             'selected_prefix' => '',
             'selected_suffix' => ' artigos selecionados',
+            'select_all' => 'Selecionar todos os artigos',
+            'select_article' => 'Selecionar artigo: :title',
             'select_action' => 'Selecionar Ação',
             'update_status' => 'Alterar Status',
             'update_review' => 'Alterar Resultado da Revisão',
