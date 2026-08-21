@@ -995,6 +995,11 @@ class AdminSystemUpdatesPageTest extends TestCase
 
     public function test_full_release_plan_detects_deleted_tracked_files(): void
     {
+        exec('git --version 2>/dev/null', $gitVersionOutput, $gitVersionExitCode);
+        if ($gitVersionExitCode !== 0) {
+            $this->markTestSkipped('Git is required to enumerate tracked files for a source release plan.');
+        }
+
         Storage::fake('local');
         Cache::flush();
 
