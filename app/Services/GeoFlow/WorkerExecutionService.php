@@ -937,11 +937,7 @@ class WorkerExecutionService
      */
     private function generateContent(AiModel $aiModel, string $contentPrompt, Task $task): string
     {
-        $owner = $task->ssoOwner;
-        if (! $owner instanceof Admin) {
-            throw new RuntimeException('任务缺少 SSO 所有者，无法选择 ixicai 用户密钥。');
-        }
-        $credentials = $this->ixicaiCredentials->forAdmin($owner);
+        $credentials = $this->ixicaiCredentials->forAdmin($task->ssoOwner);
         $providerUrl = OpenAiRuntimeProvider::resolveChatBaseUrl($credentials['base_url']);
         $apiKey = $credentials['api_key'];
 

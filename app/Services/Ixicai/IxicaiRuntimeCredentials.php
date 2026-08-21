@@ -17,14 +17,12 @@ final class IxicaiRuntimeCredentials
     public function forCurrentUser(): array
     {
         $admin = Auth::guard('admin')->user();
-        if (! $admin instanceof Admin) {
-            throw new RuntimeException('An SSO user session is required to use ixicai models.');
-        }
-        return $this->forAdmin($admin);
+
+        return $this->forAdmin($admin instanceof Admin ? $admin : null);
     }
 
     /** @return array{base_url:string,api_key:string} */
-    public function forAdmin(Admin $admin): array
+    public function forAdmin(?Admin $admin): array
     {
         // models.dofe.ai is the shared gateway for CI and production workers.
         if (OpenAiRuntimeProvider::hasUnifiedOverride()) {
@@ -32,6 +30,9 @@ final class IxicaiRuntimeCredentials
                 'base_url' => OpenAiRuntimeProvider::unifiedBaseUrl(),
                 'api_key' => OpenAiRuntimeProvider::unifiedApiKey(),
             ];
+        }
+        if (! $admin instanceof Admin) {
+            throw new RuntimeException('An SSO user session is required to use ixicai models.');
         }
 
         $key = IxicaiApiKey::query()->where('admin_id', $admin->id)->where('status', 'active')->first();
