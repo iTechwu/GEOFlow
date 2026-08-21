@@ -3,14 +3,12 @@
 @section('content')
     @php
         $state = is_array($summary['state'] ?? null) ? $summary['state'] : [];
-        $links = is_array($summary['links'] ?? null) ? $summary['links'] : [];
         $deployment = is_array($summary['deployment'] ?? null) ? $summary['deployment'] : [];
         $deploymentDiagnostics = is_array($summary['deployment_diagnostics'] ?? null) ? $summary['deployment_diagnostics'] : [];
         $diagnosticItems = is_array($deploymentDiagnostics['items'] ?? null) ? $deploymentDiagnostics['items'] : [];
         $diagnosticFacts = is_array($deploymentDiagnostics['facts'] ?? null) ? $deploymentDiagnostics['facts'] : [];
         $diagnosticCommands = is_array($deploymentDiagnostics['commands'] ?? null) ? $deploymentDiagnostics['commands'] : [];
         $diagnosticLog = is_array($deploymentDiagnostics['log'] ?? null) ? $deploymentDiagnostics['log'] : [];
-        $diagnosticDocs = is_array($deploymentDiagnostics['docs'] ?? null) ? $deploymentDiagnostics['docs'] : [];
         $latestPlan = $summary['latest_plan'] ?? null;
         $preflight = is_array($summary['preflight'] ?? null) ? $summary['preflight'] : [];
         $preflightItems = is_array($preflight['items'] ?? null) ? $preflight['items'] : [];
@@ -92,9 +90,6 @@
             'deployment' => 'border-blue-200 bg-blue-50 text-blue-700',
             'recommended' => 'border-emerald-200 bg-emerald-50 text-emerald-700',
         ];
-        $githubUrl = (string) ($links['github'] ?? 'https://github.com/yaojingang/geo.dofe');
-        $changelogLinks = is_array($links['changelog'] ?? null) ? $links['changelog'] : [];
-        $changelogUrl = (string) ($changelogLinks[$localeForChangelog] ?? $changelogLinks['zh-CN'] ?? 'https://github.com/yaojingang/geo.dofe/blob/main/docs/CHANGELOG.md');
         $flagLabels = [
             'requires_composer' => __('admin.system_updates.plan.requires_composer'),
             'requires_npm_build' => __('admin.system_updates.plan.requires_npm_build'),
@@ -119,10 +114,6 @@
                         {{ __('admin.system_updates.button.check') }}
                     </button>
                 </form>
-                <a href="{{ $githubUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50">
-                    <i data-lucide="github" class="mr-2 h-4 w-4"></i>
-                    {{ __('admin.system_updates.button.open_github') }}
-                </a>
             </div>
         </div>
 
@@ -213,9 +204,6 @@
                         </div>
                     </div>
                     <div class="flex flex-wrap gap-3">
-                        <a href="{{ $changelogUrl }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50">
-                            {{ __('admin.system_updates.button.view_changelog') }}
-                        </a>
                         <span class="inline-flex items-center rounded-md bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700">
                             {{ __('admin.system_updates.label.backup_keep', ['count' => (int) ($summary['backup_keep'] ?? 10)]) }}
                         </span>
@@ -296,10 +284,6 @@
                                 <h3 class="text-sm font-semibold text-blue-900">{{ __('admin.system_updates.diagnostics.docs_title') }}</h3>
                                 <p class="mt-1 text-xs leading-5 text-blue-700">{{ __('admin.system_updates.diagnostics.docs_desc') }}</p>
                             </div>
-                            <a href="{{ (string) ($diagnosticDocs['url'] ?? 'https://github.com/yaojingang/geo.dofe/blob/main/docs/deployment/DEPLOYMENT.md') }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center rounded-md bg-white px-3 py-2 text-xs font-semibold text-blue-700 hover:bg-blue-100">
-                                <i data-lucide="external-link" class="mr-1.5 h-3.5 w-3.5"></i>
-                                {{ __('admin.system_updates.diagnostics.open_docs') }}
-                            </a>
                         </div>
                     </div>
 

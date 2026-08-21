@@ -397,29 +397,6 @@
             ));
         }
 
-        $skillResourceCards = [
-            [
-                'title' => __('admin.dashboard.skill_resources.template_title'),
-                'desc' => __('admin.dashboard.skill_resources.template_desc'),
-                'href' => 'https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-template',
-                'icon' => 'layers-3',
-                'tone' => 'blue',
-            ],
-            [
-                'title' => __('admin.dashboard.skill_resources.design_title'),
-                'desc' => __('admin.dashboard.skill_resources.design_desc'),
-                'href' => 'https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-design',
-                'icon' => 'palette',
-                'tone' => 'violet',
-            ],
-            [
-                'title' => __('admin.dashboard.skill_resources.cli_title'),
-                'desc' => __('admin.dashboard.skill_resources.cli_desc'),
-                'href' => 'https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-cli',
-                'icon' => 'terminal',
-                'tone' => 'slate',
-            ],
-        ];
     @endphp
 
     <div class="px-4 sm:px-0">
@@ -675,31 +652,5 @@
             @endforeach
         </section>
 
-        <section>
-            <div class="mb-5">
-                <h2 class="text-xl font-semibold text-gray-900">{{ __('admin.dashboard.skill_resources.title') }}</h2>
-                <p class="mt-1 text-sm text-gray-600">{{ __('admin.dashboard.skill_resources.desc') }}</p>
-            </div>
-            <div class="grid grid-cols-1 gap-5 lg:grid-cols-3">
-                @foreach ($skillResourceCards as $card)
-                    @php($toneClass = $toneStyles[$card['tone']] ?? $toneStyles['slate'])
-                    <a href="{{ $card['href'] }}" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-white p-5 shadow-sm ring-1 ring-gray-200 transition hover:-translate-y-0.5 hover:shadow-md">
-                        <div class="flex items-start gap-4">
-                            <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg {{ $toneClass }}">
-                                <i data-lucide="{{ $card['icon'] }}" class="h-5 w-5"></i>
-                            </div>
-                            <div class="min-w-0">
-                                <h3 class="text-base font-semibold text-gray-900">{{ $card['title'] }}</h3>
-                                <p class="mt-2 text-sm leading-6 text-gray-500">{{ $card['desc'] }}</p>
-                                <span class="mt-4 inline-flex items-center text-sm font-medium text-blue-600">
-                                    {{ __('admin.dashboard.skill_resources.open') }}
-                                    <i data-lucide="external-link" class="ml-1.5 h-4 w-4"></i>
-                                </span>
-                            </div>
-                        </div>
-                    </a>
-                @endforeach
-            </div>
-        </section>
     </div>
 @endsection

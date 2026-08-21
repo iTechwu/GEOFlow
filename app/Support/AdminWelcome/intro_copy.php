@@ -8,10 +8,6 @@ return [
             'badge' => '项目说明',
             'switch_label' => 'English',
             'close' => '关闭',
-            'links_label' => '需要更多细节时，可以查看项目仓库、更新日志和作者主页。',
-            'author_link' => '作者 X 主页',
-            'github_link' => '项目 GitHub',
-            'changelog_link' => '更新日志',
         ],
         'letter' => [
             'title' => '写给 geo.dofe 使用者的一封信',
@@ -58,7 +54,7 @@ return [
                 [
                     'type' => 'list',
                     'items' => [
-                        '先配置 Chat 模型、Embedding 模型和提示词，再沉淀知识库、标题库、关键词库、图片和作者',
+                        '先配置 Chat 模型、Embedding 模型和提示词，再沉淀知识库、标题库、关键词库和图片',
                         '先用小任务生成少量文章，检查标题、事实、Markdown 排版、图片、SEO 字段和 Schema',
                         '通过审核后再发布到本站，或同步到目标 Agent、WordPress、通用 API 等渠道',
                         '定期查看观测归因，用任务状态、分发日志、访问日志和 AI 爬虫数据反向修正知识资产和内容',
@@ -89,10 +85,6 @@ return [
             'badge' => 'Project Intro',
             'switch_label' => '中文',
             'close' => 'Close',
-            'links_label' => 'Use these links when you need repository details, release notes, or the author profile.',
-            'author_link' => 'Author X Profile',
-            'github_link' => 'Project GitHub',
-            'changelog_link' => 'Changelog',
         ],
         'letter' => [
             'title' => 'A Letter to geo.dofe Users',
@@ -139,7 +131,7 @@ return [
                 [
                     'type' => 'list',
                     'items' => [
-                        'Configure chat models, embedding models, and prompts before building knowledge, title, keyword, image, and author libraries',
+                        'Configure chat models, embedding models, and prompts before building knowledge, title, keyword, and image libraries',
                         'Generate a few articles first, then review titles, facts, Markdown layout, images, SEO fields, and Schema',
                         'After review, publish to the local site or sync to target Agent, WordPress, and generic API channels',
                         'Use Analytics regularly to refine materials and content through task status, distribution logs, access logs, and AI crawler data',

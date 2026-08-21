@@ -37,10 +37,6 @@ return static function (array $welcomeState): array {
                 'badge' => '版本更新',
                 'switch_label' => 'English',
                 'close' => '关闭',
-                'links_label' => '建议先查看更新日志，再决定是否现在升级。',
-                'author_link' => '作者 X 主页',
-                'github_link' => '项目 GitHub',
-                'changelog_link' => '更新日志',
             ],
             'letter' => [
                 'title' => 'geo.dofe 有新版本可更新',
@@ -52,7 +48,7 @@ return static function (array $welcomeState): array {
                     ],
                     [
                         'type' => 'paragraph',
-                        'content' => $summaryZh !== '' ? $summaryZh : '这次更新已经整理成版本元数据和更新日志。你可以先看清楚改了什么，再决定什么时候升级，而不用自己去 GitHub 手动对比。',
+                        'content' => $summaryZh !== '' ? $summaryZh : '这次更新已经整理成版本元数据和更新说明。你可以先看清楚改了什么，再决定什么时候升级。',
                     ],
                     [
                         'type' => 'list',
@@ -75,10 +71,6 @@ return static function (array $welcomeState): array {
                 'badge' => 'Release Update',
                 'switch_label' => '中文',
                 'close' => 'Close',
-                'links_label' => 'Review the changelog first, then decide when to upgrade.',
-                'author_link' => 'Author X Profile',
-                'github_link' => 'Project GitHub',
-                'changelog_link' => 'Changelog',
             ],
             'letter' => [
                 'title' => 'A new geo.dofe version is available',

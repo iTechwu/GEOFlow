@@ -108,9 +108,9 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertSee(route('admin.distribution.index'), false)
             ->assertSee(route('admin.distribution.create'), false)
             ->assertSee(route('admin.distribution.jobs'), false)
-            ->assertSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-template', false)
-            ->assertSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-design', false)
-            ->assertSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-cli', false);
+            ->assertDontSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-template', false)
+            ->assertDontSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-design', false)
+            ->assertDontSee('https://github.com/yaojingang/yao-geo-skills/tree/main/skills/yao-geoflow-cli', false);
 
         $html = $response->getContent();
         $this->assertGreaterThanOrEqual(1, substr_count($html, route('admin.knowledge-bases.index')));
@@ -261,7 +261,7 @@ class AdminDashboardQuickStartTest extends TestCase
         $this->assertStringContainsString(__('admin.footer.project_intro_link'), $secondHtml);
     }
 
-    public function test_admin_footer_links_to_locale_specific_help_docs(): void
+    public function test_admin_footer_omits_external_author_and_repository_links(): void
     {
         $admin = Admin::query()->create([
             'username' => 'dashboard_help_docs_admin',
@@ -277,9 +277,9 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString(__('admin.footer.help_docs_link'), $zhHtml);
-        $this->assertStringContainsString('https://github.com/yaojingang/geo.dofe/wiki', $zhHtml);
-        $this->assertStringNotContainsString('https://github.com/yaojingang/geo.dofe/wiki/Home-English', $zhHtml);
+        $this->assertStringNotContainsString('github.com', $zhHtml);
+        $this->assertStringNotContainsString('x.com', $zhHtml);
+        $this->assertStringNotContainsString('姚金刚', $zhHtml);
 
         session(['locale' => 'en']);
 
@@ -288,7 +288,8 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('Help docs', $enHtml);
-        $this->assertStringContainsString('https://github.com/yaojingang/geo.dofe/wiki/Home-English', $enHtml);
+        $this->assertStringNotContainsString('github.com', $enHtml);
+        $this->assertStringNotContainsString('x.com', $enHtml);
+        $this->assertStringNotContainsString('Yao Jingang', $enHtml);
     }
 }
