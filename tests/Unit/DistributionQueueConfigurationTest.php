@@ -210,4 +210,16 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('find app config database resources routes -type d -exec chmod 755 {} +', $dockerfile);
         $this->assertStringContainsString('find app config database resources routes -type f -exec chmod 644 {} +', $dockerfile);
     }
+
+    public function test_nginx_preserves_external_host_port_for_laravel_asset_urls(): void
+    {
+        $nginx = file_get_contents(dirname(__DIR__, 2).'/docker/nginx/default.conf');
+
+        $this->assertIsString($nginx);
+        $this->assertStringContainsString('~:(?<geoflow_host_port>[0-9]+)$ $geoflow_host_port;', $nginx);
+        $this->assertStringContainsString('"" $http_host;', $nginx);
+        $this->assertStringContainsString('"" $geoflow_request_port;', $nginx);
+        $this->assertStringContainsString('proxy_set_header X-Forwarded-Host $geoflow_forwarded_host;', $nginx);
+        $this->assertStringContainsString('proxy_set_header X-Forwarded-Port $geoflow_forwarded_port;', $nginx);
+    }
 }
