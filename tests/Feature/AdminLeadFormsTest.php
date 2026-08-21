@@ -30,7 +30,7 @@ class AdminLeadFormsTest extends TestCase
         $this->actingAs($this->admin(), 'admin')
             ->get(route('admin.lead-forms.create'))
             ->assertOk()
-            ->assertSee('<input type="text" name="fields[0][options]"', false)
+            ->assertSee('<input id="lead-form-field-0-options" type="text" name="fields[0][options]"', false)
             ->assertDontSee('<textarea name="fields[0][options]"', false)
             ->assertSee(__('admin.lead_forms.options_placeholder_inline'), false)
             ->assertSee('justify-center', false)

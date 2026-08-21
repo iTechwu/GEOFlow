@@ -46,6 +46,7 @@ class AdminAccessibilityTest extends TestCase
             'admin.site-settings.index',
             'admin.ai-models.index',
             'admin.url-import',
+            'admin.lead-forms.create',
         ];
 
         $failures = [];
