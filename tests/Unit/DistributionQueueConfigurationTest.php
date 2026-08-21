@@ -141,4 +141,16 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('"name":"geoflow.catalog"', $healthcheck);
         $this->assertStringNotContainsString('Authorization: Bearer $token', $healthcheck);
     }
+
+    public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
+    {
+        $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/build-and-push-amd64-images.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('--password-stdin', $script);
+        $this->assertStringContainsString('REGISTRY_USERNAME', $script);
+        $this->assertStringContainsString('REGISTRY_PASSWORD', $script);
+        $this->assertStringContainsString('PUSH_LATEST="${PUSH_LATEST:-0}"', $script);
+        $this->assertStringNotContainsString("--username='majin72'", $script);
+    }
 }

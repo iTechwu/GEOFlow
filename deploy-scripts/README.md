@@ -10,6 +10,7 @@
 | --- | --- |
 | `geoflow-docker-deploy.sh` | 生产 Docker 首次空库一键部署脚本。会自检服务器、准备 `.env.prod`、连接外部 PostgreSQL/Redis、部署 Web、App、队列、调度和 Reverb，并在最后执行健康检查。 |
 | `geoflow-healthcheck.sh` | 部署后健康检查脚本。可单独检查容器状态、Laravel 健康端点和数据库连接。 |
+| `build-and-push-amd64-images.sh` | 用 CI Secret 登录镜像仓库，构建并推送带不可变版本标签的 amd64 生产镜像。 |
 | `start-docker-pull-tunnel.sh` | **本机 Mac**：SSH 反向隧道，把 Clash HTTP 代理暴露给 ECS。 |
 | `pull-images-once-via-tunnel.sh` | **ECS 一次性拉镜像**：经隧道 + `skopeo`，**不重启 docker**，不影响运行中容器。 |
 | `build-once-via-tunnel.sh` | **ECS 一次性 build**：临时代理仅作用于本次 `docker compose build`，**不重启 docker**。 |
@@ -95,6 +96,19 @@ bash geoflow-docker-deploy.sh
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | 反向代理、CDN、二级目录部署时的可信代理设置 |
 | `GEOFLOW_SELF_DELETE` | `0` | 设置为 `1` 时，部署成功后删除当前执行的部署脚本 |
 
+## CI 构建生产镜像
+
+```bash
+REGISTRY=registry.example.com \
+NS=geo_flow \
+VERSION="$GITHUB_SHA" \
+REGISTRY_USERNAME="$REGISTRY_USERNAME" \
+REGISTRY_PASSWORD="$REGISTRY_PASSWORD" \
+bash deploy-scripts/build-and-push-amd64-images.sh
+```
+
+默认只推送 `VERSION` 不可变标签，便于审计和回滚。仅在明确需要兼容浮动标签时设置 `PUSH_LATEST=1`。脚本通过 `--password-stdin` 登录，不会把密码写入命令行参数。
+
 ## 执行后自删除
 
 如果你把部署脚本下载到临时目录，部署成功后希望自动删除它：
@@ -155,6 +169,7 @@ This folder contains reference scripts for technical operators who want a faster
 | --- | --- |
 | `geoflow-docker-deploy.sh` | First install on a fresh empty production database. It checks the server, prepares `.env.prod`, connects to externally managed PostgreSQL/Redis, deploys web, app, queue, scheduler and Reverb, then runs a healthcheck. |
 | `geoflow-healthcheck.sh` | Post-deployment healthcheck. It validates Docker Compose services, the Laravel health endpoint and database connectivity. |
+| `build-and-push-amd64-images.sh` | Logs in with CI secrets and publishes versioned amd64 production images. |
 
 ## Recommended Server Profile
 
