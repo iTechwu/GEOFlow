@@ -38,7 +38,7 @@ final class ModelsInternalClient
     private static function client(): PendingRequest
     {
         if (! self::isConfigured()) {
-            throw new RuntimeException('models internal HMAC 未配置：需 MODELS_INTERNAL_BASE_URL 与 INTERNAL_API_SECRET 同时非空。');
+            throw new RuntimeException('models internal HMAC 未配置：需 MODELS_INTERNAL_BASE_URL 与 MODELS_INTERNAL_API_SECRET（兼容 INTERNAL_API_SECRET）同时非空。');
         }
 
         return Http::withHeaders(ModelsInternalAuth::headers(self::secret(), self::serviceName()))

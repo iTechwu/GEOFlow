@@ -108,9 +108,9 @@ return [
     // models 管理端点 host（ModelsInternalClient 访问 /internal/*，服务间 HMAC）。
     // 注意：chat/embeddings 走公共 /v1 + MODELS_API_KEY，不使用此 HMAC。
     'models_internal_base_url' => rtrim(trim((string) env('MODELS_INTERNAL_BASE_URL', '')), '/'),
-    'models_internal_api_secret' => trim((string) env('INTERNAL_API_SECRET', '')),
+    // 优先使用 models 专用密钥；回退 INTERNAL_API_SECRET 以兼容既有部署。
+    'models_internal_api_secret' => trim((string) env('MODELS_INTERNAL_API_SECRET', env('INTERNAL_API_SECRET', ''))),
     'models_service_name' => trim((string) env('MODELS_SERVICE_NAME', 'geoflow')),
-    'models_team_id' => trim((string) env('MODELS_TEAM_ID', '')),
 
     // Streamable HTTP MCP endpoint; disabled when no explicit token is configured.
     'mcp_enabled' => filter_var(env('GEOFLOW_MCP_ENABLED', false), FILTER_VALIDATE_BOOLEAN),

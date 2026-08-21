@@ -16,7 +16,7 @@ class ModelsInternalCheckCommand extends Command
     public function handle(): int
     {
         if (! ModelsInternalClient::isConfigured()) {
-            $this->error('models internal HMAC 未配置：需 MODELS_INTERNAL_BASE_URL 与 INTERNAL_API_SECRET 同时非空。');
+            $this->error('models internal HMAC 未配置：需 MODELS_INTERNAL_BASE_URL 与 MODELS_INTERNAL_API_SECRET（兼容 INTERNAL_API_SECRET）同时非空。');
 
             return self::FAILURE;
         }
