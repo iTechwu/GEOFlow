@@ -321,7 +321,7 @@ class ManagedImageFileService extends ManagedImagePathHasherV1
             throw new RuntimeException('managed_image_identity_backfill_required');
         }
 
-        /** @var array{path:string,path_hash:string,fence_token:int}|null $intent */
+        /** @var array{path:string,paths:list<string>,path_hash:string,fence_token:int}|null $intent */
         $intent = $this->withPathLock($path, function () use ($path): ?array {
             $managed = $this->resolve($path, false);
             if ($this->hasPhysicalReference($managed['path_hash'])) {
@@ -338,9 +338,17 @@ class ManagedImageFileService extends ManagedImagePathHasherV1
 
             $fenceToken = $this->currentFenceToken($managed['db_path']);
             $this->markRegistry($managed['db_path'], 'deleting');
+            $registeredPath = ManagedImagePath::query()
+                ->where('path_hash', $managed['path_hash'])
+                ->value('file_path');
+            $paths = array_values(array_unique(array_filter([
+                $managed['db_path'],
+                is_string($registeredPath) ? $registeredPath : null,
+            ])));
 
             return [
                 'path' => $managed['db_path'],
+                'paths' => $paths,
                 'path_hash' => $managed['path_hash'],
                 'fence_token' => $fenceToken,
             ];
@@ -360,13 +368,18 @@ class ManagedImageFileService extends ManagedImagePathHasherV1
             return false;
         }
 
-        $managed = $this->resolve($intent['path'], false);
-        if ($managed['exists']) {
-            $deleted = $managed['disk_path'] !== null
-                ? Storage::disk('public')->delete($managed['disk_path'])
-                : @unlink($managed['absolute_path']);
-            if (! $deleted && is_file($managed['absolute_path'])) {
+        foreach ($intent['paths'] as $candidatePath) {
+            $managed = $this->resolve($candidatePath, false);
+            if (! hash_equals($intent['path_hash'], $managed['path_hash'])) {
                 return false;
+            }
+            if ($managed['exists']) {
+                $deleted = $managed['disk_path'] !== null
+                    ? Storage::disk('public')->delete($managed['disk_path'])
+                    : @unlink($managed['absolute_path']);
+                if (! $deleted && is_file($managed['absolute_path'])) {
+                    return false;
+                }
             }
         }
 
