@@ -16,10 +16,22 @@ class AdminAiModelsPageTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        config([
+            'geoflow.models_base_url' => 'https://models.test/v1',
+            'geoflow.models_api_key' => 'models-service-key',
+            'geoflow.ai_base_url' => '',
+            'geoflow.ai_api_key' => '',
+        ]);
+    }
+
     public function test_admin_can_test_chat_model_connection(): void
     {
         Http::fake([
-            'https://ai.test/v1/chat/completions' => Http::response([
+            'https://models.test/v1/chat/completions' => Http::response([
                 'choices' => [
                     ['message' => ['content' => 'OK']],
                 ],
@@ -37,9 +49,9 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'chat')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://ai.test/v1/chat/completions'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
             && $request['model'] === 'test-chat-model'
-            && $request->hasHeader('Authorization', 'Bearer test-api-key'));
+            && $request->hasHeader('Authorization', 'Bearer models-service-key'));
     }
 
     public function test_admin_models_page_shows_test_action(): void
@@ -108,7 +120,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_admin_can_test_embedding_model_connection(): void
     {
         Http::fake([
-            'https://ai.test/v1/embeddings' => Http::response([
+            'https://models.test/v1/embeddings' => Http::response([
                 'data' => [
                     ['embedding' => [0.1, 0.2, 0.3]],
                 ],
@@ -126,15 +138,15 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'embedding')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://ai.test/v1/embeddings'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/embeddings'
             && $request['model'] === 'test-embedding-model'
             && $request['input'] === 'GEOFlow embedding connection test');
     }
 
-    public function test_admin_can_test_volcengine_embedding_model_connection(): void
+    public function test_admin_routes_volcengine_embedding_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://ark.cn-beijing.volces.com/api/v3/embeddings' => Http::response([
+            'https://models.test/v1/embeddings' => Http::response([
                 'data' => [
                     ['embedding' => [0.11, 0.22, 0.33]],
                 ],
@@ -156,24 +168,18 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'embedding')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://ark.cn-beijing.volces.com/api/v3/embeddings'
-            && $request->hasHeader('Authorization', 'Bearer test-api-key')
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/embeddings'
+            && $request->hasHeader('Authorization', 'Bearer models-service-key')
             && $request['model'] === 'doubao-embedding-text-240515'
             && $request['input'] === 'GEOFlow embedding connection test');
     }
 
-    public function test_admin_can_test_gemini_chat_model_connection(): void
+    public function test_admin_routes_gemini_chat_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent' => Http::response([
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                ['text' => 'OK'],
-                            ],
-                        ],
-                    ],
+            'https://models.test/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'OK']],
                 ],
             ]),
         ]);
@@ -193,19 +199,18 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'chat')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent'
-            && $request->hasHeader('x-goog-api-key', 'test-api-key')
-            && ($request['contents'][0]['parts'][0]['text'] ?? '') === 'Reply with OK.'
-            && ($request['generationConfig']['thinkingConfig']['thinkingLevel'] ?? '') === 'minimal'
-            && ($request['generationConfig']['maxOutputTokens'] ?? 0) >= 64);
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
+            && $request->hasHeader('Authorization', 'Bearer models-service-key')
+            && ($request['model'] ?? '') === 'gemini-3-flash-preview'
+            && ($request['messages'][0]['content'] ?? '') === 'Reply with OK.');
     }
 
-    public function test_admin_can_test_gemini_embedding_model_connection_with_retrieval_prefix(): void
+    public function test_admin_routes_gemini_embedding_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents' => Http::response([
-                'embeddings' => [
-                    ['values' => [0.1, 0.2, 0.3]],
+            'https://models.test/v1/embeddings' => Http::response([
+                'data' => [
+                    ['embedding' => [0.1, 0.2, 0.3]],
                 ],
             ]),
         ]);
@@ -225,25 +230,18 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'embedding')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://generativelanguage.googleapis.com/v1beta/models/gemini-embedding-2:batchEmbedContents'
-            && $request->hasHeader('x-goog-api-key', 'test-api-key')
-            && ($request['requests'][0]['content']['parts'][0]['text'] ?? '') === 'task: search result | query: GEOFlow embedding connection test'
-            && ! isset($request['requests'][0]['taskType'])
-            && ! isset($request['taskType']));
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/embeddings'
+            && $request->hasHeader('Authorization', 'Bearer models-service-key')
+            && ($request['model'] ?? '') === 'gemini-embedding-2'
+            && ($request['input'] ?? '') === 'GEOFlow embedding connection test');
     }
 
-    public function test_gemini_three_pro_connection_test_uses_low_thinking_level(): void
+    public function test_admin_routes_gemini_pro_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent' => Http::response([
-                'candidates' => [
-                    [
-                        'content' => [
-                            'parts' => [
-                                ['text' => 'OK'],
-                            ],
-                        ],
-                    ],
+            'https://models.test/v1/chat/completions' => Http::response([
+                'choices' => [
+                    ['message' => ['content' => 'OK']],
                 ],
             ]),
         ]);
@@ -261,9 +259,9 @@ class AdminAiModelsPageTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://generativelanguage.googleapis.com/v1beta/models/gemini-3-pro-preview:generateContent'
-            && ($request['generationConfig']['thinkingConfig']['thinkingLevel'] ?? '') === 'low'
-            && ($request['generationConfig']['maxOutputTokens'] ?? 0) >= 64);
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
+            && $request->hasHeader('Authorization', 'Bearer models-service-key')
+            && ($request['model'] ?? '') === 'gemini-3-pro-preview');
     }
 
     public function test_admin_models_page_shows_embedding_quick_fill_presets_and_notice(): void
@@ -321,7 +319,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_model_connection_test_reports_provider_errors(): void
     {
         Http::fake([
-            'https://ai.test/v1/chat/completions' => Http::response(['detail' => 'API Key invalid'], 401),
+            'https://models.test/v1/chat/completions' => Http::response(['detail' => 'API Key invalid'], 401),
         ]);
 
         $model = $this->createAiModel('chat');
