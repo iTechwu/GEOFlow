@@ -7,6 +7,7 @@
 - 鉴权：`Authorization: Bearer <token>`，支持两类凭证：
   - 部署级令牌（系统/跨租户）：`GEOFLOW_MCP_TOKEN` 全量（读+写）；`GEOFLOW_MCP_READ_TOKEN`（可选）只读（仅 `catalog` / `tasks.list` / `tasks.get`）。
   - SSO 访问令牌（租户隔离，以 SSO 为准）：复用 REST API 的 SSO 鉴权，取 `selected_team_id` 作为租户，任务工具仅能访问该租户的数据；缺失团队上下文时返回 401。
+- 系统令牌开关：`GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN=true`（默认）时允许部署级系统令牌；多租户生产可置 `false` 强制仅接受 SSO 令牌，彻底关闭跨租户系统通道。
 - 开关：`GEOFLOW_MCP_ENABLED=true` 且至少配置一个 Token 时才开放；否则返回 404/401
 - 建议由 CI 反向代理强制 HTTPS、来源 IP 白名单和请求体大小限制。
 

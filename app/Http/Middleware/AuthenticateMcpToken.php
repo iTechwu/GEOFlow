@@ -41,7 +41,14 @@ final class AuthenticateMcpToken
             return $this->unauthorized();
         }
 
-        $context = $this->resolveStaticToken($provided) ?? $this->resolveSsoToken($provided);
+        $context = null;
+        if ((bool) config('geoflow.mcp_allow_system_token', true)) {
+            $context = $this->resolveStaticToken($provided);
+        }
+        if ($context === null) {
+            $context = $this->resolveSsoToken($provided);
+        }
+
         if ($context === null) {
             return $this->unauthorized();
         }

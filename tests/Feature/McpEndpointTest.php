@@ -307,4 +307,21 @@ class McpEndpointTest extends TestCase
             ->assertUnauthorized()
             ->assertJsonPath('error.code', -32001);
     }
+
+    public function test_system_token_rejected_when_disabled(): void
+    {
+        $this->enableMcp('ci-secret');
+        config(['geoflow.mcp_allow_system_token' => false]);
+
+        Http::fake([
+            '*oauth/userinfo' => Http::response([], 401),
+        ]);
+
+        $this->mockServices();
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
+            ->assertUnauthorized()
+            ->assertJsonPath('error.code', -32001);
+    }
 }

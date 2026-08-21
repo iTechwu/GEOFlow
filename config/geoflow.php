@@ -119,6 +119,8 @@ return [
     // 可选只读令牌：仅允许 catalog / tasks.list / tasks.get，拒绝所有写工具。
     'mcp_read_token' => trim((string) env('GEOFLOW_MCP_READ_TOKEN', '')),
     'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
+    // 是否允许部署级系统令牌（跨租户）。多租户生产可置 false 强制仅接受 SSO 令牌。
+    'mcp_allow_system_token' => filter_var(env('GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN', true), FILTER_VALIDATE_BOOLEAN),
     // 临时数据保留策略（geoflow:prune-transient 每日清理）。
     'mcp_audit_retention_days' => max(1, (int) env('GEOFLOW_MCP_AUDIT_RETENTION_DAYS', 30)),
     'idempotency_retention_days' => max(1, (int) env('GEOFLOW_IDEMPOTENCY_RETENTION_DAYS', 7)),
