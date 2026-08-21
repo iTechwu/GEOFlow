@@ -237,7 +237,7 @@ final class OpenAiRuntimeProvider
     {
         $trimmed = trim($content);
         if ($trimmed === '' || ! self::looksLikeSseCompletionPayload($trimmed)) {
-            return $trimmed;
+            return self::stripReasoningBlocks($trimmed);
         }
 
         $segments = [];
@@ -288,7 +288,37 @@ final class OpenAiRuntimeProvider
             }
         }
 
-        return trim(implode('', array_filter($segments, static fn (string $segment): bool => $segment !== '')));
+        return self::stripReasoningBlocks(
+            trim(implode('', array_filter($segments, static fn (string $segment): bool => $segment !== '')))
+        );
+    }
+
+    /**
+     * 不把推理模型的内部思考段落写入用户文章或摘要。
+     * 部分 OpenAI 兼容网关会把 <think>/<analysis>/<reasoning> 直接放进 content。
+     */
+    private static function stripReasoningBlocks(string $content): string
+    {
+        $normalized = trim($content);
+        if ($normalized === '') {
+            return '';
+        }
+
+        $normalized = preg_replace(
+            '/<(?:think|analysis|reasoning)\\b[^>]*>.*?<\\/(?:think|analysis|reasoning)\\s*>/isu',
+            '',
+            $normalized
+        ) ?? $normalized;
+
+        // An interrupted generation may omit the closing tag. Drop the
+        // incomplete reasoning tail so it cannot leak into a draft.
+        $normalized = preg_replace(
+            '/<(?:think|analysis|reasoning)\\b[^>]*>.*$/isu',
+            '',
+            $normalized
+        ) ?? $normalized;
+
+        return trim($normalized);
     }
 
     public static function looksLikeSseCompletionPayload(string $content): bool
