@@ -126,4 +126,19 @@ class DistributionQueueConfigurationTest extends TestCase
             $healthcheck
         );
     }
+
+    public function test_deployment_healthcheck_is_a_strict_models_and_mcp_release_gate(): void
+    {
+        $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');
+
+        $this->assertIsString($healthcheck);
+        $this->assertStringContainsString('fail "Required services did not become ready:', $healthcheck);
+        $this->assertStringContainsString('fail "HTTP health endpoint failed:', $healthcheck);
+        $this->assertStringContainsString('php artisan geoflow:models-internal-check --no-interaction', $healthcheck);
+        $this->assertStringContainsString('GEOFLOW_HEALTHCHECK_REQUIRE_MODELS_INTERNAL:-1', $healthcheck);
+        $this->assertStringContainsString('"method":"initialize"', $healthcheck);
+        $this->assertStringContainsString('"method":"tools/list"', $healthcheck);
+        $this->assertStringContainsString('"name":"geoflow.catalog"', $healthcheck);
+        $this->assertStringNotContainsString('Authorization: Bearer $token', $healthcheck);
+    }
 }

@@ -251,7 +251,7 @@ prepare_env() {
   fi
 
   local default_ip current_app_url current_admin_path current_web_port current_reverb_port
-  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret db_host redis_host models_base models_key mcp_token mcp_read_token mcp_enabled
+  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret db_host redis_host models_base models_key models_internal_base models_internal_secret mcp_token mcp_read_token mcp_enabled
   default_ip="$(detect_primary_ip || true)"
   default_ip="${default_ip:-127.0.0.1}"
 
@@ -274,6 +274,8 @@ prepare_env() {
   reverb_secret="${GEOFLOW_REVERB_SECRET:-$(get_env_value .env.prod REVERB_APP_SECRET)}"
   models_base="${MODELS_BASE_URL:-$(get_env_value .env.prod MODELS_BASE_URL)}"
   models_key="${MODELS_API_KEY:-$(get_env_value .env.prod MODELS_API_KEY)}"
+  models_internal_base="${MODELS_INTERNAL_BASE_URL:-$(get_env_value .env.prod MODELS_INTERNAL_BASE_URL)}"
+  models_internal_secret="${MODELS_INTERNAL_API_SECRET:-$(get_env_value .env.prod MODELS_INTERNAL_API_SECRET)}"
   mcp_token="${GEOFLOW_MCP_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_TOKEN)}"
   mcp_read_token="${GEOFLOW_MCP_READ_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_READ_TOKEN)}"
   mcp_enabled="${GEOFLOW_MCP_ENABLED:-$(get_env_value .env.prod GEOFLOW_MCP_ENABLED)}"
@@ -281,11 +283,15 @@ prepare_env() {
   [ -n "$redis_password" ] || fail "Set GEOFLOW_REDIS_PASSWORD for the externally managed Redis service."
   [ -n "$models_base" ] || fail "Set MODELS_BASE_URL to the models.dofe.ai OpenAI-compatible endpoint."
   [ -n "$models_key" ] || fail "Set MODELS_API_KEY in CI secrets."
+  [ -n "$models_internal_base" ] || fail "Set MODELS_INTERNAL_BASE_URL for the models management endpoint."
+  [ -n "$models_internal_secret" ] || fail "Set MODELS_INTERNAL_API_SECRET in CI secrets."
   [ "$mcp_enabled" != "true" ] || [ -n "$mcp_token" ] || fail "Set GEOFLOW_MCP_TOKEN or disable GEOFLOW_MCP_ENABLED."
   mcp_token="${mcp_token:-}"
   mcp_read_token="${mcp_read_token:-}"
   models_base="${models_base:-https://models.dofe.ai/v1}"
   models_key="${models_key:-}"
+  models_internal_base="${models_internal_base:-https://models.dofe.ai}"
+  models_internal_secret="${models_internal_secret:-}"
   redis_password="${redis_password:-}"
   reverb_secret="${reverb_secret:-$(random_secret)}"
 
@@ -307,6 +313,8 @@ prepare_env() {
   set_env_value .env.prod REDIS_PASSWORD "$redis_password"
   set_env_value .env.prod MODELS_BASE_URL "$models_base"
   set_env_value .env.prod MODELS_API_KEY "$models_key"
+  set_env_value .env.prod MODELS_INTERNAL_BASE_URL "$models_internal_base"
+  set_env_value .env.prod MODELS_INTERNAL_API_SECRET "$models_internal_secret"
   set_env_value .env.prod GEOFLOW_MCP_ENABLED "${mcp_enabled:-false}"
   set_env_value .env.prod GEOFLOW_MCP_TOKEN "$mcp_token"
   set_env_value .env.prod GEOFLOW_MCP_READ_TOKEN "$mcp_read_token"
