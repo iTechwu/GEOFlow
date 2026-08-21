@@ -11,6 +11,7 @@ use App\Support\McpAuditLogger;
 use Closure;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Throwable;
 
 /**
@@ -19,7 +20,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks): JsonResponse
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -215,7 +216,7 @@ final class McpController extends Controller
     /**
      * JSON-RPC 通知不携带 id，也不应有响应体；严格客户端会将其视为协议错误。
      */
-    private function notification(mixed $id): JsonResponse
+    private function notification(mixed $id): JsonResponse|Response
     {
         if ($id === null) {
             return response()->noContent();
