@@ -45,6 +45,12 @@ jobs:
           php -l app/Services/Mcp/McpToolException.php
           php -l app/Support/McpAuditLogger.php
           php -l app/Models/McpAuditLog.php
+          php -l app/Support/ModelsInternalAuth.php
+          php -l app/Services/Models/ModelsInternalClient.php
+          php -l app/Console/Commands/ModelsInternalCheckCommand.php
+
+      - name: Run focused integration tests
+        run: php artisan test --filter='ModelsInternalClientTest|McpEndpointTest'
 
       - name: Run tests
         run: php artisan test
