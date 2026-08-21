@@ -105,6 +105,12 @@ return [
     // models.dofe.ai is the production model catalog and routing gateway.
     'models_base_url' => rtrim(trim((string) env('MODELS_BASE_URL', '')), '/'),
     'models_api_key' => trim((string) env('MODELS_API_KEY', '')),
+    // /internal/v1 服务间 HMAC 入口；默认空=不启用。与 models_internal_api_secret 同时非空时优先于公共 /v1。
+    'models_internal_base_url' => rtrim(trim((string) env('MODELS_INTERNAL_BASE_URL', '')), '/'),
+    'models_internal_api_secret' => trim((string) env('INTERNAL_API_SECRET', '')),
+    // 内部 HMAC 三段令牌/头部使用的服务名与租户标识。
+    'models_service_name' => trim((string) env('MODELS_SERVICE_NAME', 'geoflow')),
+    'models_team_id' => trim((string) env('MODELS_TEAM_ID', '')),
 
     // Streamable HTTP MCP endpoint; disabled when no explicit token is configured.
     'mcp_enabled' => filter_var(env('GEOFLOW_MCP_ENABLED', false), FILTER_VALIDATE_BOOLEAN),

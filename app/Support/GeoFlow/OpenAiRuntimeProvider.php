@@ -2,6 +2,7 @@
 
 namespace App\Support\GeoFlow;
 
+use App\Support\ModelsInternalAuth;
 use Illuminate\Support\Facades\Config;
 use Throwable;
 
@@ -45,6 +46,25 @@ final class OpenAiRuntimeProvider
         }
 
         return trim((string) config('geoflow.ai_api_key', ''));
+    }
+
+    /**
+     * models.dofe.ai /internal/v1 服务间 HMAC 覆盖是否启用：
+     * internal base_url 与 INTERNAL_API_SECRET 两者均非空时为 true，优先级高于公共 /v1。
+     */
+    public static function hasInternalOverride(): bool
+    {
+        return self::internalBaseUrl() !== '' && self::internalApiSecret() !== '';
+    }
+
+    public static function internalBaseUrl(): string
+    {
+        return trim((string) config('geoflow.models_internal_base_url', ''));
+    }
+
+    public static function internalApiSecret(): string
+    {
+        return trim((string) config('geoflow.models_internal_api_secret', ''));
     }
 
     /**
@@ -196,13 +216,24 @@ final class OpenAiRuntimeProvider
      */
     public static function registerProvider(string $registrySlot, string $driver, string $providerUrl, string $apiKey): string
     {
-        // 统一网关覆盖：强制使用统一 base + key，忽略调用方传入的按模型/按用户值。
-        if (self::hasUnifiedOverride()) {
+        $internal = self::hasInternalOverride();
+        if ($internal) {
+            // models 内部 HMAC 优先：切换为 /internal/v1 base，key 改为 2 段 HMAC token。
+            // 2 段 token（<timestamp>:<signature>）不需要 x-service-name 头部，可直接作为 SDK 的 Bearer key。
+            $providerUrl = self::internalBaseUrl();
+            $apiKey = ModelsInternalAuth::token(self::internalApiSecret(), null);
+            $nameKey = 'models_internal';
+        } elseif (self::hasUnifiedOverride()) {
+            // 统一网关覆盖：强制使用统一 base + key，忽略调用方传入的按模型/按用户值。
             $providerUrl = self::unifiedBaseUrl();
             $apiKey = self::unifiedApiKey();
+            $nameKey = $apiKey;
+        } else {
+            $nameKey = $apiKey;
         }
 
-        $providerName = 'runtime_'.$registrySlot.'_'.md5($driver.'|'.$providerUrl.'|'.$apiKey);
+        // 名称里使用稳定 nameKey（内部覆盖时不带时间戳），避免长驻 worker 内 config 无限膨胀。
+        $providerName = 'runtime_'.$registrySlot.'_'.md5($driver.'|'.$providerUrl.'|'.$nameKey);
         Config::set('ai.providers.'.$providerName, [
             'driver' => $driver,
             'key' => $apiKey,
