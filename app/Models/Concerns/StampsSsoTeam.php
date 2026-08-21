@@ -12,7 +12,7 @@ use App\Support\SsoTeamContext;
  */
 trait StampsSsoTeam
 {
-    protected static function bootStampsSsoTeam(): void
+    public static function bootStampsSsoTeam(): void
     {
         static::creating(static function ($model): void {
             if (! $model->isFillable('sso_team_id')) {
