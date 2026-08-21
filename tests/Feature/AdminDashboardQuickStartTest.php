@@ -29,6 +29,25 @@ class AdminDashboardQuickStartTest extends TestCase
             ->assertDontSee('js/tailwindcss.play-cdn.js', false);
     }
 
+    public function test_admin_header_menu_buttons_expose_accessible_state(): void
+    {
+        $admin = Admin::query()->create([
+            'username' => 'accessible_header_admin',
+            'password' => 'secret-123',
+            'email' => 'accessible-header@example.com',
+            'display_name' => 'Accessible Header Admin',
+            'role' => 'super_admin',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($admin, 'admin')
+            ->withSession(['locale' => 'en'])
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->assertSee('aria-label="Account menu" aria-controls="user-menu" aria-expanded="false"', false)
+            ->assertSee('aria-label="Open navigation menu" aria-controls="mobile-menu" aria-expanded="false"', false);
+    }
+
     public function test_dashboard_shows_scenario_navigation_without_data_widgets(): void
     {
         $admin = Admin::query()->create([

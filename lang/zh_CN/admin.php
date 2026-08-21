@@ -26,6 +26,8 @@ return [
         'language_switch_label' => '界面语言',
         'language_switch_hint' => '中文 / English',
         'language_switch_to' => '切换为 :language',
+        'account_menu' => '账户菜单',
+        'mobile_menu' => '打开导航菜单',
         'notifications' => [
             'label' => '通知消息',
             'title' => '通知消息',

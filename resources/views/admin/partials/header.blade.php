@@ -119,7 +119,7 @@
             </nav>
             <div class="flex shrink-0 items-center gap-2 sm:gap-3 ml-auto">
                 <div class="relative">
-                    <button onclick="toggleAdminNotifications()" class="relative rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors duration-200" type="button" aria-label="{{ __('admin.header.notifications.label') }}" title="{{ __('admin.header.notifications.label') }}">
+                    <button id="admin-notification-button" onclick="toggleAdminNotifications()" class="relative rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors duration-200" type="button" aria-label="{{ __('admin.header.notifications.label') }}" aria-controls="admin-notification-menu" aria-expanded="false" title="{{ __('admin.header.notifications.label') }}">
                         <i data-lucide="bell" class="w-5 h-5"></i>
                         @if($hasVersionUpdate)
                             <span data-update-indicator class="absolute right-1.5 top-1.5 h-2.5 w-2.5 rounded-full bg-red-500 ring-2 ring-white"></span>
@@ -191,7 +191,7 @@
                     </select>
                 </div>
                 <div class="relative">
-                    <button onclick="toggleUserMenu()" class="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200" type="button">
+                    <button id="user-menu-button" onclick="toggleUserMenu()" class="flex items-center space-x-1 text-sm text-gray-600 hover:text-gray-900 transition-colors duration-200" type="button" aria-label="{{ __('admin.header.account_menu') }}" aria-controls="user-menu" aria-expanded="false">
                         <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
                             <i data-lucide="user" class="w-4 h-4 text-blue-600"></i>
                         </div>
@@ -243,7 +243,7 @@
     </div>
 </nav>
 <div class="md:hidden fixed top-4 right-4 z-50">
-    <button onclick="toggleMobileMenu()" class="bg-white p-2 rounded-md shadow-md" type="button">
+    <button id="mobile-menu-button" onclick="toggleMobileMenu()" class="bg-white p-2 rounded-md shadow-md" type="button" aria-label="{{ __('admin.header.mobile_menu') }}" aria-controls="mobile-menu" aria-expanded="false">
         <i data-lucide="menu" class="w-5 h-5 text-gray-600"></i>
     </button>
 </div>
@@ -260,22 +260,28 @@
 <script>
     function toggleUserMenu() {
         const menu = document.getElementById('user-menu');
+        const button = document.getElementById('user-menu-button');
         if (menu) {
             menu.classList.toggle('hidden');
+            button?.setAttribute('aria-expanded', menu.classList.contains('hidden') ? 'false' : 'true');
         }
     }
 
     function toggleAdminNotifications() {
         const menu = document.getElementById('admin-notification-menu');
+        const button = document.getElementById('admin-notification-button');
         if (menu) {
             menu.classList.toggle('hidden');
+            button?.setAttribute('aria-expanded', menu.classList.contains('hidden') ? 'false' : 'true');
         }
     }
 
     function toggleMobileMenu() {
         const menu = document.getElementById('mobile-menu');
+        const button = document.getElementById('mobile-menu-button');
         if (menu) {
             menu.classList.toggle('hidden');
+            button?.setAttribute('aria-expanded', menu.classList.contains('hidden') ? 'false' : 'true');
         }
     }
 
@@ -285,12 +291,15 @@
         const notificationMenu = document.getElementById('admin-notification-menu');
         if (userMenu && !event.target.closest('[onclick="toggleUserMenu()"]') && !userMenu.contains(event.target)) {
             userMenu.classList.add('hidden');
+            document.getElementById('user-menu-button')?.setAttribute('aria-expanded', 'false');
         }
         if (notificationMenu && !event.target.closest('[onclick="toggleAdminNotifications()"]') && !notificationMenu.contains(event.target)) {
             notificationMenu.classList.add('hidden');
+            document.getElementById('admin-notification-button')?.setAttribute('aria-expanded', 'false');
         }
         if (mobileMenu && !event.target.closest('[onclick="toggleMobileMenu()"]') && !mobileMenu.contains(event.target)) {
             mobileMenu.classList.add('hidden');
+            document.getElementById('mobile-menu-button')?.setAttribute('aria-expanded', 'false');
         }
     });
 </script>
