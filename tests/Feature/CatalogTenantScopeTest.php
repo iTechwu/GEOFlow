@@ -26,11 +26,13 @@ class CatalogTenantScopeTest extends TestCase
 
     public function test_catalog_without_team_shows_all_content(): void
     {
-        Prompt::query()->create(['name' => 'team-a-prompt', 'type' => 'content', 'content' => 'a', 'sso_team_id' => 'team-a']);
-        Prompt::query()->create(['name' => 'team-b-prompt', 'type' => 'content', 'content' => 'b', 'sso_team_id' => 'team-b']);
+        $teamA = Prompt::query()->create(['name' => 'team-a-prompt', 'type' => 'content', 'content' => 'a', 'sso_team_id' => 'team-a']);
+        $teamB = Prompt::query()->create(['name' => 'team-b-prompt', 'type' => 'content', 'content' => 'b', 'sso_team_id' => 'team-b']);
 
         $all = app(CatalogGeoFlowService::class)->getCatalog(null);
+        $ids = collect($all['prompts'])->pluck('id');
 
-        $this->assertCount(2, $all['prompts']);
+        $this->assertTrue($ids->contains($teamA->id));
+        $this->assertTrue($ids->contains($teamB->id));
     }
 }
