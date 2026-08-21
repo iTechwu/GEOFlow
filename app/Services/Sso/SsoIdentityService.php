@@ -60,8 +60,26 @@ final class SsoIdentityService
         ))));
     }
 
+    /**
+     * 解析某管理员已同步的 SSO 团队（selected_team_id）。
+     *
+     * createTask 等写路径据此在任务上落库 sso_team_id，实现以 SSO 为准的租户归属。
+     */
+    public function selectedTeamIdForAdmin(int $adminId): ?string
+    {
+        $admin = Admin::query()->find($adminId);
+        $claims = $admin?->sso_claims;
+        if (! is_array($claims)) {
+            return null;
+        }
+
+        $teamId = $this->selectedTeamId($claims);
+
+        return $teamId !== null && $teamId !== '' ? $teamId : null;
+    }
+
     /** @param array<string,mixed> $claims */
-    private function selectedTeamId(array $claims): ?string
+    public function selectedTeamId(array $claims): ?string
     {
         foreach (['team_id', 'selected_team_id', 'current_team_id', 'tenant_id'] as $field) {
             $value = trim((string) ($claims[$field] ?? ''));

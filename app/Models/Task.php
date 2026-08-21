@@ -48,6 +48,7 @@ class Task extends Model
         'schedule_enabled',
         'max_retry_count',
         'sso_owner_admin_id',
+        'sso_team_id',
     ];
 
     protected function casts(): array

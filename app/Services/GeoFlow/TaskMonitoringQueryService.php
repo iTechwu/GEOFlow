@@ -72,6 +72,7 @@ class TaskMonitoringQueryService
             ->when(! empty($filters['status']), fn ($q) => $q->where('status', (string) $filters['status']))
             ->when(! empty($filters['search']), fn ($q) => $q->where('name', 'like', '%'.trim((string) $filters['search']).'%'))
             ->when(isset($filters['sso_owner_admin_id']), fn ($q) => $q->where('sso_owner_admin_id', (int) $filters['sso_owner_admin_id']))
+            ->when(! empty($filters['sso_team_id']), fn ($q) => $q->where('sso_team_id', (string) $filters['sso_team_id']))
             ->orderByDesc('created_at');
 
         $total = (clone $query)->count();

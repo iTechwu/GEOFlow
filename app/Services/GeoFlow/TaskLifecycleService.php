@@ -14,6 +14,7 @@ use App\Models\Task;
 use App\Models\TaskRun;
 use App\Models\TaskSchedule;
 use App\Models\TitleLibrary;
+use App\Services\Sso\SsoIdentityService;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -39,7 +40,8 @@ class TaskLifecycleService
     public function __construct(
         private JobQueueService $queueService,
         private TaskMonitoringQueryService $taskMonitoringQueryService,
-        private TaskRealtimeBroadcastService $taskRealtimeBroadcastService
+        private TaskRealtimeBroadcastService $taskRealtimeBroadcastService,
+        private SsoIdentityService $ssoIdentityService
     ) {}
 
     /**
@@ -99,6 +101,7 @@ class TaskLifecycleService
                 'category_mode' => $normalized['category_mode'],
                 'fixed_category_id' => $normalized['fixed_category_id'],
                 'sso_owner_admin_id' => isset($data['sso_owner_admin_id']) ? (int) $data['sso_owner_admin_id'] : null,
+                'sso_team_id' => $this->resolveTeamId($data),
             ]);
 
             $taskId = (int) $task->id;
@@ -151,6 +154,40 @@ class TaskLifecycleService
         if (! Task::query()->whereKey($taskId)->where('sso_owner_admin_id', $adminId)->exists()) {
             throw new ApiException('task_not_found', '任务不存在', 404);
         }
+    }
+
+    /**
+     * MCP 多租户隔离：按 SSO 团队（selected_team_id）限定任务可见范围。
+     *
+     * - $teamId 为空表示系统/跨租户令牌，不施加租户限制；
+     * - 否则任务必须归属该团队，跨租户访问统一返回 404（不泄露任务存在性）。
+     */
+    public function ensureTaskInScope(int $taskId, ?string $teamId): void
+    {
+        if ($teamId === null || $teamId === '') {
+            return;
+        }
+
+        if (! Task::query()->whereKey($taskId)->where('sso_team_id', $teamId)->exists()) {
+            throw new ApiException('task_not_found', '任务不存在', 404);
+        }
+    }
+
+    /**
+     * 解析任务创建时的租户归属：优先使用显式传入的 sso_team_id，
+     * 否则回退到创建者 SSO 身份已同步的 selected_team_id（以 SSO 为准）。
+     *
+     * @param  array<string,mixed>  $data
+     */
+    private function resolveTeamId(array $data): ?string
+    {
+        if (is_string($data['sso_team_id'] ?? null) && trim($data['sso_team_id']) !== '') {
+            return trim((string) $data['sso_team_id']);
+        }
+
+        $ownerId = (int) ($data['sso_owner_admin_id'] ?? 0);
+
+        return $ownerId > 0 ? $this->ssoIdentityService->selectedTeamIdForAdmin($ownerId) : null;
     }
 
     /**
