@@ -1,48 +1,9 @@
 # 预构建镜像部署：服务器只 pull 镜像并启动，不执行 Docker build。
+# PostgreSQL/Redis are external services managed by docker-helm.dofe.ai.
 # 用法：docker compose --env-file .env.prod -f docker-compose.prebuilt.yml up -d
 name: geoflow-laravel-prod
 
 services:
-  postgres:
-    image: ${PGVECTOR_IMAGE:-pgvector/pgvector:pg18}
-    container_name: geoflow-postgres-prod
-    environment:
-      POSTGRES_DB: "${DB_DATABASE:-geo_flow}"
-      POSTGRES_USER: "${DB_USERNAME:-geo_user}"
-      POSTGRES_PASSWORD: "${DB_PASSWORD:-change-this-password}"
-    volumes:
-      - ${POSTGRES_DATA_DIR:-./docker-data/prod/postgres}:${POSTGRES_CONTAINER_DATA_DIR:-/var/lib/postgresql}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d \"$$POSTGRES_DB\""]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
-  redis:
-    image: ${REDIS_IMAGE:-redis:8-alpine}
-    container_name: geoflow-redis-prod
-    environment:
-      REDIS_PASSWORD: "${REDIS_PASSWORD:-}"
-    command:
-      - /bin/sh
-      - -lc
-      - |
-        if [ -n "$${REDIS_PASSWORD:-}" ]; then
-          exec redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"
-        fi
-        exec redis-server --appendonly yes
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "if [ -n \"$${REDIS_PASSWORD:-}\" ]; then redis-cli -a \"$${REDIS_PASSWORD}\" ping; else redis-cli ping; fi",
-        ]
-      interval: 10s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
   init:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-init-prod
@@ -53,11 +14,6 @@ services:
     volumes:
       - ./.env.prod:/var/www/html/.env
       - ./storage:/var/www/html/storage
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     restart: "no"
 
   app:
@@ -107,8 +63,6 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
-      redis:
-        condition: service_healthy
     restart: unless-stopped
 
   scheduler:
@@ -138,14 +92,8 @@ services:
     depends_on:
       init:
         condition: service_completed_successfully
-      redis:
-        condition: service_healthy
     restart: unless-stopped
 networks:
   default:
-    name: ${DOCKER_NETWORK_NAME:-geoflow-prod-net}
-    ipam:
-      config:
-        # 避开 VPC 172.16.0.0/12，避免容器路由与内网地址冲突。
-        - subnet: ${DOCKER_NETWORK_SUBNET:-10.88.0.0/16}
-          gateway: ${DOCKER_NETWORK_GATEWAY:-10.88.0.1}
+    external: true
+    name: ${DOCKER_COMMON_NETWORK_NAME:-common_network}

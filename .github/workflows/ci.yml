@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      APP_KEY: base64:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite, bcmath, intl, gd
+          coverage: none
+          tools: composer:v2
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --no-progress
+
+      # 边界检查：阻止 PostgreSQL/Redis/RabbitMQ 服务重新进入应用编排（AGENTS.md）。
+      - name: Compose boundary check
+        run: bash deploy-scripts/check-compose-boundaries.sh
+
+      - name: PHP syntax check (MCP files)
+        run: |
+          php -l app/Http/Controllers/McpController.php
+          php -l app/Http/Middleware/AuthenticateMcpToken.php
+          php -l app/Http/McpAuthContext.php
+          php -l app/Services/Mcp/McpIdempotencyService.php
+          php -l app/Services/Mcp/McpToolException.php
+          php -l app/Support/McpAuditLogger.php
+          php -l app/Models/McpAuditLog.php
+
+      - name: Run tests
+        run: php artisan test
+
+      - name: Whitespace check
+        run: git diff --check

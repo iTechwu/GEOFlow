@@ -23,13 +23,11 @@ default_images=(
   composer:2
   uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
   nginx:1.31.1-alpine
-  pgvector/pgvector:pg18
-  redis:8-alpine
 )
 
 read_images() {
   if [[ -f "${ENV_FILE}" ]]; then
-    grep -E '^(COMPOSER|PHP_FPM|NGINX|PGVECTOR|REDIS)_IMAGE=' "${ENV_FILE}" \
+    grep -E '^(COMPOSER|PHP_FPM|NGINX)_IMAGE=' "${ENV_FILE}" \
       | cut -d= -f2- | tr -d '"' | awk '!seen[$0]++'
     return
   fi

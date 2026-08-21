@@ -251,7 +251,7 @@ prepare_env() {
   fi
 
   local default_ip current_app_url current_admin_path current_web_port current_reverb_port
-  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret
+  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret db_host redis_host models_base models_key mcp_token mcp_read_token mcp_enabled
   default_ip="$(detect_primary_ip || true)"
   default_ip="${default_ip:-127.0.0.1}"
 
@@ -265,11 +265,28 @@ prepare_env() {
   app_url="$(prompt_value GEOFLOW_APP_URL "Public APP_URL, including protocol and optional subdirectory" "${current_app_url:-http://${default_ip}:${web_port}}")"
   admin_path="$(prompt_value GEOFLOW_ADMIN_BASE_PATH "Admin base path without leading slash" "${current_admin_path:-geo_admin}")"
 
+  db_host="${GEOFLOW_DB_HOST:-$(get_env_value .env.prod DB_HOST)}"
+  redis_host="${GEOFLOW_REDIS_HOST:-$(get_env_value .env.prod REDIS_HOST)}"
+  db_host="${db_host:-dofe-postgres}"
+  redis_host="${redis_host:-dofe-redis}"
   db_password="${GEOFLOW_DB_PASSWORD:-$(get_env_value .env.prod DB_PASSWORD)}"
   redis_password="${GEOFLOW_REDIS_PASSWORD:-$(get_env_value .env.prod REDIS_PASSWORD)}"
   reverb_secret="${GEOFLOW_REVERB_SECRET:-$(get_env_value .env.prod REVERB_APP_SECRET)}"
-  db_password="${db_password:-$(random_secret)}"
-  redis_password="${redis_password:-$(random_secret)}"
+  models_base="${MODELS_BASE_URL:-$(get_env_value .env.prod MODELS_BASE_URL)}"
+  models_key="${MODELS_API_KEY:-$(get_env_value .env.prod MODELS_API_KEY)}"
+  mcp_token="${GEOFLOW_MCP_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_TOKEN)}"
+  mcp_read_token="${GEOFLOW_MCP_READ_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_READ_TOKEN)}"
+  mcp_enabled="${GEOFLOW_MCP_ENABLED:-$(get_env_value .env.prod GEOFLOW_MCP_ENABLED)}"
+  [ -n "$db_password" ] || fail "Set GEOFLOW_DB_PASSWORD for the externally managed PostgreSQL service."
+  [ -n "$redis_password" ] || fail "Set GEOFLOW_REDIS_PASSWORD for the externally managed Redis service."
+  [ -n "$models_base" ] || fail "Set MODELS_BASE_URL to the models.dofe.ai OpenAI-compatible endpoint."
+  [ -n "$models_key" ] || fail "Set MODELS_API_KEY in CI secrets."
+  [ "$mcp_enabled" != "true" ] || [ -n "$mcp_token" ] || fail "Set GEOFLOW_MCP_TOKEN or disable GEOFLOW_MCP_ENABLED."
+  mcp_token="${mcp_token:-}"
+  mcp_read_token="${mcp_read_token:-}"
+  models_base="${models_base:-https://models.dofe.ai/v1}"
+  models_key="${models_key:-}"
+  redis_password="${redis_password:-}"
   reverb_secret="${reverb_secret:-$(random_secret)}"
 
   check_ports "$web_port" "$reverb_port"
@@ -281,13 +298,18 @@ prepare_env() {
   set_env_value .env.prod BOOST_BROWSER_LOGS_WATCHER false
   set_env_value .env.prod ADMIN_BASE_PATH "$admin_path"
   set_env_value .env.prod DB_CONNECTION pgsql
-  set_env_value .env.prod DB_HOST postgres
+  set_env_value .env.prod DB_HOST "$db_host"
   set_env_value .env.prod DB_PORT 5432
   set_env_value .env.prod DB_DATABASE "${GEOFLOW_DB_DATABASE:-geo_flow}"
   set_env_value .env.prod DB_USERNAME "${GEOFLOW_DB_USERNAME:-geo_user}"
   set_env_value .env.prod DB_PASSWORD "$db_password"
-  set_env_value .env.prod REDIS_HOST redis
+  set_env_value .env.prod REDIS_HOST "$redis_host"
   set_env_value .env.prod REDIS_PASSWORD "$redis_password"
+  set_env_value .env.prod MODELS_BASE_URL "$models_base"
+  set_env_value .env.prod MODELS_API_KEY "$models_key"
+  set_env_value .env.prod GEOFLOW_MCP_ENABLED "${mcp_enabled:-false}"
+  set_env_value .env.prod GEOFLOW_MCP_TOKEN "$mcp_token"
+  set_env_value .env.prod GEOFLOW_MCP_READ_TOKEN "$mcp_read_token"
   set_env_value .env.prod WEB_PORT "$web_port"
   set_env_value .env.prod REVERB_EXPOSE_PORT "$reverb_port"
   set_env_value .env.prod REVERB_APP_SECRET "$reverb_secret"
@@ -306,9 +328,6 @@ deploy_stack() {
 
   log "Building production images."
   "${COMPOSE[@]}" build
-
-  log "Starting PostgreSQL and Redis."
-  "${COMPOSE[@]}" up -d postgres redis
 
   log "Running initialization and database migrations."
   "${COMPOSE[@]}" up init

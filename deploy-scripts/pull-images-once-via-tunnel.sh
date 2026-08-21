@@ -68,7 +68,7 @@ read_images_from_env() {
   if [[ -f "${ENV_FILE}" ]]; then
     while IFS= read -r line; do
       case "${line}" in
-        COMPOSER_IMAGE=*|PHP_FPM_IMAGE=*|NGINX_IMAGE=*|PGVECTOR_IMAGE=*|REDIS_IMAGE=*)
+        COMPOSER_IMAGE=*|PHP_FPM_IMAGE=*|NGINX_IMAGE=*)
           local value="${line#*=}"
           value="${value%\"}"
           value="${value#\"}"
@@ -82,8 +82,6 @@ read_images_from_env() {
       composer:2
       uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
       nginx:1.31.1-alpine
-      pgvector/pgvector:pg18
-      redis:8-alpine
     )
   fi
   printf '%s\n' "${images[@]}" | awk '!seen[$0]++'

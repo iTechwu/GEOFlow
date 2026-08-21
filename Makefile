@@ -1,4 +1,4 @@
-.PHONY: dev dev-up dev-down dev-logs dev-shell
+.PHONY: dev dev-up dev-down dev-logs dev-shell check-boundaries test
 
 dev: .env.local
 	GEOFLOW_ENV_FILE=.env.local docker compose --env-file .env.local up --build
@@ -17,3 +17,11 @@ dev-shell:
 
 .env.local:
 	cp .env.example .env.local
+
+# 校验 Compose 未内嵌 PostgreSQL/Redis/RabbitMQ 服务（见 AGENTS.md）
+check-boundaries:
+	bash deploy-scripts/check-compose-boundaries.sh
+
+# 运行 PHPUnit（需本地 php + vendor）
+test:
+	php artisan test

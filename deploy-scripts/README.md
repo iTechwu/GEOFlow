@@ -8,7 +8,7 @@
 
 | 脚本 | 用途 |
 | --- | --- |
-| `geoflow-docker-deploy.sh` | 生产 Docker 首次空库一键部署脚本。会自检服务器、准备 `.env.prod`、部署 PostgreSQL、Redis、Web、App、队列、调度和 Reverb，并在最后执行健康检查。 |
+| `geoflow-docker-deploy.sh` | 生产 Docker 首次空库一键部署脚本。会自检服务器、准备 `.env.prod`、连接外部 PostgreSQL/Redis、部署 Web、App、队列、调度和 Reverb，并在最后执行健康检查。 |
 | `geoflow-healthcheck.sh` | 部署后健康检查脚本。可单独检查容器状态、Laravel 健康端点和数据库连接。 |
 | `start-docker-pull-tunnel.sh` | **本机 Mac**：SSH 反向隧道，把 Clash HTTP 代理暴露给 ECS。 |
 | `pull-images-once-via-tunnel.sh` | **ECS 一次性拉镜像**：经隧道 + `skopeo`，**不重启 docker**，不影响运行中容器。 |
@@ -82,8 +82,14 @@ bash geoflow-docker-deploy.sh
 | `GEOFLOW_BRANCH` | `main` | 部署分支 |
 | `GEOFLOW_APP_DIR` | `/opt/geoflow` | 服务器部署目录 |
 | `GEOFLOW_INSTALL_DOCKER` | `auto` | `1` 自动安装 Docker；`0` 缺少 Docker 时直接失败 |
-| `GEOFLOW_DB_PASSWORD` | 随机生成 | PostgreSQL 密码 |
-| `GEOFLOW_REDIS_PASSWORD` | 随机生成 | Redis 密码 |
+| `GEOFLOW_DB_HOST` | `dofe-postgres` | 外部 PostgreSQL 主机，由 docker-helm 提供 |
+| `GEOFLOW_REDIS_HOST` | `dofe-redis` | 外部 Redis 主机，由 docker-helm 提供 |
+| `GEOFLOW_DB_PASSWORD` | 必填 | 外部 PostgreSQL 密码，不由本脚本创建 |
+| `GEOFLOW_REDIS_PASSWORD` | 必填 | 外部 Redis 密码，不由本脚本创建 |
+| `MODELS_API_KEY` | 必填 | models.dofe.ai 服务密钥 |
+| `GEOFLOW_MCP_ENABLED` | `.env.prod` 默认值 | 是否开放 `/mcp`；开启时必须同时提供 Token |
+| `GEOFLOW_MCP_TOKEN` | MCP 开启时必填 | MCP 全量（读+写）Bearer Token |
+| `GEOFLOW_MCP_READ_TOKEN` | 可选 | MCP 只读 Bearer Token（仅 catalog / tasks.list / tasks.get） |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | 反向代理、CDN、二级目录部署时的可信代理设置 |
 | `GEOFLOW_SELF_DELETE` | `0` | 设置为 `1` 时，部署成功后删除当前执行的部署脚本 |
 
@@ -145,7 +151,7 @@ This folder contains reference scripts for technical operators who want a faster
 
 | Script | Purpose |
 | --- | --- |
-| `geoflow-docker-deploy.sh` | First install on a fresh empty production database. It checks the server, prepares `.env.prod`, deploys PostgreSQL, Redis, web, app, queue, scheduler and Reverb, then runs a healthcheck. |
+| `geoflow-docker-deploy.sh` | First install on a fresh empty production database. It checks the server, prepares `.env.prod`, connects to externally managed PostgreSQL/Redis, deploys web, app, queue, scheduler and Reverb, then runs a healthcheck. |
 | `geoflow-healthcheck.sh` | Post-deployment healthcheck. It validates Docker Compose services, the Laravel health endpoint and database connectivity. |
 
 ## Recommended Server Profile
@@ -215,8 +221,14 @@ Optional variables:
 | `GEOFLOW_BRANCH` | `main` | Branch to deploy |
 | `GEOFLOW_APP_DIR` | `/opt/geoflow` | Server installation directory |
 | `GEOFLOW_INSTALL_DOCKER` | `auto` | `1` to install Docker automatically, `0` to fail if Docker is missing |
-| `GEOFLOW_DB_PASSWORD` | random | PostgreSQL password |
-| `GEOFLOW_REDIS_PASSWORD` | random | Redis password |
+| `GEOFLOW_DB_HOST` | `dofe-postgres` | External PostgreSQL host, provided by docker-helm |
+| `GEOFLOW_REDIS_HOST` | `dofe-redis` | External Redis host, provided by docker-helm |
+| `GEOFLOW_DB_PASSWORD` | required | External PostgreSQL password, not created by this script |
+| `GEOFLOW_REDIS_PASSWORD` | required | External Redis password, not created by this script |
+| `MODELS_API_KEY` | required | models.dofe.ai service key |
+| `GEOFLOW_MCP_ENABLED` | `.env.prod` default | Whether to open `/mcp`; a Token is required when enabled |
+| `GEOFLOW_MCP_TOKEN` | required when MCP enabled | MCP full (read+write) Bearer Token |
+| `GEOFLOW_MCP_READ_TOKEN` | optional | MCP read-only Bearer Token (catalog / tasks.list / tasks.get only) |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | Trusted proxy setting for reverse proxy/CDN/subdirectory deployments |
 | `GEOFLOW_SELF_DELETE` | `0` | Set to `1` to remove the deployment script after a successful deployment |
 

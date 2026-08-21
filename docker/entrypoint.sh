@@ -85,14 +85,22 @@ run_geoflow_install() {
 }
 
 if [ "${DB_CONNECTION:-}" = "pgsql" ]; then
-  DB_HOST_VALUE="${DB_HOST:-postgres}"
+  DB_HOST_VALUE="${DB_HOST:-postgres.shared}"
   DB_PORT_VALUE="${DB_PORT:-5432}"
-  DB_USER_VALUE="${DB_USERNAME:-postgres}"
-  DB_NAME_VALUE="${DB_DATABASE:-postgres}"
+  DB_USER_VALUE="${DB_USERNAME:-geo_user}"
+  DB_NAME_VALUE="${DB_DATABASE:-geo_flow}"
+  DB_WAIT_ATTEMPTS="${GEOFLOW_DB_WAIT_ATTEMPTS:-60}"
+  DB_WAIT_SECONDS="${GEOFLOW_DB_WAIT_SECONDS:-5}"
 
   echo "[entrypoint] waiting for postgres at ${DB_HOST_VALUE}:${DB_PORT_VALUE}"
+  attempt=0
   until pg_isready -h "${DB_HOST_VALUE}" -p "${DB_PORT_VALUE}" -U "${DB_USER_VALUE}" -d "${DB_NAME_VALUE}" >/dev/null 2>&1; do
-    sleep 2
+    attempt=$((attempt + 1))
+    if [ "$attempt" -ge "$DB_WAIT_ATTEMPTS" ]; then
+      echo "[entrypoint] error: PostgreSQL not reachable at ${DB_HOST_VALUE}:${DB_PORT_VALUE} after ${attempt} attempts" >&2
+      exit 1
+    fi
+    sleep "$DB_WAIT_SECONDS"
   done
 fi
 

@@ -70,7 +70,7 @@ main() {
   log "Checking container status."
   "${COMPOSE[@]}" ps
 
-  local required=(postgres redis app web queue scheduler reverb)
+  local required=(app web queue scheduler reverb)
   local service
   for service in "${required[@]}"; do
     if "${COMPOSE[@]}" ps --status running --services | grep -qx "$service"; then
