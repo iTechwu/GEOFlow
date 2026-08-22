@@ -6,18 +6,23 @@ use PHPUnit\Framework\TestCase;
 
 class DistributionQueueConfigurationTest extends TestCase
 {
-    public function test_docker_queue_workers_listen_to_distribution_queue(): void
+    public function test_docker_queue_workers_listen_to_all_application_queues(): void
     {
         $root = dirname(__DIR__, 2);
         $composeFiles = [
             $root.'/docker-compose.yml',
             $root.'/docker-compose.prod.yml',
+            $root.'/docker-compose.prebuilt.yml',
         ];
 
         foreach ($composeFiles as $composeFile) {
             $contents = file_get_contents($composeFile);
             $this->assertIsString($contents);
-            $this->assertStringContainsString('--queue=geoflow,distribution,theme-replication,default', $contents, basename($composeFile));
+            $this->assertStringContainsString('--queue=geoflow,distribution,theme-replication,system-updates,default', $contents, basename($composeFile));
+
+            if (basename($composeFile) !== 'docker-compose.yml') {
+                $this->assertStringContainsString('redis:system-updates', $contents, basename($composeFile));
+            }
         }
     }
 
