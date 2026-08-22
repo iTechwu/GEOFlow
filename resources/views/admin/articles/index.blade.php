@@ -277,8 +277,8 @@
                     @endif
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-4">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.task') }}</label>
-                            <select aria-label="{{ __('admin.articles.filters.task') }}" name="task_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="article-filter-task" class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.task') }}</label>
+                            <select id="article-filter-task" name="task_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_tasks') }}</option>
                                 @foreach($tasks as $task)
                                     <option value="{{ (int) $task['id'] }}" @selected($selectedTaskId === (int) $task['id'])>{{ $task['name'] }}</option>
@@ -287,8 +287,8 @@
                         </div>
                         @if(!$isTrashView)
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.status') }}</label>
-                            <select aria-label="{{ __('admin.articles.filters.status') }}" name="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="article-filter-status" class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.status') }}</label>
+                            <select id="article-filter-status" name="status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_status') }}</option>
                                 <option value="draft" @selected($selectedStatus === 'draft')>{{ __('admin.articles.status.draft') }}</option>
                                 <option value="published" @selected($selectedStatus === 'published')>{{ __('admin.articles.status.published') }}</option>
@@ -296,8 +296,8 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.review_status') }}</label>
-                            <select aria-label="{{ __('admin.articles.filters.review_status') }}" name="review_status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="article-filter-review-status" class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.review_status') }}</label>
+                            <select id="article-filter-review-status" name="review_status" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_review') }}</option>
                                 <option value="pending" @selected($selectedReviewStatus === 'pending')>{{ __('admin.articles.review.pending') }}</option>
                                 <option value="approved" @selected($selectedReviewStatus === 'approved')>{{ __('admin.articles.review.approved') }}</option>
@@ -307,8 +307,8 @@
                         </div>
                         @endif
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.author') }}</label>
-                            <select aria-label="{{ __('admin.articles.filters.author') }}" name="author_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="article-filter-author" class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.author') }}</label>
+                            <select id="article-filter-author" name="author_id" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                                 <option value="">{{ __('admin.articles.filters.all_authors') }}</option>
                                 @foreach($authors as $author)
                                     <option value="{{ (int) $author['id'] }}" @selected($selectedAuthorId === (int) $author['id'])>{{ $author['name'] }}</option>
@@ -316,12 +316,12 @@
                             </select>
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.date_from') }}</label>
-                            <input aria-label="{{ __('admin.articles.filters.date_from') }}" type="date" name="date_from" value="{{ $selectedDateFrom }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="article-filter-date-from" class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.date_from') }}</label>
+                            <input id="article-filter-date-from" type="date" name="date_from" value="{{ $selectedDateFrom }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.date_to') }}</label>
-                            <input aria-label="{{ __('admin.articles.filters.date_to') }}" type="date" name="date_to" value="{{ $selectedDateTo }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="article-filter-date-to" class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.date_to') }}</label>
+                            <input id="article-filter-date-to" type="date" name="date_to" value="{{ $selectedDateTo }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                     </div>
                     @if(!empty($distributionChannels))
@@ -335,13 +335,14 @@
                                     <button type="button"
                                             data-distribution-channel-filter-toggle
                                             aria-expanded="false"
+                                            aria-controls="distribution-channel-filter-panel"
                                             class="inline-flex items-center rounded-md border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50">
                                         <span data-distribution-channel-filter-toggle-label>{{ __('admin.articles.filters.distribution_channel_expand') }}</span>
                                         <i data-lucide="chevron-down" data-distribution-channel-filter-toggle-icon class="ml-1 h-3.5 w-3.5 transition-transform"></i>
                                     </button>
                                 </div>
                             </div>
-                            <div data-distribution-channel-filter-panel class="hidden grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            <div id="distribution-channel-filter-panel" data-distribution-channel-filter-panel class="hidden grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
                                 @foreach($distributionChannels as $channel)
                                     <label data-distribution-channel-filter-card @class([
                                         'flex items-start gap-3 rounded-md border px-4 py-3 text-sm transition',
@@ -368,8 +369,8 @@
                     @endif
                     <div class="flex items-end space-x-4">
                         <div class="flex-1">
-                            <label class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.search') }}</label>
-                            <input aria-label="{{ __('admin.articles.filters.search') }}" type="text" name="search" value="{{ $selectedSearch }}" placeholder="{{ __('admin.articles.filters.search_placeholder') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <label for="article-filter-search" class="block text-sm font-medium text-gray-700">{{ __('admin.articles.filters.search') }}</label>
+                            <input id="article-filter-search" type="text" name="search" value="{{ $selectedSearch }}" placeholder="{{ __('admin.articles.filters.search_placeholder') }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
                         </div>
                         <div class="flex space-x-2">
                             <button type="submit" class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">

@@ -3,9 +3,11 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Models\AiModel;
 use App\Models\Article;
 use App\Models\Author;
 use App\Models\Category;
+use App\Support\GeoFlow\ApiKeyCrypto;
 use DOMDocument;
 use DOMElement;
 use DOMXPath;
@@ -39,6 +41,19 @@ class AdminAccessibilityTest extends TestCase
             'review_status' => 'approved',
             'published_at' => now(),
         ]);
+        AiModel::query()->create([
+            'name' => 'Accessibility Chat',
+            'version' => 'test',
+            'api_key' => app(ApiKeyCrypto::class)->encrypt('accessibility-test-key'),
+            'model_id' => 'accessibility-chat',
+            'model_type' => 'chat',
+            'api_url' => 'https://models.test',
+            'failover_priority' => 100,
+            'daily_limit' => 0,
+            'used_today' => 0,
+            'total_used' => 0,
+            'status' => 'active',
+        ]);
 
         $routes = [
             'admin.articles.index',
@@ -61,18 +76,59 @@ class AdminAccessibilityTest extends TestCase
         $modelResponse = $this->actingAs($admin, 'admin')->get(route('admin.ai-models.index'));
         $modelResponse
             ->assertSee('id="modelModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"', false)
-            ->assertSee('id="modalTitle"', false);
+            ->assertSee('id="modalTitle"', false)
+            ->assertSee('aria-live="polite"', false);
     }
 
     /** @return list<string> */
     private function accessibilityFailures(string $routeName, string $html): array
     {
         $document = new DOMDocument;
-        libxml_use_internal_errors(true);
+        $previousLibxmlSetting = libxml_use_internal_errors(true);
         $document->loadHTML($html, LIBXML_NOERROR | LIBXML_NOWARNING);
         libxml_clear_errors();
+        libxml_use_internal_errors($previousLibxmlSetting);
         $xpath = new DOMXPath($document);
         $failures = [];
+
+        foreach ($xpath->query('//*[@id]') ?: [] as $element) {
+            if (! $element instanceof DOMElement) {
+                continue;
+            }
+
+            $id = trim($element->getAttribute('id'));
+            if ($id === '' || ($xpath->query('//*[@id='.json_encode($id).']')?->length ?? 0) !== 1) {
+                $failures[] = $routeName.': duplicate or empty id '.$this->describe($element);
+            }
+        }
+
+        foreach ($xpath->query('//*[@aria-controls]') ?: [] as $controller) {
+            if (! $controller instanceof DOMElement) {
+                continue;
+            }
+
+            foreach (preg_split('/\s+/', trim($controller->getAttribute('aria-controls'))) ?: [] as $controlledId) {
+                if ($controlledId === '' || ($xpath->query('//*[@id='.json_encode($controlledId).']')?->length ?? 0) !== 1) {
+                    $failures[] = $routeName.': invalid aria-controls '.$this->describe($controller);
+                }
+            }
+        }
+
+        foreach ($xpath->query('//*[@aria-expanded and not(@aria-controls)]') ?: [] as $controller) {
+            if ($controller instanceof DOMElement) {
+                $failures[] = $routeName.': aria-expanded without aria-controls '.$this->describe($controller);
+            }
+        }
+
+        if (in_array($routeName, ['admin.articles.index', 'admin.analytics', 'admin.url-import'], true)) {
+            $unassociatedLabels = '//label[not(@for) and not(descendant::input or descendant::select or descendant::textarea)'
+                .' and following-sibling::*[1][self::input or self::select or self::textarea]]';
+            foreach ($xpath->query($unassociatedLabels) ?: [] as $label) {
+                if ($label instanceof DOMElement) {
+                    $failures[] = $routeName.': visible label is not associated '.$this->describe($label);
+                }
+            }
+        }
 
         foreach ($xpath->query('//input[translate(@type, "HIDDEN", "hidden") != "hidden"] | //select | //textarea') ?: [] as $control) {
             if ($control instanceof DOMElement && ! $this->controlHasLabel($control, $xpath)) {
@@ -105,8 +161,13 @@ class AdminAccessibilityTest extends TestCase
         }
 
         $id = trim($control->getAttribute('id'));
+        if ($id === '') {
+            return false;
+        }
 
-        return $id !== '' && ($xpath->query('//label[@for='.json_encode($id).']')?->length ?? 0) > 0;
+        $labels = $xpath->query('//label[@for='.json_encode($id).']');
+
+        return ($labels?->length ?? 0) === 1 && trim((string) $labels->item(0)?->textContent) !== '';
     }
 
     private function actionHasName(DOMElement $action, DOMXPath $xpath): bool
@@ -133,7 +194,7 @@ class AdminAccessibilityTest extends TestCase
     private function describe(DOMElement $element): string
     {
         $attributes = [];
-        foreach (['id', 'name', 'type', 'href'] as $attribute) {
+        foreach (['id', 'name', 'type', 'href', 'class', 'data-action'] as $attribute) {
             $value = trim($element->getAttribute($attribute));
             if ($value !== '') {
                 $attributes[] = $attribute.'="'.$value.'"';

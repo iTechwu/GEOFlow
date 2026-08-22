@@ -194,7 +194,7 @@
                                         <button type="button" onclick='editModel(@json($model, JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP))' class="text-blue-600 hover:text-blue-900">{{ __('admin.ai_models.edit') }}</button>
                                         <button type="button" onclick="deleteModel({{ (int) $model['id'] }}, @js($model['name']))" class="text-red-600 hover:text-red-900">{{ __('admin.ai_models.delete') }}</button>
                                     </div>
-                                    <div id="model-test-result-{{ (int) $model['id'] }}" class="mt-2 text-xs whitespace-normal max-w-xs"></div>
+                                    <div id="model-test-result-{{ (int) $model['id'] }}" role="status" aria-live="polite" aria-atomic="true" class="mt-2 text-xs whitespace-normal max-w-xs"></div>
                                 </td>
                             </tr>
                         @endforeach
