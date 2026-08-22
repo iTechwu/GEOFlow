@@ -354,6 +354,11 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('geoflow:security-audit', $script);
         $this->assertStringContainsString('geoflow-healthcheck.sh', $script);
         $this->assertStringContainsString('GEOFLOW_HEALTHCHECK_MAINTENANCE_SECRET="$MAINTENANCE_SECRET"', $script);
+        $this->assertSame(
+            2,
+            substr_count($script, 'php artisan down --secret="$MAINTENANCE_SECRET" --no-interaction --quiet'),
+            'Maintenance bypass secrets must never be printed by Artisan into CI logs.',
+        );
         $healthcheckPosition = strpos($script, 'bash deploy-scripts/geoflow-healthcheck.sh');
         $leaveMaintenancePosition = strrpos($script, 'php artisan up --no-interaction');
         $this->assertNotFalse($healthcheckPosition);

@@ -96,7 +96,7 @@ enter_maintenance_and_drain() {
 
   if service_is_running app; then
     log "Entering Laravel maintenance mode."
-    "${COMPOSE[@]}" exec -T app php artisan down --secret="$MAINTENANCE_SECRET" --no-interaction
+    "${COMPOSE[@]}" exec -T app php artisan down --secret="$MAINTENANCE_SECRET" --no-interaction --quiet
   fi
 
   log "Stopping ingress and background workers with a ${DRAIN_TIMEOUT}s timeout."
@@ -157,7 +157,7 @@ run_readiness_gates() {
 
 ensure_maintenance_mode() {
   log "Persisting maintenance mode for pre-release verification."
-  "${COMPOSE[@]}" run --rm --no-deps app php artisan down --secret="$MAINTENANCE_SECRET" --no-interaction
+  "${COMPOSE[@]}" run --rm --no-deps app php artisan down --secret="$MAINTENANCE_SECRET" --no-interaction --quiet
 }
 
 start_release() {
