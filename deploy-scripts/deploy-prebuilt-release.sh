@@ -56,11 +56,6 @@ trap on_exit EXIT
 trap 'exit 130' INT
 trap 'exit 143' TERM
 
-read_env_value() {
-  local key="$1"
-  grep "^${key}=" "${APP_DIR}/.env.prod" 2>/dev/null | tail -n1 | cut -d= -f2-
-}
-
 image_is_immutable() {
   local image="$1"
   local final_component="${image##*/}"
@@ -76,8 +71,21 @@ image_is_immutable() {
   esac
 }
 
+validate_resolved_images() {
+  local resolved_images="$1"
+  local image found="0"
+
+  while IFS= read -r image; do
+    [ -n "$image" ] || continue
+    found="1"
+    image_is_immutable "$image" || fail "Release images must use immutable version or digest references, not latest"
+  done <<< "$resolved_images"
+
+  [ "$found" = "1" ] || fail "Docker Compose did not resolve any release images"
+}
+
 validate_release() {
-  local app_image web_image
+  local resolved_images
 
   [ -d "$APP_DIR" ] || fail "GEOFLOW_APP_DIR does not exist: ${APP_DIR}"
   [ -f "${APP_DIR}/.env.prod" ] || fail ".env.prod not found in ${APP_DIR}"
@@ -87,14 +95,6 @@ validate_release() {
   command -v openssl >/dev/null 2>&1 || fail "OpenSSL is required to generate an ephemeral maintenance secret"
   docker info >/dev/null 2>&1 || fail "Docker is not usable by this CI runner"
   docker compose version >/dev/null 2>&1 || fail "Docker Compose v2 is required"
-
-  app_image="$(read_env_value GEOFLOW_APP_IMAGE)"
-  web_image="$(read_env_value GEOFLOW_WEB_IMAGE)"
-  [ -n "$app_image" ] || fail "GEOFLOW_APP_IMAGE is required in .env.prod"
-  [ -n "$web_image" ] || fail "GEOFLOW_WEB_IMAGE is required in .env.prod"
-
-  image_is_immutable "$app_image" || fail "Release images must use immutable version or digest references, not latest"
-  image_is_immutable "$web_image" || fail "Release images must use immutable version or digest references, not latest"
 
   case "$DRAIN_TIMEOUT" in
     ''|*[!0-9]*) fail "GEOFLOW_DRAIN_TIMEOUT_SECONDS must be a positive integer" ;;
@@ -106,8 +106,10 @@ validate_release() {
     *) fail "GEOFLOW_RELEASE_MODE must be fresh or upgrade" ;;
   esac
 
-  bash "${APP_DIR}/deploy-scripts/check-compose-boundaries.sh"
   docker compose --env-file "${APP_DIR}/.env.prod" -f "${APP_DIR}/docker-compose.prebuilt.yml" config --quiet
+  resolved_images="$(docker compose --env-file "${APP_DIR}/.env.prod" -f "${APP_DIR}/docker-compose.prebuilt.yml" config --images)"
+  validate_resolved_images "$resolved_images"
+  bash "${APP_DIR}/deploy-scripts/check-compose-boundaries.sh"
 }
 
 service_is_running() {

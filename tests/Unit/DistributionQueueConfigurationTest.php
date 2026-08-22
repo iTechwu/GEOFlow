@@ -383,6 +383,18 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString("trap 'on_error ", $script);
     }
 
+    public function test_prebuilt_release_validates_compose_resolved_image_references(): void
+    {
+        $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/deploy-prebuilt-release.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('validate_resolved_images()', $script);
+        $this->assertStringContainsString('config --images', $script);
+        $this->assertStringContainsString('validate_resolved_images "$resolved_images"', $script);
+        $this->assertStringNotContainsString('read_env_value()', $script);
+        $this->assertStringNotContainsString('grep "^${key}="', $script);
+    }
+
     public function test_mcp_healthcheck_can_use_an_ephemeral_maintenance_cookie(): void
     {
         $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');
