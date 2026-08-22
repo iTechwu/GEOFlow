@@ -367,6 +367,22 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString('down -v', $script);
     }
 
+    public function test_prebuilt_release_seals_the_maintenance_bypass_on_every_failed_exit_path(): void
+    {
+        $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/deploy-prebuilt-release.sh');
+
+        $this->assertIsString($script);
+        $this->assertStringContainsString('seal_maintenance_mode()', $script);
+        $this->assertStringContainsString('trap on_exit EXIT', $script);
+        $this->assertStringContainsString("trap 'exit 130' INT", $script);
+        $this->assertStringContainsString("trap 'exit 143' TERM", $script);
+        $this->assertStringContainsString('app php artisan down --no-interaction --quiet', $script);
+        $this->assertStringContainsString('-e AUTO_MIGRATE=false', $script);
+        $this->assertStringContainsString('-e AUTO_INSTALL_ONCE=false', $script);
+        $this->assertStringContainsString('MAINTENANCE_SECRET=""', $script);
+        $this->assertStringNotContainsString("trap 'on_error ", $script);
+    }
+
     public function test_mcp_healthcheck_can_use_an_ephemeral_maintenance_cookie(): void
     {
         $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');

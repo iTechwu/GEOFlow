@@ -19,18 +19,42 @@ fail() {
   exit 1
 }
 
-on_error() {
-  local line="$1"
+seal_maintenance_mode() {
+  if "${COMPOSE[@]}" exec -T app php artisan down --no-interaction --quiet >/dev/null 2>&1; then
+    return 0
+  fi
 
+  "${COMPOSE[@]}" run --rm --no-deps \
+    -e AUTO_MIGRATE=false \
+    -e AUTO_INSTALL_ONCE=false \
+    app php artisan down --no-interaction --quiet >/dev/null 2>&1
+}
+
+on_exit() {
+  local exit_code="$?"
+  local seal_failed="0"
+
+  trap - EXIT INT TERM
   if [ "$RELEASE_STARTED" = "1" ]; then
-    log "Release failed; keeping the application in maintenance mode."
-    "${COMPOSE[@]}" exec -T app php artisan down --no-interaction >/dev/null 2>&1 || true
+    set +e
+    log "Release failed; sealing the maintenance bypass before exit."
+    if ! seal_maintenance_mode; then
+      seal_failed="1"
+      printf '\033[1;31m[error]\033[0m Failed to seal the maintenance bypass; remove the stored maintenance secret before accepting traffic.\n' >&2
+    fi
     "${COMPOSE[@]}" logs --tail=120 app queue scheduler web >&2 || true
   fi
 
-  printf '\033[1;31m[error]\033[0m Release failed near line %s.\n' "$line" >&2
+  MAINTENANCE_SECRET=""
+  if [ "$exit_code" -eq 0 ] && [ "$seal_failed" = "1" ]; then
+    exit_code="1"
+  fi
+
+  exit "$exit_code"
 }
-trap 'on_error $LINENO' ERR
+trap on_exit EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 read_env_value() {
   local key="$1"
@@ -173,9 +197,9 @@ main() {
   log "Pulling immutable production images."
   "${COMPOSE[@]}" pull
 
-  RELEASE_STARTED="1"
   MAINTENANCE_SECRET="$(openssl rand -hex 32)"
   [ -n "$MAINTENANCE_SECRET" ] || fail "Failed to generate the ephemeral maintenance secret"
+  RELEASE_STARTED="1"
   if [ "$RELEASE_MODE" = "fresh" ]; then
     run_fresh_install
   else
