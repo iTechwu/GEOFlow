@@ -6,6 +6,22 @@ use PHPUnit\Framework\TestCase;
 
 class CiWorkflowSecurityTest extends TestCase
 {
+    public function test_every_third_party_action_is_pinned_to_a_full_commit(): void
+    {
+        $workflow = file_get_contents(dirname(__DIR__, 2).'/.github/workflows/ci.yml');
+        $this->assertIsString($workflow);
+        preg_match_all('/^\s*uses:\s*([^\s#]+)(?:\s+#.*)?$/m', $workflow, $matches);
+
+        $this->assertNotEmpty($matches[1]);
+        foreach ($matches[1] as $action) {
+            $this->assertMatchesRegularExpression(
+                '/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+@[a-f0-9]{40}$/',
+                $action,
+                $action,
+            );
+        }
+    }
+
     public function test_production_image_builds_are_restricted_to_main(): void
     {
         $workflow = file_get_contents(dirname(__DIR__, 2).'/.github/workflows/ci.yml');
