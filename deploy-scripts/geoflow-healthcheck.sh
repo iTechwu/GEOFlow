@@ -61,20 +61,30 @@ published_web_port() {
 
 wait_for_services() {
   local required="app web queue scheduler reverb"
-  local attempt service missing
+  local attempt service missing container_id health_status
 
   attempt=1
   while [ "$attempt" -le "$WAIT_ATTEMPTS" ]; do
     missing=""
     for service in $required; do
-      if ! "${COMPOSE[@]}" ps --status running --services | grep -qx "$service"; then
-        missing="${missing} ${service}"
+      container_id="$("${COMPOSE[@]}" ps -q "$service")"
+      if [ -z "$container_id" ]; then
+        missing="${missing} ${service}(missing)"
+        continue
+      fi
+
+      if ! health_status="$("${DOCKER_CMD[@]}" inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}missing{{end}}' "$container_id" 2>/dev/null)"; then
+        missing="${missing} ${service}(inspect-failed)"
+        continue
+      fi
+      if [ "$health_status" != "healthy" ]; then
+        missing="${missing} ${service}(${health_status})"
       fi
     done
 
     if [ -z "$missing" ]; then
       for service in $required; do
-        log "Service running: ${service}"
+        log "Service healthy: ${service}"
       done
       return
     fi
