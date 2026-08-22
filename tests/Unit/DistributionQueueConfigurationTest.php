@@ -264,6 +264,14 @@ class DistributionQueueConfigurationTest extends TestCase
 
     }
 
+    public function test_production_overlay_replaces_the_development_reverb_port_mapping(): void
+    {
+        $compose = file_get_contents(dirname(__DIR__, 2).'/docker-compose.prod.yml');
+
+        $this->assertIsString($compose);
+        $this->assertStringContainsString("ports: !override\n      - \"\${REVERB_EXPOSE_PORT:-18081}:\${REVERB_SERVER_PORT:-18080}\"", $compose);
+    }
+
     public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/build-and-push-amd64-images.sh');

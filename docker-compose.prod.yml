@@ -169,7 +169,7 @@ services:
       AUTO_INSTALL_ONCE: "false"
     # 端口由 .env.prod 的 REVERB_SERVER_PORT 决定（见 config/reverb.php）；nginx /reverb 反代端口须与之对齐
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0"]
-    ports:
+    ports: !override
       - "${REVERB_EXPOSE_PORT:-18081}:${REVERB_SERVER_PORT:-18080}"
     volumes:
       - ./.env.prod:/var/www/html/.env
