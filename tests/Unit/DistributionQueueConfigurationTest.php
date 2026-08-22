@@ -269,7 +269,7 @@ class DistributionQueueConfigurationTest extends TestCase
         $compose = file_get_contents(dirname(__DIR__, 2).'/docker-compose.prod.yml');
 
         $this->assertIsString($compose);
-        $this->assertStringContainsString("ports: !override\n      - \"\${REVERB_EXPOSE_PORT:-18081}:\${REVERB_SERVER_PORT:-18080}\"", $compose);
+        $this->assertStringContainsString("ports: !override\n      - \"127.0.0.1:\${REVERB_EXPOSE_PORT:-18081}:\${REVERB_SERVER_PORT:-18080}\"", $compose);
     }
 
     public function test_web_container_healthcheck_is_independent_from_laravel_maintenance_mode(): void
@@ -480,5 +480,26 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('"" $geoflow_request_port;', $nginx);
         $this->assertStringContainsString('proxy_set_header X-Forwarded-Host $geoflow_forwarded_host;', $nginx);
         $this->assertStringContainsString('proxy_set_header X-Forwarded-Port $geoflow_forwarded_port;', $nginx);
+    }
+
+    public function test_production_ingress_ports_are_bound_to_loopback(): void
+    {
+        $root = dirname(__DIR__, 2);
+
+        foreach (['docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
+            $compose = file_get_contents($root.'/'.$composeFile);
+            $this->assertIsString($compose);
+            $this->assertStringContainsString('127.0.0.1:${WEB_PORT:-18080}:80', $compose, $composeFile);
+            $this->assertStringContainsString('127.0.0.1:${REVERB_EXPOSE_PORT:-18081}:${REVERB_SERVER_PORT:-18080}', $compose, $composeFile);
+        }
+    }
+
+    public function test_nginx_passes_the_outer_proxy_client_ip_and_prefix_to_laravel(): void
+    {
+        $nginx = file_get_contents(dirname(__DIR__, 2).'/docker/nginx/default.conf');
+
+        $this->assertIsString($nginx);
+        $this->assertStringContainsString('fastcgi_param HTTP_X_FORWARDED_FOR $http_x_forwarded_for;', $nginx);
+        $this->assertStringContainsString('fastcgi_param HTTP_X_FORWARDED_PREFIX $http_x_forwarded_prefix;', $nginx);
     }
 }
