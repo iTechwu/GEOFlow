@@ -16,10 +16,11 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
 
 WORKDIR /app
 
+# Composer 版本由 CI 传入的镜像决定，避免构建时下载 latest 覆盖已解析的镜像内容。
+RUN composer --version
+
 # composer:2 基于 Alpine；国内 ECS 需替换 apk 源（与 dev Dockerfile 的 Debian 镜像策略一致）
 RUN set -eux; \
-    curl -fsSL https://getcomposer.org/download/latest-stable/composer.phar -o /usr/local/bin/composer; \
-    chmod 0755 /usr/local/bin/composer; \
     if command -v apk >/dev/null 2>&1; then \
         if [ -f /etc/apk/repositories ]; then \
             sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories; \

@@ -155,6 +155,15 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString("--username='majin72'", $script);
     }
 
+    public function test_production_image_uses_the_composer_binary_from_its_supplied_image(): void
+    {
+        $dockerfile = file_get_contents(dirname(__DIR__, 2).'/docker/Dockerfile.prod');
+
+        $this->assertIsString($dockerfile);
+        $this->assertStringContainsString('RUN composer --version', $dockerfile);
+        $this->assertStringNotContainsString('getcomposer.org/download/latest-stable', $dockerfile);
+    }
+
     public function test_prebuilt_release_script_enforces_stopped_and_drained_upgrade_gates(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/deploy-prebuilt-release.sh');
