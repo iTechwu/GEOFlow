@@ -22,6 +22,7 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-app-prod
     working_dir: /var/www/html
+    command: ["php-fpm", "-F"]
     env_file:
       - ./.env.prod
     environment:
@@ -34,7 +35,7 @@ services:
       init:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "php-fpm -t"]
+      test: ["CMD-SHELL", "tr '\\000' ' ' </proc/1/cmdline | grep -q 'php-fpm' && php-fpm -t"]
       interval: 30s
       timeout: 5s
       retries: 3

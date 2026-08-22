@@ -250,6 +250,20 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('Service healthy:', $healthcheck);
     }
 
+    public function test_production_app_runs_php_fpm_and_checks_the_live_process(): void
+    {
+        $root = dirname(__DIR__, 2);
+
+        foreach (['docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
+            $compose = file_get_contents($root.'/'.$composeFile);
+
+            $this->assertIsString($compose);
+            $this->assertStringContainsString('command: ["php-fpm", "-F"]', $compose, $composeFile);
+            $this->assertStringContainsString("grep -q 'php-fpm' && php-fpm -t", $compose, $composeFile);
+        }
+
+    }
+
     public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/build-and-push-amd64-images.sh');
