@@ -20,9 +20,15 @@ Schedule::command('horizon:snapshot')->everyFiveMinutes();
 /**
  * GeoFlow 任务调度：每分钟扫描一次可执行任务并入队（对齐 bak cron 逻辑）。
  */
-Schedule::command('geoflow:schedule-tasks')->everyMinute();
+Schedule::command('geoflow:schedule-tasks')
+    ->everyMinute()
+    ->onOneServer()
+    ->withoutOverlapping(10);
 
 /**
  * 临时数据清理：每日回收 MCP 审计与幂等键（保留窗口见 config/geoflow.php）。
  */
-Schedule::command('geoflow:prune-transient')->daily();
+Schedule::command('geoflow:prune-transient')
+    ->daily()
+    ->onOneServer()
+    ->withoutOverlapping(60);
