@@ -205,13 +205,13 @@
         </div>
     </div>
 
-    <div id="modelModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
-        <div class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
+    <div id="modelModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true" tabindex="-1" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+        <div data-model-modal-panel class="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
             <div class="mt-3">
                 <div class="flex items-center justify-between mb-4">
                     <h3 class="text-lg font-medium text-gray-900" id="modalTitle">{{ __('admin.ai_models.modal_create') }}</h3>
-                    <button type="button" onclick="closeModelModal()" class="text-gray-400 hover:text-gray-600" aria-label="{{ __('admin.common.close') }}">
-                        <i data-lucide="x" class="w-6 h-6"></i>
+                    <button type="button" data-model-modal-close onclick="closeModelModal()" class="rounded-md text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2" aria-label="{{ __('admin.common.close') }}">
+                        <i data-lucide="x" class="w-6 h-6" aria-hidden="true"></i>
                     </button>
                 </div>
 
@@ -306,7 +306,7 @@
                     </div>
 
                     <div class="flex justify-end space-x-3 pt-4">
-                        <button type="button" onclick="closeModelModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                        <button type="button" data-model-modal-close onclick="closeModelModal()" class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
                             {{ __('admin.button.cancel') }}
                         </button>
                         <button type="submit" class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
@@ -339,6 +339,18 @@
         const UPDATE_URL_TEMPLATE = @json(\App\Support\AdminWeb::routePath('admin.ai-models.update', ['modelId' => '__MODEL_ID__']));
         const DELETE_URL_TEMPLATE = @json(\App\Support\AdminWeb::routePath('admin.ai-models.delete', ['modelId' => '__MODEL_ID__']));
         const TEST_URL_TEMPLATE = @json(\App\Support\AdminWeb::routePath('admin.ai-models.test', ['modelId' => '__MODEL_ID__']));
+        const modelModal = document.getElementById('modelModal');
+        let modelModalTrigger = null;
+
+        function openModelModal() {
+            modelModalTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+            modelModal.classList.remove('hidden');
+            modelModal.setAttribute('aria-hidden', 'false');
+            document.body.classList.add('overflow-hidden');
+            window.requestAnimationFrame(() => {
+                document.getElementById('name')?.focus({preventScroll: true});
+            });
+        }
 
         const PROVIDER_PRESETS = {
             minimax: {name: 'MiniMax M3', version: 'M3', model_id: 'MiniMax-M3', api_url: 'https://api.minimax.io', model_type: 'chat'},
@@ -369,7 +381,7 @@
             document.getElementById('api_url').value = 'https://api.deepseek.com';
             document.getElementById('failover_priority').value = 100;
             syncMaxTokensVisibility();
-            document.getElementById('modelModal').classList.remove('hidden');
+            openModelModal();
         }
 
         function editModel(model) {
@@ -392,11 +404,21 @@
             document.getElementById('status').value = model.status || 'active';
             document.getElementById('statusField').classList.remove('hidden');
             syncMaxTokensVisibility();
-            document.getElementById('modelModal').classList.remove('hidden');
+            openModelModal();
         }
 
         function closeModelModal() {
-            document.getElementById('modelModal').classList.add('hidden');
+            if (modelModal.classList.contains('hidden')) {
+                return;
+            }
+
+            modelModal.classList.add('hidden');
+            modelModal.setAttribute('aria-hidden', 'true');
+            document.body.classList.remove('overflow-hidden');
+            if (modelModalTrigger?.isConnected) {
+                modelModalTrigger.focus();
+            }
+            modelModalTrigger = null;
         }
 
         function deleteModel(id, name) {
@@ -495,9 +517,44 @@
         syncMaxTokensVisibility();
 
         window.addEventListener('click', function (event) {
-            const modal = document.getElementById('modelModal');
-            if (event.target === modal) {
+            if (event.target === modelModal) {
                 closeModelModal();
+            }
+        });
+
+        document.addEventListener('keydown', function (event) {
+            if (modelModal.classList.contains('hidden')) {
+                return;
+            }
+
+            if (event.key === 'Escape') {
+                event.preventDefault();
+                closeModelModal();
+                return;
+            }
+
+            if (event.key !== 'Tab') {
+                return;
+            }
+
+            const focusableElements = Array.from(modelModal.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+            )).filter((element) => element.getClientRects().length > 0);
+
+            if (focusableElements.length === 0) {
+                event.preventDefault();
+                modelModal.focus({preventScroll: true});
+                return;
+            }
+
+            const firstElement = focusableElements[0];
+            const lastElement = focusableElements[focusableElements.length - 1];
+            if (event.shiftKey && (document.activeElement === firstElement || !modelModal.contains(document.activeElement))) {
+                event.preventDefault();
+                lastElement.focus();
+            } else if (!event.shiftKey && document.activeElement === lastElement) {
+                event.preventDefault();
+                firstElement.focus();
             }
         });
     </script>

@@ -75,9 +75,14 @@ class AdminAccessibilityTest extends TestCase
 
         $modelResponse = $this->actingAs($admin, 'admin')->get(route('admin.ai-models.index'));
         $modelResponse
-            ->assertSee('id="modelModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"', false)
+            ->assertSee('id="modelModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-hidden="true"', false)
             ->assertSee('id="modalTitle"', false)
-            ->assertSee('aria-live="polite"', false);
+            ->assertSee('aria-live="polite"', false)
+            ->assertSee('data-model-modal-panel', false)
+            ->assertSee('data-model-modal-close', false)
+            ->assertSee("event.key === 'Escape'", false)
+            ->assertSee("event.key !== 'Tab'", false)
+            ->assertSee('modelModalTrigger.focus()', false);
     }
 
     /** @return list<string> */
