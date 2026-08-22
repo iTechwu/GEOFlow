@@ -46,7 +46,7 @@ final class ModelsInternalClient
         }
 
         if (! ModelsEndpointPolicy::allows(self::baseUrl())) {
-            throw new ModelsInternalCheckException('MODELS_INTERNAL_BASE_URL 必须是有效的 HTTPS 地址。');
+            throw new ModelsInternalCheckException('MODELS_INTERNAL_BASE_URL 必须指向 HTTPS 主机 models.dofe.ai，或使用显式允许的本地 Models 地址。');
         }
 
         return Http::withHeaders(ModelsInternalAuth::headers(self::secret(), self::serviceName()))

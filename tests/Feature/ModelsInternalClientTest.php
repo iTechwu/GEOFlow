@@ -82,6 +82,23 @@ class ModelsInternalClientTest extends TestCase
         }
     }
 
+    public function test_client_rejects_an_unapproved_https_host_before_sending_the_hmac_token(): void
+    {
+        config()->set('geoflow.models_internal_base_url', 'https://attacker.example.test');
+        Http::fake(['*' => Http::response(['list' => [], 'total' => 0])]);
+
+        try {
+            ModelsInternalClient::listModels();
+            $this->fail('Expected the models internal client to reject an unapproved HTTPS host.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('MODELS_INTERNAL_BASE_URL', $exception->getMessage());
+            $this->assertStringContainsString('models.dofe.ai', $exception->getMessage());
+            $this->assertStringNotContainsString('test-secret', $exception->getMessage());
+        }
+
+        Http::assertNothingSent();
+    }
+
     public function test_client_allows_explicit_local_http_with_the_private_target_allowlist(): void
     {
         config()->set('geoflow.models_internal_base_url', 'http://dofe-models-api-local:3101');

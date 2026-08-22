@@ -4,6 +4,8 @@ namespace App\Services\Models;
 
 final class ModelsEndpointPolicy
 {
+    private const PRODUCTION_HOST = 'models.dofe.ai';
+
     public static function allows(string $baseUrl): bool
     {
         $parts = parse_url($baseUrl);
@@ -12,13 +14,16 @@ final class ModelsEndpointPolicy
         }
 
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
-        $host = trim((string) ($parts['host'] ?? ''));
-        if ($host === '') {
+        $host = strtolower(trim((string) ($parts['host'] ?? '')));
+        if ($host === '' || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
             return false;
         }
 
         if ($scheme === 'https') {
-            return true;
+            $port = $parts['port'] ?? null;
+
+            return $host === self::PRODUCTION_HOST
+                && ($port === null || $port === 443);
         }
 
         $localHosts = ['127.0.0.1', 'host.docker.internal', 'dofe-models-api-local'];

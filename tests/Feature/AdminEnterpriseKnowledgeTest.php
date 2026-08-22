@@ -31,7 +31,7 @@ class AdminEnterpriseKnowledgeTest extends TestCase
 
         $this->withoutMiddleware(ValidateCsrfToken::class);
         config([
-            'geoflow.models_base_url' => 'https://models.test/v1',
+            'geoflow.models_base_url' => 'https://models.dofe.ai/v1',
             'geoflow.models_api_key' => 'models-service-key',
             'geoflow.ai_base_url' => '',
             'geoflow.ai_api_key' => '',
@@ -251,7 +251,7 @@ MARKDOWN,
             'status' => 'active',
         ]);
         Http::fake([
-            'https://models.test/*' => Http::response($this->chatCompletion($this->completeDraftContent('AI 结构化企业知识稿')), 200),
+            'https://models.dofe.ai/*' => Http::response($this->chatCompletion($this->completeDraftContent('AI 结构化企业知识稿')), 200),
         ]);
 
         $project = EnterpriseKnowledgeProject::query()->create([
@@ -295,7 +295,7 @@ MARKDOWN,
             'status' => 'active',
         ]);
         Http::fake([
-            'https://models.test/*' => Http::response($this->chatCompletion($this->completeDraftContent('AI 简化草稿')), 200),
+            'https://models.dofe.ai/*' => Http::response($this->chatCompletion($this->completeDraftContent('AI 简化草稿')), 200),
         ]);
 
         $project = EnterpriseKnowledgeProject::query()->create([
@@ -389,7 +389,7 @@ MARKDOWN,
         $noisyContent = $this->completeDraftContent('带来源噪音 AI 草稿')
             ."\n\n## 资料覆盖清单\n- [1] profile.md（markdown，36 字）";
         Http::fake([
-            'https://models.test/*' => Http::response($this->chatCompletion($noisyContent), 200),
+            'https://models.dofe.ai/*' => Http::response($this->chatCompletion($noisyContent), 200),
         ]);
 
         $project = EnterpriseKnowledgeProject::query()->create([
@@ -435,7 +435,7 @@ MARKDOWN,
             'status' => 'active',
         ]);
         Http::fake([
-            'https://models.test/*' => Http::response($this->chatCompletion("# 企业介绍\n独有内容治理平台。"), 200),
+            'https://models.dofe.ai/*' => Http::response($this->chatCompletion("# 企业介绍\n独有内容治理平台。"), 200),
         ]);
 
         $project = EnterpriseKnowledgeProject::query()->create([

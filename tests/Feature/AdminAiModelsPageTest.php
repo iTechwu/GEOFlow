@@ -21,7 +21,7 @@ class AdminAiModelsPageTest extends TestCase
         parent::setUp();
 
         config([
-            'geoflow.models_base_url' => 'https://models.test/v1',
+            'geoflow.models_base_url' => 'https://models.dofe.ai/v1',
             'geoflow.models_api_key' => 'models-service-key',
             'geoflow.ai_base_url' => '',
             'geoflow.ai_api_key' => '',
@@ -31,7 +31,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_admin_can_test_chat_model_connection(): void
     {
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response([
+            'https://models.dofe.ai/v1/chat/completions' => Http::response([
                 'choices' => [
                     ['message' => ['content' => 'OK']],
                 ],
@@ -49,7 +49,7 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'chat')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/chat/completions'
             && $request['model'] === 'test-chat-model'
             && $request->hasHeader('Authorization', 'Bearer models-service-key'));
     }
@@ -120,7 +120,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_admin_can_test_embedding_model_connection(): void
     {
         Http::fake([
-            'https://models.test/v1/embeddings' => Http::response([
+            'https://models.dofe.ai/v1/embeddings' => Http::response([
                 'data' => [
                     ['embedding' => [0.1, 0.2, 0.3]],
                 ],
@@ -138,7 +138,7 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'embedding')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/embeddings'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/embeddings'
             && $request['model'] === 'test-embedding-model'
             && $request['input'] === 'GEOFlow embedding connection test');
     }
@@ -146,7 +146,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_admin_routes_volcengine_embedding_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://models.test/v1/embeddings' => Http::response([
+            'https://models.dofe.ai/v1/embeddings' => Http::response([
                 'data' => [
                     ['embedding' => [0.11, 0.22, 0.33]],
                 ],
@@ -168,7 +168,7 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'embedding')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/embeddings'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/embeddings'
             && $request->hasHeader('Authorization', 'Bearer models-service-key')
             && $request['model'] === 'doubao-embedding-text-240515'
             && $request['input'] === 'GEOFlow embedding connection test');
@@ -177,7 +177,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_admin_routes_gemini_chat_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response([
+            'https://models.dofe.ai/v1/chat/completions' => Http::response([
                 'choices' => [
                     ['message' => ['content' => 'OK']],
                 ],
@@ -199,7 +199,7 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'chat')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/chat/completions'
             && $request->hasHeader('Authorization', 'Bearer models-service-key')
             && ($request['model'] ?? '') === 'gemini-3-flash-preview'
             && ($request['messages'][0]['content'] ?? '') === 'Reply with OK.');
@@ -208,7 +208,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_admin_routes_gemini_embedding_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://models.test/v1/embeddings' => Http::response([
+            'https://models.dofe.ai/v1/embeddings' => Http::response([
                 'data' => [
                     ['embedding' => [0.1, 0.2, 0.3]],
                 ],
@@ -230,7 +230,7 @@ class AdminAiModelsPageTest extends TestCase
             ->assertJsonPath('meta.model_type', 'embedding')
             ->assertJsonPath('meta.http_status', 200);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/embeddings'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/embeddings'
             && $request->hasHeader('Authorization', 'Bearer models-service-key')
             && ($request['model'] ?? '') === 'gemini-embedding-2'
             && ($request['input'] ?? '') === 'GEOFlow embedding connection test');
@@ -239,7 +239,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_admin_routes_gemini_pro_alias_through_models_gateway(): void
     {
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response([
+            'https://models.dofe.ai/v1/chat/completions' => Http::response([
                 'choices' => [
                     ['message' => ['content' => 'OK']],
                 ],
@@ -259,7 +259,7 @@ class AdminAiModelsPageTest extends TestCase
             ->assertOk()
             ->assertJsonPath('success', true);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/chat/completions'
             && $request->hasHeader('Authorization', 'Bearer models-service-key')
             && ($request['model'] ?? '') === 'gemini-3-pro-preview');
     }
@@ -319,7 +319,7 @@ class AdminAiModelsPageTest extends TestCase
     public function test_model_connection_test_reports_provider_errors(): void
     {
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response(['detail' => 'API Key invalid'], 401),
+            'https://models.dofe.ai/v1/chat/completions' => Http::response(['detail' => 'API Key invalid'], 401),
         ]);
 
         $model = $this->createAiModel('chat');

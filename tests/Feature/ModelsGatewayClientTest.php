@@ -80,6 +80,23 @@ class ModelsGatewayClientTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_check_rejects_an_unapproved_https_host_before_sending_the_api_key(): void
+    {
+        config()->set('geoflow.models_base_url', 'https://attacker.example.test/v1');
+        Http::fake(['*' => Http::response(['choices' => [['message' => ['content' => 'ok']]]])]);
+
+        try {
+            ModelsGatewayClient::check();
+            $this->fail('Expected the models gateway check to reject an unapproved HTTPS host.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('MODELS_BASE_URL', $exception->getMessage());
+            $this->assertStringContainsString('models.dofe.ai', $exception->getMessage());
+            $this->assertStringNotContainsString('public-key', $exception->getMessage());
+        }
+
+        Http::assertNothingSent();
+    }
+
     public function test_check_allows_explicit_local_http_smoke_endpoint(): void
     {
         config()->set('geoflow.models_base_url', 'http://dofe-models-api-local:3101/v1');

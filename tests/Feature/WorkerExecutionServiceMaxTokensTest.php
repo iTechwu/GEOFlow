@@ -23,7 +23,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
         parent::setUp();
 
         config([
-            'geoflow.models_base_url' => 'https://models.test/v1',
+            'geoflow.models_base_url' => 'https://models.dofe.ai/v1',
             'geoflow.models_api_key' => 'models-service-key',
             'geoflow.ai_base_url' => '',
             'geoflow.ai_api_key' => '',
@@ -45,7 +45,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
     public function test_generate_content_sends_configured_model_max_tokens(): void
     {
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'完整正文。')),
+            'https://models.dofe.ai/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'完整正文。')),
         ]);
 
         $model = $this->createChatModel(['max_tokens' => 8192]);
@@ -54,7 +54,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
 
         $this->assertSame('# 标题'."\n\n".'完整正文。', $content);
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/chat/completions'
             && ($request['max_tokens'] ?? null) === 8192
             && ! array_key_exists('max_completion_tokens', (array) $request->data()));
     }
@@ -64,14 +64,14 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
         config(['geoflow.content_max_tokens' => 5000]);
 
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'完整正文。')),
+            'https://models.dofe.ai/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'完整正文。')),
         ]);
 
         $model = $this->createChatModel(['max_tokens' => null]);
 
         $this->generateContent($model, '写一篇文章。');
 
-        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.test/v1/chat/completions'
+        Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/chat/completions'
             && ($request['max_tokens'] ?? null) === 5000);
     }
 
@@ -81,7 +81,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
         $truncated = "# 标题\n\n正文开始。\n\n```\n└── 探";
 
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response($this->completion($truncated)),
+            'https://models.dofe.ai/v1/chat/completions' => Http::response($this->completion($truncated)),
         ]);
 
         Log::spy();
@@ -102,7 +102,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
     public function test_generate_content_does_not_warn_for_complete_output(): void
     {
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'这是一篇完整收尾的文章。')),
+            'https://models.dofe.ai/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'这是一篇完整收尾的文章。')),
         ]);
 
         Log::spy();
@@ -117,7 +117,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
     public function test_generate_content_does_not_warn_for_valid_markdown_colon_ending(): void
     {
         Http::fake([
-            'https://models.test/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'下一节重点如下：')),
+            'https://models.dofe.ai/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'下一节重点如下：')),
         ]);
 
         Log::spy();

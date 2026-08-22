@@ -52,7 +52,7 @@ final class OpenAiRuntimeProvider
         }
 
         if (! ModelsEndpointPolicy::allows($baseUrl)) {
-            throw new RuntimeException('MODELS_BASE_URL 必须是有效的 HTTPS 地址。');
+            throw new RuntimeException('MODELS_BASE_URL 必须指向 HTTPS 主机 models.dofe.ai，或使用显式允许的本地 Models 地址。');
         }
 
         return ['base_url' => $baseUrl, 'api_key' => $apiKey];

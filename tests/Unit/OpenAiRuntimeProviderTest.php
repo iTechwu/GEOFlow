@@ -35,6 +35,29 @@ class OpenAiRuntimeProviderTest extends TestCase
         $this->assertSame(['existing' => ['driver' => 'openai']], config('ai.providers'));
     }
 
+    public function test_it_rejects_an_unapproved_https_models_override_before_registering_the_api_key(): void
+    {
+        config()->set('geoflow.models_base_url', 'https://attacker.example.test/v1');
+        config()->set('geoflow.models_api_key', 'models-secret');
+        config()->set('ai.providers', ['existing' => ['driver' => 'openai']]);
+
+        try {
+            OpenAiRuntimeProvider::registerProvider(
+                'https_security_test',
+                'openai',
+                'https://fallback.example.test/v1',
+                'fallback-key',
+            );
+            $this->fail('Expected an unapproved models host to be rejected.');
+        } catch (RuntimeException $exception) {
+            $this->assertStringContainsString('MODELS_BASE_URL', $exception->getMessage());
+            $this->assertStringContainsString('models.dofe.ai', $exception->getMessage());
+            $this->assertStringNotContainsString('models-secret', $exception->getMessage());
+        }
+
+        $this->assertSame(['existing' => ['driver' => 'openai']], config('ai.providers'));
+    }
+
     public function test_it_allows_an_explicit_local_models_override(): void
     {
         config()->set('geoflow.models_base_url', 'http://dofe-models-api-local:3101/v1');
