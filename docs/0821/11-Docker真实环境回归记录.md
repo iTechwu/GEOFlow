@@ -39,7 +39,7 @@
 
 - AgentSpace 本机页面使用隔离 Playwright 浏览器打开，创建了 `GEO 管理智能体`，备注名为 `GEO Manager`，工作说明明确要求通过 GEOFlow MCP 完成任务、文章审核和发布；页面显示创建成功且无 console error/失败网络请求。
 - GEOFlow 首页和已发布文章在隔离 Chromium 中均返回 200，控制台无 error、无失败网络请求，`scrollWidth === clientWidth`；文章页桌面视口无水平溢出。
-- GEOFlow admin 登录入口在没有 SSO 管理员会话时按设计重定向到 SSO，且当前重定向保留 `:18080` 端口。本机没有伪造生产 SSO 回调；SSO 密码登录属于外部系统边界，未绕过授权。
+- GEOFlow admin 登录入口在没有 SSO 管理员会话时按设计重定向到 SSO，且当前重定向保留 `:18080` 端口。本机没有伪造生产 SSO 回调；SSO 密码登录属于外部系统边界，未绕过授权。隔离 Chromium 观察到外部 SSO 在 390px 视口有约 8px 横向溢出（`scrollWidth=398`），该问题应由 `sso.dofe.ai` 单独修复，不纳入 GEOFlow Docker 变更。
 - 当前会话未提供 Chrome DevTools MCP 服务，因此浏览器证据使用 Playwright Chromium 采集，包含截图、console、HTTP 状态和布局指标。
 
 ## 后续放行条件
