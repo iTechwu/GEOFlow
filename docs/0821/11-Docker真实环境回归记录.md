@@ -29,10 +29,10 @@
 | 任务 create/get | 通过 |
 | 任务 start/stop | 通过 |
 | 任务 enqueue | 通过；空标题库被业务校验拒绝并回收 pending job |
-| 真实模型生成 | 通过；本地 models Docker API 的 `minimax-m2` 生成 1 篇 10K+ 字符草稿，queue worker 约 1 分钟完成 |
+| 真实模型生成 | 通过；本地 models Docker API 的 `minimax-m2` 连续两轮生成成功，最近一轮生成 4146 字符草稿，queue worker 约 45 秒完成 |
 | 推理段清洗 | 通过；落库正文、摘要、meta description 均不含 `<think>`/`<analysis>`/`<reasoning>` |
 | 文章 create/get/update | 通过 |
-| 文章 review/publish/list/trash | 通过；审核后发布，公开 slug 返回 HTTP 200 |
+| 文章 review/publish/list/trash | 通过；最近一轮审核后发布，公开 slug 返回 HTTP 200；回归完成后已删除文章和全部临时数据 |
 | MCP PHPUnit | 19 tests、46 assertions 全部通过 |
 
 ## 浏览器回归
@@ -48,3 +48,4 @@
 2. 按既有 CI/发布流程执行迁移、健康检查和 SSO 回调验证；本机不启动 Jenkins。
 3. 为测试环境配置受管控的 models API key 与 embedding 模型后，再执行知识库向量检索路径；本轮只使用 chat 模型完成真实文章闭环。
 4. 本轮生成的管理员、模型、任务、文章、标题库等临时数据及 models smoke key 已全部撤销，最终 catalog 仅保留内置 prompts。
+5. 清理并重启后的最终 Docker 栈再次通过 `app/web healthy` 与首页 HTTP 200 验证。
