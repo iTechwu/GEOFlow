@@ -27,9 +27,20 @@ final class ModelsEndpointPolicy
         }
 
         $localHosts = ['127.0.0.1', 'host.docker.internal', 'dofe-models-api-local'];
+        $privateTargets = config('geoflow.outbound_private_targets', []);
+        if (! is_array($privateTargets)) {
+            return false;
+        }
+
+        $privateTargets = array_map(
+            static fn (mixed $target): string => strtolower(trim((string) $target)),
+            $privateTargets,
+        );
+        $target = $host.':'.(string) ($parts['port'] ?? 80);
 
         return (bool) config('geoflow.models_allow_insecure_local', false)
             && $scheme === 'http'
-            && in_array($host, $localHosts, true);
+            && in_array($host, $localHosts, true)
+            && in_array($target, $privateTargets, true);
     }
 }

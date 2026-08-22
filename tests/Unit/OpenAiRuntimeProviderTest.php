@@ -63,6 +63,7 @@ class OpenAiRuntimeProviderTest extends TestCase
         config()->set('geoflow.models_base_url', 'http://dofe-models-api-local:3101/v1');
         config()->set('geoflow.models_api_key', 'models-secret');
         config()->set('geoflow.models_allow_insecure_local', true);
+        config()->set('geoflow.outbound_private_targets', ['dofe-models-api-local:3101']);
 
         $provider = OpenAiRuntimeProvider::registerProvider(
             'local_models_test',

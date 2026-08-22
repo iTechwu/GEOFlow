@@ -30,6 +30,9 @@ class ModelsEndpointPolicyTest extends TestCase
         $this->assertFalse(ModelsEndpointPolicy::allows('http://dofe-models-api-local:3101/v1'));
 
         config()->set('geoflow.models_allow_insecure_local', true);
+        $this->assertFalse(ModelsEndpointPolicy::allows('http://dofe-models-api-local:3101/v1'));
+
+        config()->set('geoflow.outbound_private_targets', ['dofe-models-api-local:3101']);
         $this->assertTrue(ModelsEndpointPolicy::allows('http://dofe-models-api-local:3101/v1'));
         $this->assertFalse(ModelsEndpointPolicy::allows('http://attacker.example.test:3101/v1'));
     }
