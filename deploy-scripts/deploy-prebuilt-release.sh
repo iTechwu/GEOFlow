@@ -73,12 +73,26 @@ image_is_immutable() {
 
 validate_resolved_images() {
   local resolved_images="$1"
-  local image found="0"
+  local image final_component version_tag
+  local found="0"
+  local release_tag=""
 
   while IFS= read -r image; do
     [ -n "$image" ] || continue
     found="1"
     image_is_immutable "$image" || fail "Release images must use immutable version or digest references, not latest"
+
+    case "$image" in
+      *@sha256:*) continue ;;
+    esac
+
+    final_component="${image##*/}"
+    version_tag="${final_component##*:}"
+    if [ -z "$release_tag" ]; then
+      release_tag="$version_tag"
+    elif [ "$version_tag" != "$release_tag" ]; then
+      fail "Release images must use the same version tag"
+    fi
   done <<< "$resolved_images"
 
   [ "$found" = "1" ] || fail "Docker Compose did not resolve any release images"
@@ -223,4 +237,6 @@ main() {
   log "Release completed successfully."
 }
 
-main "$@"
+if [[ "${BASH_SOURCE[0]}" == "$0" ]]; then
+  main "$@"
+fi
