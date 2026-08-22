@@ -9,6 +9,7 @@ DRAIN_TIMEOUT="${GEOFLOW_DRAIN_TIMEOUT_SECONDS:-300}"
 RELEASE_MODE="${GEOFLOW_RELEASE_MODE:-upgrade}"
 RELEASE_STARTED="0"
 MAINTENANCE_SECRET=""
+RESOLVED_IMAGES=""
 
 log() {
   printf '\033[1;34m[geoflow-release]\033[0m %s\n' "$*"
@@ -98,9 +99,37 @@ validate_resolved_images() {
   [ "$found" = "1" ] || fail "Docker Compose did not resolve any release images"
 }
 
-validate_release() {
-  local resolved_images
+image_revision() {
+  docker image inspect \
+    --format '{{ index .Config.Labels "org.opencontainers.image.revision" }}' \
+    "$1" 2>/dev/null
+}
 
+validate_pulled_image_revisions() {
+  local resolved_images="$1"
+  local image revision
+  local release_revision=""
+  local found="0"
+
+  while IFS= read -r image; do
+    [ -n "$image" ] || continue
+    found="1"
+    revision="$(image_revision "$image" | tr -d '\r\n')" || fail "Cannot inspect the pulled release image"
+    case "$revision" in
+      ''|'<no value>') fail "Every release image must contain an OCI revision label" ;;
+    esac
+
+    if [ -z "$release_revision" ]; then
+      release_revision="$revision"
+    elif [ "$revision" != "$release_revision" ]; then
+      fail "Release images must use the same OCI revision"
+    fi
+  done <<< "$resolved_images"
+
+  [ "$found" = "1" ] || fail "Docker Compose did not resolve any release images"
+}
+
+validate_release() {
   [ -d "$APP_DIR" ] || fail "GEOFLOW_APP_DIR does not exist: ${APP_DIR}"
   [ -f "${APP_DIR}/.env.prod" ] || fail ".env.prod not found in ${APP_DIR}"
   [ -f "${APP_DIR}/docker-compose.prebuilt.yml" ] || fail "docker-compose.prebuilt.yml not found in ${APP_DIR}"
@@ -121,8 +150,8 @@ validate_release() {
   esac
 
   docker compose --env-file "${APP_DIR}/.env.prod" -f "${APP_DIR}/docker-compose.prebuilt.yml" config --quiet
-  resolved_images="$(docker compose --env-file "${APP_DIR}/.env.prod" -f "${APP_DIR}/docker-compose.prebuilt.yml" config --images)"
-  validate_resolved_images "$resolved_images"
+  RESOLVED_IMAGES="$(docker compose --env-file "${APP_DIR}/.env.prod" -f "${APP_DIR}/docker-compose.prebuilt.yml" config --images)"
+  validate_resolved_images "$RESOLVED_IMAGES"
   bash "${APP_DIR}/deploy-scripts/check-compose-boundaries.sh"
 }
 
@@ -212,6 +241,7 @@ main() {
 
   log "Pulling immutable production images."
   "${COMPOSE[@]}" pull
+  validate_pulled_image_revisions "$RESOLVED_IMAGES"
 
   MAINTENANCE_SECRET="$(openssl rand -hex 32)"
   [ -n "$MAINTENANCE_SECRET" ] || fail "Failed to generate the ephemeral maintenance secret"

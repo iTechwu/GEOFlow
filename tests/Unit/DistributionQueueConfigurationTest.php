@@ -390,7 +390,13 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertIsString($script);
         $this->assertStringContainsString('validate_resolved_images()', $script);
         $this->assertStringContainsString('config --images', $script);
-        $this->assertStringContainsString('validate_resolved_images "$resolved_images"', $script);
+        $this->assertStringContainsString('validate_resolved_images "$RESOLVED_IMAGES"', $script);
+        $this->assertStringContainsString('validate_pulled_image_revisions "$RESOLVED_IMAGES"', $script);
+        $revisionGatePosition = strpos($script, 'validate_pulled_image_revisions "$RESOLVED_IMAGES"');
+        $maintenanceSecretPosition = strpos($script, 'MAINTENANCE_SECRET="$(openssl rand -hex 32)"');
+        $this->assertNotFalse($revisionGatePosition);
+        $this->assertNotFalse($maintenanceSecretPosition);
+        $this->assertLessThan($maintenanceSecretPosition, $revisionGatePosition);
         $this->assertStringNotContainsString('read_env_value()', $script);
         $this->assertStringNotContainsString('grep "^${key}="', $script);
     }

@@ -63,6 +63,7 @@ echo ">>> 构建并推送 app 镜像"
 docker buildx build --platform "${PLATFORM}" \
   -f docker/Dockerfile.prod \
   "${APP_TAGS[@]}" \
+  --label "org.opencontainers.image.revision=${VERSION}" \
   --build-arg COMPOSER_IMAGE="${COMPOSER_IMAGE}" \
   --build-arg COMPOSER_VERSION="${COMPOSER_VERSION}" \
   --build-arg COMPOSER_SHA256="${COMPOSER_SHA256}" \
@@ -74,6 +75,7 @@ echo ">>> 构建并推送 web 镜像"
 docker buildx build --platform "${PLATFORM}" \
   -f docker/nginx/Dockerfile.prod \
   "${WEB_TAGS[@]}" \
+  --label "org.opencontainers.image.revision=${VERSION}" \
   --build-arg NGINX_IMAGE="${NGINX_IMAGE}" \
   --push .
 
