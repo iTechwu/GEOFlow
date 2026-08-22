@@ -270,7 +270,23 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('geoflow:managed-images:readiness', $script);
         $this->assertStringContainsString('geoflow:security-audit', $script);
         $this->assertStringContainsString('geoflow-healthcheck.sh', $script);
+        $this->assertStringContainsString('GEOFLOW_HEALTHCHECK_MAINTENANCE_SECRET="$MAINTENANCE_SECRET"', $script);
+        $healthcheckPosition = strpos($script, 'bash deploy-scripts/geoflow-healthcheck.sh');
+        $leaveMaintenancePosition = strrpos($script, 'php artisan up --no-interaction');
+        $this->assertNotFalse($healthcheckPosition);
+        $this->assertNotFalse($leaveMaintenancePosition);
+        $this->assertGreaterThan($healthcheckPosition, $leaveMaintenancePosition, 'Maintenance mode must remain active until all release gates pass.');
         $this->assertStringNotContainsString('down -v', $script);
+    }
+
+    public function test_mcp_healthcheck_can_use_an_ephemeral_maintenance_cookie(): void
+    {
+        $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');
+
+        $this->assertIsString($healthcheck);
+        $this->assertStringContainsString('GEOFLOW_HEALTHCHECK_MAINTENANCE_SECRET', $healthcheck);
+        $this->assertStringContainsString('Cookie: laravel_maintenance=%s', $healthcheck);
+        $this->assertStringContainsString('stream_get_contents(STDIN)', $healthcheck);
     }
 
     public function test_ci_environment_renderer_requires_external_services_models_and_sso(): void

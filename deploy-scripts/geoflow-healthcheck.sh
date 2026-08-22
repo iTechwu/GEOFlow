@@ -183,7 +183,7 @@ mcp_request() {
 
 check_mcp() {
   local web_port="$1"
-  local enabled allow_system token url response
+  local enabled allow_system token url response maintenance_secret maintenance_cookie
   enabled="$(runtime_env_value GEOFLOW_MCP_ENABLED)"
   case "$enabled" in
     true) ;;
@@ -214,6 +214,25 @@ check_mcp() {
   MCP_HEADER_FILE="$(mktemp)"
   chmod 600 "$MCP_HEADER_FILE"
   printf 'Authorization: Bearer %s\n' "$token" > "$MCP_HEADER_FILE"
+
+  maintenance_secret="${GEOFLOW_HEALTHCHECK_MAINTENANCE_SECRET:-}"
+  case "$maintenance_secret" in
+    *$'\r'*|*$'\n'*) fail "The maintenance healthcheck secret must not contain line breaks." ;;
+  esac
+  if [ -n "$maintenance_secret" ]; then
+    maintenance_cookie="$(
+      printf '%s' "$maintenance_secret" | "${COMPOSE[@]}" exec -T app php -r '
+        $secret = stream_get_contents(STDIN);
+        $expiresAt = time() + 3600;
+        echo base64_encode((string) json_encode([
+            "expires_at" => $expiresAt,
+            "mac" => hash_hmac("sha256", (string) $expiresAt, $secret),
+        ]));
+      '
+    )"
+    [ -n "$maintenance_cookie" ] || fail "Failed to create the maintenance bypass cookie."
+    printf 'Cookie: laravel_maintenance=%s\n' "$maintenance_cookie" >> "$MCP_HEADER_FILE"
+  fi
 
   url="http://127.0.0.1:${web_port}/mcp"
 

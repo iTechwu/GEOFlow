@@ -8,6 +8,7 @@ APP_DIR="${GEOFLOW_APP_DIR:-$(pwd)}"
 DRAIN_TIMEOUT="${GEOFLOW_DRAIN_TIMEOUT_SECONDS:-300}"
 RELEASE_MODE="${GEOFLOW_RELEASE_MODE:-upgrade}"
 RELEASE_STARTED="0"
+MAINTENANCE_SECRET=""
 
 log() {
   printf '\033[1;34m[geoflow-release]\033[0m %s\n' "$*"
@@ -59,6 +60,7 @@ validate_release() {
   [ -f "${APP_DIR}/docker-compose.prebuilt.yml" ] || fail "docker-compose.prebuilt.yml not found in ${APP_DIR}"
   [ -x "${APP_DIR}/deploy-scripts/geoflow-healthcheck.sh" ] || fail "geoflow-healthcheck.sh is missing or not executable"
   command -v docker >/dev/null 2>&1 || fail "Docker is required"
+  command -v openssl >/dev/null 2>&1 || fail "OpenSSL is required to generate an ephemeral maintenance secret"
   docker info >/dev/null 2>&1 || fail "Docker is not usable by this CI runner"
   docker compose version >/dev/null 2>&1 || fail "Docker Compose v2 is required"
 
@@ -94,7 +96,7 @@ enter_maintenance_and_drain() {
 
   if service_is_running app; then
     log "Entering Laravel maintenance mode."
-    "${COMPOSE[@]}" exec -T app php artisan down --no-interaction
+    "${COMPOSE[@]}" exec -T app php artisan down --secret="$MAINTENANCE_SECRET" --no-interaction
   fi
 
   log "Stopping ingress and background workers with a ${DRAIN_TIMEOUT}s timeout."
@@ -142,12 +144,14 @@ run_readiness_gates() {
   "${COMPOSE[@]}" run --rm --no-deps app php artisan geoflow:security-audit --no-interaction
 }
 
+ensure_maintenance_mode() {
+  log "Persisting maintenance mode for pre-release verification."
+  "${COMPOSE[@]}" run --rm --no-deps app php artisan down --secret="$MAINTENANCE_SECRET" --no-interaction
+}
+
 start_release() {
   log "Starting the new release in maintenance mode."
   "${COMPOSE[@]}" up -d --no-deps app queue scheduler reverb web
-
-  log "Leaving Laravel maintenance mode."
-  "${COMPOSE[@]}" exec -T app php artisan up --no-interaction
 }
 
 main() {
@@ -159,6 +163,8 @@ main() {
   "${COMPOSE[@]}" pull
 
   RELEASE_STARTED="1"
+  MAINTENANCE_SECRET="$(openssl rand -hex 32)"
+  [ -n "$MAINTENANCE_SECRET" ] || fail "Failed to generate the ephemeral maintenance secret"
   if [ "$RELEASE_MODE" = "fresh" ]; then
     run_fresh_install
   else
@@ -166,11 +172,16 @@ main() {
     run_upgrade
   fi
   run_readiness_gates
+  ensure_maintenance_mode
   start_release
 
   GEOFLOW_APP_DIR="$APP_DIR" \
     GEOFLOW_COMPOSE_FILE=docker-compose.prebuilt.yml \
+    GEOFLOW_HEALTHCHECK_MAINTENANCE_SECRET="$MAINTENANCE_SECRET" \
     bash deploy-scripts/geoflow-healthcheck.sh
+
+  log "Leaving Laravel maintenance mode after all release gates passed."
+  "${COMPOSE[@]}" exec -T app php artisan up --no-interaction
   RELEASE_STARTED="0"
   log "Release completed successfully."
 }
