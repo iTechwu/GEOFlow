@@ -86,8 +86,8 @@ jobs:
     name: Build immutable production images
     needs: test
     if: >-
-      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
-      github.event_name == 'workflow_dispatch'
+      github.ref == 'refs/heads/main' &&
+      (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     runs-on: ubuntu-latest
     outputs:
       app_image: ${{ steps.image_refs.outputs.app_image }}
