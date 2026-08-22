@@ -262,7 +262,7 @@ prepare_env() {
   fi
 
   local default_ip current_app_url current_admin_path current_web_port current_reverb_port
-  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret db_host redis_host models_base models_key models_chat_smoke_model models_embedding_smoke_model models_internal_base models_internal_secret mcp_token mcp_read_token mcp_enabled
+  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret db_host redis_host models_base models_key models_chat_smoke_model models_embedding_smoke_model models_allow_insecure_local outbound_private_targets models_internal_base models_internal_secret mcp_token mcp_read_token mcp_enabled
   default_ip="$(detect_primary_ip || true)"
   default_ip="${default_ip:-127.0.0.1}"
 
@@ -287,6 +287,12 @@ prepare_env() {
   models_key="${MODELS_API_KEY:-$(get_env_value .env.prod MODELS_API_KEY)}"
   models_chat_smoke_model="${MODELS_CHAT_SMOKE_MODEL:-$(get_env_value .env.prod MODELS_CHAT_SMOKE_MODEL)}"
   models_embedding_smoke_model="${MODELS_EMBEDDING_SMOKE_MODEL:-$(get_env_value .env.prod MODELS_EMBEDDING_SMOKE_MODEL)}"
+  models_allow_insecure_local="${GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL:-$(get_env_value .env.prod GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL)}"
+  if [ -n "${GEOFLOW_OUTBOUND_PRIVATE_TARGETS+x}" ]; then
+    outbound_private_targets="$GEOFLOW_OUTBOUND_PRIVATE_TARGETS"
+  else
+    outbound_private_targets="$(get_env_value .env.prod GEOFLOW_OUTBOUND_PRIVATE_TARGETS)"
+  fi
   models_internal_base="${MODELS_INTERNAL_BASE_URL:-$(get_env_value .env.prod MODELS_INTERNAL_BASE_URL)}"
   models_internal_secret="${MODELS_INTERNAL_API_SECRET:-$(get_env_value .env.prod MODELS_INTERNAL_API_SECRET)}"
   mcp_token="${GEOFLOW_MCP_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_TOKEN)}"
@@ -307,6 +313,8 @@ prepare_env() {
   models_key="${models_key:-}"
   models_chat_smoke_model="${models_chat_smoke_model:-}"
   models_embedding_smoke_model="${models_embedding_smoke_model:-}"
+  models_allow_insecure_local="${models_allow_insecure_local:-false}"
+  outbound_private_targets="${outbound_private_targets:-}"
   models_internal_base="${models_internal_base:-https://models.dofe.ai}"
   models_internal_secret="${models_internal_secret:-}"
   redis_password="${redis_password:-}"
@@ -333,6 +341,8 @@ prepare_env() {
   set_env_value .env.prod MODELS_API_KEY "$models_key"
   set_env_value .env.prod MODELS_CHAT_SMOKE_MODEL "$models_chat_smoke_model"
   set_env_value .env.prod MODELS_EMBEDDING_SMOKE_MODEL "$models_embedding_smoke_model"
+  set_env_value .env.prod GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL "$models_allow_insecure_local"
+  set_env_value .env.prod GEOFLOW_OUTBOUND_PRIVATE_TARGETS "$outbound_private_targets"
   set_env_value .env.prod MODELS_INTERNAL_BASE_URL "$models_internal_base"
   set_env_value .env.prod MODELS_INTERNAL_API_SECRET "$models_internal_secret"
   set_env_value .env.prod GEOFLOW_MCP_ENABLED "${mcp_enabled:-false}"

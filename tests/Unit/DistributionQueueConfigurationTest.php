@@ -202,6 +202,30 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString('echo "$value"', $script);
     }
 
+    public function test_deployment_paths_preserve_local_models_gateway_security_controls(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $keys = [
+            'GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL',
+            'GEOFLOW_OUTBOUND_PRIVATE_TARGETS',
+        ];
+        $files = [
+            '.env.prod.example',
+            '.github/workflows/ci.yml',
+            'deploy-scripts/render-prod-env.sh',
+            'deploy-scripts/geoflow-docker-deploy.sh',
+        ];
+
+        foreach ($files as $file) {
+            $contents = file_get_contents($root.'/'.$file);
+            $this->assertIsString($contents);
+
+            foreach ($keys as $key) {
+                $this->assertStringContainsString($key, $contents, $file.' must preserve '.$key);
+            }
+        }
+    }
+
     public function test_interactive_deployment_removes_redis_url_that_overrides_external_host(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-docker-deploy.sh');

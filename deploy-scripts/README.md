@@ -92,6 +92,8 @@ bash geoflow-docker-deploy.sh
 | `MODELS_API_KEY` | 必填 | models.dofe.ai 服务密钥 |
 | `MODELS_CHAT_SMOKE_MODEL` | 必填 | 部署验收使用的 models Chat 模型 ID |
 | `MODELS_EMBEDDING_SMOKE_MODEL` | 必填 | 部署验收使用的 models Embedding 模型 ID |
+| `GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL` | `false` | 仅固定同机 Models HTTP 验收可开启 |
+| `GEOFLOW_OUTBOUND_PRIVATE_TARGETS` | 空 | 私网出站精确 `host:port` 列表；本地 Models HTTP 验收时必须同步配置 |
 | `MODELS_INTERNAL_BASE_URL` | `https://models.dofe.ai` | models 管理面地址 |
 | `MODELS_INTERNAL_API_SECRET` | 必填 | models 管理面服务间 HMAC 密钥 |
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` 默认值 | 是否开放 `/mcp`；开启时必须同时提供 Token |
@@ -272,6 +274,8 @@ Optional variables:
 | `MODELS_API_KEY` | required | models.dofe.ai service key |
 | `MODELS_CHAT_SMOKE_MODEL` | required | models Chat model ID used by the deployment gate |
 | `MODELS_EMBEDDING_SMOKE_MODEL` | required | models Embedding model ID used by the deployment gate |
+| `GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL` | `false` | Enable only for a fixed same-host Models HTTP smoke endpoint |
+| `GEOFLOW_OUTBOUND_PRIVATE_TARGETS` | empty | Exact private `host:port` targets; required together with local Models HTTP smoke access |
 | `MODELS_INTERNAL_BASE_URL` | `https://models.dofe.ai` | models management-plane base URL |
 | `MODELS_INTERNAL_API_SECRET` | required | models management-plane service-to-service HMAC secret |
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` default | Whether to open `/mcp`; a Token is required when enabled |
