@@ -2,7 +2,9 @@
 
 namespace App\Support\GeoFlow;
 
+use App\Services\Models\ModelsEndpointPolicy;
 use Illuminate\Support\Facades\Config;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -16,7 +18,8 @@ final class OpenAiRuntimeProvider
      */
     public static function hasUnifiedOverride(): bool
     {
-        return self::unifiedBaseUrl() !== '' && self::unifiedApiKey() !== '';
+        return self::modelsOverride() !== null
+            || (self::legacyBaseUrl() !== '' && self::legacyApiKey() !== '');
     }
 
     /**
@@ -24,13 +27,9 @@ final class OpenAiRuntimeProvider
      */
     public static function unifiedBaseUrl(): string
     {
-        $modelsBase = trim((string) config('geoflow.models_base_url', ''));
-        $modelsKey = trim((string) config('geoflow.models_api_key', ''));
-        if ($modelsBase !== '' && $modelsKey !== '') {
-            return $modelsBase;
-        }
+        $modelsOverride = self::modelsOverride();
 
-        return trim((string) config('geoflow.ai_base_url', ''));
+        return $modelsOverride['base_url'] ?? self::legacyBaseUrl();
     }
 
     /**
@@ -38,12 +37,34 @@ final class OpenAiRuntimeProvider
      */
     public static function unifiedApiKey(): string
     {
-        $modelsBase = trim((string) config('geoflow.models_base_url', ''));
-        $modelsKey = trim((string) config('geoflow.models_api_key', ''));
-        if ($modelsBase !== '' && $modelsKey !== '') {
-            return $modelsKey;
+        $modelsOverride = self::modelsOverride();
+
+        return $modelsOverride['api_key'] ?? self::legacyApiKey();
+    }
+
+    /** @return array{base_url: string, api_key: string}|null */
+    private static function modelsOverride(): ?array
+    {
+        $baseUrl = trim((string) config('geoflow.models_base_url', ''));
+        $apiKey = trim((string) config('geoflow.models_api_key', ''));
+        if ($baseUrl === '' || $apiKey === '') {
+            return null;
         }
 
+        if (! ModelsEndpointPolicy::allows($baseUrl)) {
+            throw new RuntimeException('MODELS_BASE_URL 必须是有效的 HTTPS 地址。');
+        }
+
+        return ['base_url' => $baseUrl, 'api_key' => $apiKey];
+    }
+
+    private static function legacyBaseUrl(): string
+    {
+        return trim((string) config('geoflow.ai_base_url', ''));
+    }
+
+    private static function legacyApiKey(): string
+    {
         return trim((string) config('geoflow.ai_api_key', ''));
     }
 
@@ -192,7 +213,7 @@ final class OpenAiRuntimeProvider
      * 向 config('ai.providers') 注入单条运行时配置并返回 provider 名称。
      *
      * @param  string  $registrySlot  调用场景标识，避免同名覆盖（如 worker、title_ai、embedding）
-     * @param  string  $driver         Laravel AI 驱动名（如 openai）
+     * @param  string  $driver  Laravel AI 驱动名（如 openai）
      */
     public static function registerProvider(string $registrySlot, string $driver, string $providerUrl, string $apiKey): string
     {
@@ -259,6 +280,7 @@ final class OpenAiRuntimeProvider
 
             if (($data['type'] ?? null) === 'response.output_text.delta' && isset($data['delta'])) {
                 $segments[] = self::stringifyContentPart($data['delta']);
+
                 continue;
             }
 
@@ -376,6 +398,7 @@ final class OpenAiRuntimeProvider
         foreach ($content as $part) {
             if (is_string($part) || is_numeric($part)) {
                 $text .= (string) $part;
+
                 continue;
             }
 

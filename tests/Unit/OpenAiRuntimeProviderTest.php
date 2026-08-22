@@ -9,6 +9,49 @@ use TypeError;
 
 class OpenAiRuntimeProviderTest extends TestCase
 {
+    public function test_it_rejects_an_insecure_models_override_before_registering_the_api_key(): void
+    {
+        config()->set('geoflow.models_base_url', 'http://attacker.example.test/v1');
+        config()->set('geoflow.models_api_key', 'models-secret');
+        config()->set('ai.providers', ['existing' => ['driver' => 'openai']]);
+
+        $caught = null;
+
+        try {
+            OpenAiRuntimeProvider::registerProvider(
+                'security_test',
+                'openai',
+                'https://fallback.example.test/v1',
+                'fallback-key',
+            );
+        } catch (RuntimeException $exception) {
+            $caught = $exception;
+        }
+
+        $this->assertInstanceOf(RuntimeException::class, $caught);
+        $this->assertStringContainsString('MODELS_BASE_URL', $caught->getMessage());
+        $this->assertStringContainsString('HTTPS', $caught->getMessage());
+        $this->assertStringNotContainsString('models-secret', $caught->getMessage());
+        $this->assertSame(['existing' => ['driver' => 'openai']], config('ai.providers'));
+    }
+
+    public function test_it_allows_an_explicit_local_models_override(): void
+    {
+        config()->set('geoflow.models_base_url', 'http://dofe-models-api-local:3101/v1');
+        config()->set('geoflow.models_api_key', 'models-secret');
+        config()->set('geoflow.models_allow_insecure_local', true);
+
+        $provider = OpenAiRuntimeProvider::registerProvider(
+            'local_models_test',
+            'openai',
+            'https://fallback.example.test/v1',
+            'fallback-key',
+        );
+
+        $this->assertSame('http://dofe-models-api-local:3101/v1', config("ai.providers.{$provider}.url"));
+        $this->assertSame('models-secret', config("ai.providers.{$provider}.key"));
+    }
+
     public function test_it_normalizes_html_response_errors_into_actionable_api_url_hint(): void
     {
         $message = OpenAiRuntimeProvider::normalizeApiException(
