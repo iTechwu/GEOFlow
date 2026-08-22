@@ -143,6 +143,20 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString('Authorization: Bearer $token', $healthcheck);
     }
 
+    public function test_deployment_healthcheck_uses_the_running_container_configuration(): void
+    {
+        $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');
+
+        $this->assertIsString($healthcheck);
+        $this->assertStringContainsString('runtime_env_value()', $healthcheck);
+        $this->assertStringContainsString("exec -T app sh -c 'printenv", $healthcheck);
+        $this->assertStringContainsString('published_web_port()', $healthcheck);
+        $this->assertStringContainsString('port web 80', $healthcheck);
+        $this->assertStringContainsString('case "$enabled" in', $healthcheck);
+        $this->assertStringNotContainsString('read_env_value()', $healthcheck);
+        $this->assertStringNotContainsString('grep "^${key}="', $healthcheck);
+    }
+
     public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/build-and-push-amd64-images.sh');

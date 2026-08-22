@@ -43,10 +43,19 @@ detect_docker_command() {
   fi
 }
 
-read_env_value() {
+runtime_env_value() {
   local key="$1"
-  local file="${APP_DIR}/.env.prod"
-  grep "^${key}=" "$file" 2>/dev/null | tail -n1 | cut -d= -f2-
+  "${COMPOSE[@]}" exec -T app sh -c 'printenv "$1" 2>/dev/null || true' sh "$key" | tr -d '\r'
+}
+
+published_web_port() {
+  local binding port
+  binding="$("${COMPOSE[@]}" port web 80 2>/dev/null | head -n1)"
+  [ -n "$binding" ] || fail "The web service does not expose container port 80."
+
+  port="${binding##*:}"
+  [[ "$port" =~ ^[0-9]+$ ]] || fail "Cannot determine the published web port from Docker Compose."
+  printf '%s' "$port"
 }
 
 wait_for_services() {
@@ -101,8 +110,8 @@ check_http() {
 
 check_models_internal() {
   local base_url secret required
-  base_url="$(read_env_value MODELS_INTERNAL_BASE_URL)"
-  secret="$(read_env_value MODELS_INTERNAL_API_SECRET)"
+  base_url="$(runtime_env_value MODELS_INTERNAL_BASE_URL)"
+  secret="$(runtime_env_value MODELS_INTERNAL_API_SECRET)"
   required="${GEOFLOW_HEALTHCHECK_REQUIRE_MODELS_INTERNAL:-1}"
 
   if [ -z "$base_url" ] || [ -z "$secret" ]; then
@@ -161,28 +170,39 @@ mcp_request() {
 }
 
 check_mcp() {
-  local enabled allow_system token web_port url response
-  enabled="$(read_env_value GEOFLOW_MCP_ENABLED)"
-  [ "$enabled" = "true" ] || {
-    log "MCP is disabled; skipping protocol smoke checks."
-    return
-  }
+  local web_port="$1"
+  local enabled allow_system token url response
+  enabled="$(runtime_env_value GEOFLOW_MCP_ENABLED)"
+  case "$enabled" in
+    true) ;;
+    false|"")
+      log "MCP is disabled; skipping protocol smoke checks."
+      return
+      ;;
+    *) fail "GEOFLOW_MCP_ENABLED must resolve to true or false in the running app container." ;;
+  esac
 
-  allow_system="$(read_env_value GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN)"
-  token="${GEOFLOW_MCP_SMOKE_TOKEN:-$(read_env_value GEOFLOW_MCP_READ_TOKEN)}"
-  token="${token:-$(read_env_value GEOFLOW_MCP_TOKEN)}"
+  allow_system="$(runtime_env_value GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN)"
+  case "$allow_system" in
+    true|false) ;;
+    *) fail "GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN must resolve to true or false in the running app container." ;;
+  esac
+
+  token="${GEOFLOW_MCP_SMOKE_TOKEN:-$(runtime_env_value GEOFLOW_MCP_READ_TOKEN)}"
+  token="${token:-$(runtime_env_value GEOFLOW_MCP_TOKEN)}"
 
   if [ "$allow_system" = "false" ] && [ -z "${GEOFLOW_MCP_SMOKE_TOKEN:-}" ]; then
     fail "MCP system tokens are disabled; set GEOFLOW_MCP_SMOKE_TOKEN to a short-lived SSO token for deployment verification."
   fi
   [ -n "$token" ] || fail "MCP is enabled, but no read, write, or explicit smoke token is configured."
+  case "$token" in
+    *$'\r'*|*$'\n'*) fail "MCP smoke tokens must not contain line breaks." ;;
+  esac
 
   MCP_HEADER_FILE="$(mktemp)"
   chmod 600 "$MCP_HEADER_FILE"
   printf 'Authorization: Bearer %s\n' "$token" > "$MCP_HEADER_FILE"
 
-  web_port="$(read_env_value WEB_PORT)"
-  web_port="${web_port:-18080}"
   url="http://127.0.0.1:${web_port}/mcp"
 
   log "Checking MCP initialize."
@@ -210,12 +230,11 @@ main() {
 
   COMPOSE=("${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml)
   local web_port
-  web_port="$(read_env_value WEB_PORT)"
-  web_port="${web_port:-18080}"
 
   log "Checking container status."
   "${COMPOSE[@]}" ps
   wait_for_services
+  web_port="$(published_web_port)"
   check_http "$web_port"
 
   log "Checking Laravel database connection."
@@ -227,7 +246,7 @@ main() {
 
   check_models_gateway
   check_models_internal
-  check_mcp
+  check_mcp "$web_port"
 
   log "Recent application logs:"
   "${COMPOSE[@]}" logs --tail=80 app queue scheduler web || true
