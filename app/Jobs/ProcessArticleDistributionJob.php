@@ -71,4 +71,46 @@ class ProcessArticleDistributionJob implements ShouldQueue
             }
         }
     }
+
+    public function failed(?Throwable $exception = null): void
+    {
+        try {
+            $message = trim((string) $exception?->getMessage());
+            $errorMessage = mb_substr(
+                '队列中断: '.($message !== '' ? $message : '队列任务异常退出'),
+                0,
+                1000,
+            );
+
+            $updated = ArticleDistribution::query()
+                ->whereKey($this->distributionId)
+                ->where('status', 'sending')
+                ->update([
+                    'status' => 'failed',
+                    'last_error_message' => $errorMessage,
+                    'last_attempt_at' => now(),
+                    'next_retry_at' => null,
+                    'updated_at' => now(),
+                ]);
+            if ($updated !== 1) {
+                return;
+            }
+
+            $distribution = ArticleDistribution::query()->whereKey($this->distributionId)->first();
+            if (! $distribution) {
+                return;
+            }
+
+            app(DistributionOrchestrator::class)->log(
+                'error',
+                '文章分发队列中断：'.$errorMessage,
+                (int) $distribution->distribution_channel_id,
+                (int) $distribution->id,
+                (int) $distribution->article_id,
+                ['event' => 'distribution.failed'],
+            );
+        } catch (Throwable) {
+            // 避免失败回调自身再抛错导致队列 Worker 重复记录异常。
+        }
+    }
 }
