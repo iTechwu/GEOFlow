@@ -272,6 +272,23 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString("ports: !override\n      - \"\${REVERB_EXPOSE_PORT:-18081}:\${REVERB_SERVER_PORT:-18080}\"", $compose);
     }
 
+    public function test_web_container_healthcheck_is_independent_from_laravel_maintenance_mode(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $nginx = file_get_contents($root.'/docker/nginx/default.conf');
+
+        $this->assertIsString($nginx);
+        $this->assertStringContainsString('location = /nginx-health', $nginx);
+        $this->assertStringContainsString('return 200', $nginx);
+
+        foreach (['docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
+            $compose = file_get_contents($root.'/'.$composeFile);
+
+            $this->assertIsString($compose);
+            $this->assertStringContainsString('http://127.0.0.1/nginx-health', $compose, $composeFile);
+        }
+    }
+
     public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/build-and-push-amd64-images.sh');
