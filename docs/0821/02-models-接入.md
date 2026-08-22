@@ -13,6 +13,8 @@ MODELS_SERVICE_NAME=geoflow
 
 `MODELS_BASE_URL` 与 `MODELS_API_KEY` 两个公共数据面变量必须同时设置。GEOFlow 会把它们注册为 Laravel AI 的运行时 Provider，模型名称仍来自 `ai_models.model_id`，因此可以在 models 中切换 alias，而无需重新构建 GEOFlow 镜像。管理面变量是可选的，仅用于 `/internal/*` 检查和后续管理能力。
 
+生产环境必须使用 HTTPS。仅当 CI 同机验收必须连接固定本地服务时，才可同时设置 `GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL=true`，并将该服务的精确 `host:port` 加入 `GEOFLOW_OUTBOUND_PRIVATE_TARGETS`。专用开关只接受 `127.0.0.1`、`host.docker.internal` 或 `dofe-models-api-local`，统一出站策略仍会解析并校验目标地址；两项配置缺一不可。
+
 ## 请求路径
 
 - Chat：`POST {MODELS_BASE_URL}/chat/completions`

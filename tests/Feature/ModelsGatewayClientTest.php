@@ -83,6 +83,7 @@ class ModelsGatewayClientTest extends TestCase
     {
         config()->set('geoflow.models_base_url', 'http://dofe-models-api-local:3101/v1');
         config()->set('geoflow.models_allow_insecure_local', true);
+        config()->set('geoflow.outbound_private_targets', ['dofe-models-api-local:3101']);
         Http::fake([
             'http://dofe-models-api-local:3101/v1/chat/completions' => Http::response([
                 'choices' => [['message' => ['content' => 'ok']]],

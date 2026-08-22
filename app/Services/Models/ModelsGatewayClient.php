@@ -125,7 +125,7 @@ final class ModelsGatewayClient
         $scheme = strtolower((string) ($parts['scheme'] ?? ''));
         $host = trim((string) ($parts['host'] ?? ''));
         $allowInsecureLocal = (bool) config('geoflow.models_allow_insecure_local', false);
-        $isLocalHost = in_array($host, ['127.0.0.1', 'localhost', 'host.docker.internal', 'dofe-models-api-local'], true);
+        $isLocalHost = in_array($host, ['127.0.0.1', 'host.docker.internal', 'dofe-models-api-local'], true);
         if (! is_array($parts)
             || $host === ''
             || ($scheme !== 'https' && ! ($allowInsecureLocal && $scheme === 'http' && $isLocalHost))) {
