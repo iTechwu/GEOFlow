@@ -63,7 +63,7 @@ class ModelsInternalClientTest extends TestCase
     {
         config()->set('geoflow.models_internal_api_secret', '');
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
 
         ModelsInternalClient::listModels();
     }
@@ -162,7 +162,7 @@ class ModelsInternalClientTest extends TestCase
         try {
             ModelsInternalClient::listModels();
             $this->fail('Expected the models internal client to reject HTTP 400.');
-        } catch (\RuntimeException $exception) {
+        } catch (RuntimeException $exception) {
             $this->assertStringContainsString('HTTP 400', $exception->getMessage());
         }
 
