@@ -26,6 +26,8 @@ final class ModelsGatewayClient
             );
         }
 
+        self::assertSecureBaseUrl();
+
         $client = app(SafeOutboundHttpClient::class);
         $maxBytes = (int) config('geoflow.outbound_ai_max_bytes', 8 * 1024 * 1024);
 
@@ -76,6 +78,17 @@ final class ModelsGatewayClient
             ->acceptJson()
             ->connectTimeout(5)
             ->timeout(30);
+    }
+
+    private static function assertSecureBaseUrl(): void
+    {
+        $parts = parse_url(self::baseUrl());
+
+        if (! is_array($parts)
+            || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
+            || trim((string) ($parts['host'] ?? '')) === '') {
+            throw new RuntimeException('MODELS_BASE_URL 必须是有效的 HTTPS 地址。');
+        }
     }
 
     private static function baseUrl(): string

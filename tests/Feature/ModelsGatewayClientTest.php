@@ -60,4 +60,21 @@ class ModelsGatewayClientTest extends TestCase
             $this->assertStringNotContainsString('public-key', $exception->getMessage());
         }
     }
+
+    public function test_check_rejects_an_insecure_gateway_before_sending_the_api_key(): void
+    {
+        config()->set('geoflow.models_base_url', 'http://models.example.test/v1');
+        Http::fake(['*' => Http::response(['choices' => [['message' => ['content' => 'ok']]]])]);
+
+        try {
+            ModelsGatewayClient::check();
+            $this->fail('Expected the models gateway check to require HTTPS.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('MODELS_BASE_URL', $exception->getMessage());
+            $this->assertStringContainsString('HTTPS', $exception->getMessage());
+            $this->assertStringNotContainsString('public-key', $exception->getMessage());
+        }
+
+        Http::assertNothingSent();
+    }
 }
