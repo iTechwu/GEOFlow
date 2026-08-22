@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\Models\ModelsInternalClient;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -15,6 +16,7 @@ class ModelsInternalClientTest extends TestCase
         config()->set('geoflow.models_internal_base_url', 'https://models.dofe.ai');
         config()->set('geoflow.models_internal_api_secret', 'test-secret');
         config()->set('geoflow.models_service_name', 'geoflow');
+        Http::preventStrayRequests();
     }
 
     public function test_list_models_sends_hmac_authorization_and_service_name_header(): void
@@ -59,5 +61,86 @@ class ModelsInternalClientTest extends TestCase
         $this->expectException(\RuntimeException::class);
 
         ModelsInternalClient::listModels();
+    }
+
+    public function test_client_rejects_http_before_sending_the_hmac_token(): void
+    {
+        config()->set('geoflow.models_internal_base_url', 'http://models.example.test');
+        Http::fake(['*' => Http::response(['list' => [], 'total' => 0])]);
+
+        $this->expectExceptionMessage('MODELS_INTERNAL_BASE_URL');
+
+        try {
+            ModelsInternalClient::listModels();
+        } finally {
+            Http::assertNothingSent();
+        }
+    }
+
+    public function test_client_allows_explicit_local_http_with_the_private_target_allowlist(): void
+    {
+        config()->set('geoflow.models_internal_base_url', 'http://dofe-models-api-local:3101');
+        config()->set('geoflow.models_allow_insecure_local', true);
+        config()->set('geoflow.outbound_private_targets', ['dofe-models-api-local:3101']);
+        Http::fake([
+            'http://dofe-models-api-local:3101/internal/models' => Http::response(['list' => [], 'total' => 0]),
+        ]);
+
+        $this->assertSame(['list' => [], 'total' => 0], ModelsInternalClient::listModels());
+        Http::assertSentCount(1);
+    }
+
+    public function test_internal_check_command_does_not_print_upstream_error_bodies(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/internal/models' => Http::response(['error' => 'secret-provider-detail'], 500),
+        ]);
+
+        $exitCode = Artisan::call('geoflow:models-internal-check', ['--no-interaction' => true]);
+        $output = Artisan::output();
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('HTTP 500', $output);
+        $this->assertStringNotContainsString('secret-provider-detail', $output);
+        $this->assertStringNotContainsString('test-secret', $output);
+        $this->assertStringNotContainsString('models.dofe.ai', $output);
+    }
+
+    public function test_client_rejects_an_invalid_success_response(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/internal/models' => Http::response(['unexpected' => true]),
+        ]);
+
+        $this->expectExceptionMessage('返回格式无效');
+
+        ModelsInternalClient::listModels();
+    }
+
+    public function test_client_retries_a_transient_server_failure(): void
+    {
+        Http::fakeSequence()
+            ->push(['error' => 'temporarily unavailable'], 503)
+            ->push(['list' => [], 'total' => 0], 200);
+
+        ModelsInternalClient::listModels();
+
+        Http::assertSentCount(2);
+    }
+
+    public function test_client_does_not_retry_a_deterministic_client_failure(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/internal/models' => Http::response(['error' => 'invalid signature'], 400),
+        ]);
+
+        try {
+            ModelsInternalClient::listModels();
+            $this->fail('Expected the models internal client to reject HTTP 400.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('HTTP 400', $exception->getMessage());
+        }
+
+        Http::assertSentCount(1);
     }
 }

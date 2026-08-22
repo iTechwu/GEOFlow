@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Models\ModelsInternalCheckException;
 use App\Services\Models\ModelsInternalClient;
 use Illuminate\Console\Command;
 use Throwable;
@@ -23,15 +24,19 @@ class ModelsInternalCheckCommand extends Command
 
         try {
             $models = ModelsInternalClient::listModels();
-            $this->info('models internal OK: '.ModelsInternalClient::baseUrl().'/internal/models');
+            $this->info('models internal HMAC check passed.');
 
             if ($this->option('list')) {
                 $this->line((string) json_encode($models, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
             }
 
             return self::SUCCESS;
-        } catch (Throwable $exception) {
+        } catch (ModelsInternalCheckException $exception) {
             $this->error('models internal check failed: '.$exception->getMessage());
+
+            return self::FAILURE;
+        } catch (Throwable) {
+            $this->error('models internal transport failed. Review protected application logs for details.');
 
             return self::FAILURE;
         }

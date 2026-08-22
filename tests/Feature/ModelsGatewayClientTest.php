@@ -17,6 +17,7 @@ class ModelsGatewayClientTest extends TestCase
         config()->set('geoflow.models_api_key', 'public-key');
         config()->set('geoflow.models_chat_smoke_model', 'chat-smoke');
         config()->set('geoflow.models_embedding_smoke_model', 'embedding-smoke');
+        Http::preventStrayRequests();
     }
 
     public function test_check_calls_chat_and_embedding_through_models(): void
