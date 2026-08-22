@@ -283,7 +283,7 @@ return [
             'command_env_check' => '检查 .env.prod 是否生效',
             'command_env_check_desc' => '确认 APP_URL、数据库、端口和后台路径是否被 Docker Compose 读取。',
             'command_key_generate' => '生成 APP_KEY',
-            'command_key_generate_desc' => '仅在 APP_KEY 缺失或异常时执行；已有线上数据和加密配置时不要随意重置。',
+            'command_key_generate_desc' => '仅在首次部署且 APP_KEY 缺失时生成，并将输出安全写入 .env.prod；已有线上数据和加密配置时不要重置。',
             'command_init' => '补跑初始化',
             'command_init_desc' => '初始化命令应运行在 app 容器内；普通补救只执行迁移和默认管理员种子，不覆盖站点设置、广告、提示词或内容数据。',
             'command_logs' => '查看容器日志',

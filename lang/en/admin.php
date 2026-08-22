@@ -283,7 +283,7 @@ return [
             'command_env_check' => 'Check whether .env.prod is effective',
             'command_env_check_desc' => 'Confirm that APP_URL, database, port, and admin path are read by Docker Compose.',
             'command_key_generate' => 'Generate APP_KEY',
-            'command_key_generate_desc' => 'Run only when APP_KEY is missing or invalid. Do not reset it casually on a running production system with encrypted data.',
+            'command_key_generate_desc' => 'Generate only for a first deployment, then store the output securely in .env.prod. Never reset it on a running production system with encrypted data.',
             'command_init' => 'Run initialization commands',
             'command_init_desc' => 'Initialization commands should run inside the app container. Recovery commands only run migrations and the default admin seeder, without overwriting site settings, ads, prompts, or content.',
             'command_logs' => 'Inspect container logs',

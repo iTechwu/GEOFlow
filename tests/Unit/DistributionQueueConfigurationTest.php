@@ -166,6 +166,27 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('AUTO_INSTALL_ONCE=false', $productionEnv);
     }
 
+    public function test_production_environment_file_is_read_only_and_entrypoint_never_rotates_the_app_key(): void
+    {
+        $root = dirname(__DIR__, 2);
+
+        foreach (['docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
+            $compose = file_get_contents($root.'/'.$composeFile);
+            $this->assertIsString($compose);
+            $this->assertSame(
+                5,
+                substr_count($compose, './.env.prod:/var/www/html/.env:ro'),
+                $composeFile.' must mount the rendered environment read-only in every PHP service.'
+            );
+            $this->assertStringNotContainsString('./.env.prod:/var/www/html/.env\n', $compose, $composeFile);
+        }
+
+        $entrypoint = file_get_contents($root.'/docker/entrypoint.prod.sh');
+        $this->assertIsString($entrypoint);
+        $this->assertStringContainsString('APP_KEY must be provided before the production container starts', $entrypoint);
+        $this->assertStringNotContainsString('key:generate', $entrypoint);
+    }
+
     public function test_deployment_healthcheck_rejects_pending_migrations(): void
     {
         $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');

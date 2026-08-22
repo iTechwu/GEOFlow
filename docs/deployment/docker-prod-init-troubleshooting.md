@@ -54,7 +54,8 @@ php artisan migrate --force
 正确方式是在服务器项目目录执行 Docker Compose 命令，让命令运行到 `app` 容器内：
 
 ```bash
-$COMPOSE_PROD run --rm app php artisan key:generate --force
+# 仅首次部署：生成后将输出安全写入 .env.prod 的 APP_KEY，再启动容器。
+printf 'base64:%s\n' "$(openssl rand -base64 32)"
 $COMPOSE_PROD run --rm app php artisan migrate --force
 $COMPOSE_PROD run --rm app php artisan geoflow:install
 $COMPOSE_PROD run --rm app php artisan storage:link --force

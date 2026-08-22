@@ -14,7 +14,7 @@ services:
       GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED: "true"
     command: ["php", "artisan", "about"]
     volumes:
-      - ./.env.prod:/var/www/html/.env
+      - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
     restart: "no"
 
@@ -29,7 +29,7 @@ services:
       AUTO_MIGRATE: "false"
       AUTO_INSTALL_ONCE: "false"
     volumes:
-      - ./.env.prod:/var/www/html/.env
+      - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
     depends_on:
       init:
@@ -71,7 +71,7 @@ services:
       AUTO_INSTALL_ONCE: "false"
     command: ["php", "artisan", "queue:work", "redis", "--queue=geoflow,distribution,theme-replication,system-updates,default", "--sleep=1", "--tries=1", "--timeout=300"]
     volumes:
-      - ./.env.prod:/var/www/html/.env
+      - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
     depends_on:
       init:
@@ -95,7 +95,7 @@ services:
       AUTO_INSTALL_ONCE: "false"
     command: ["php", "artisan", "schedule:work"]
     volumes:
-      - ./.env.prod:/var/www/html/.env
+      - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
     depends_on:
       init:
@@ -122,7 +122,7 @@ services:
     ports:
       - "127.0.0.1:${REVERB_EXPOSE_PORT:-18081}:${REVERB_SERVER_PORT:-18080}"
     volumes:
-      - ./.env.prod:/var/www/html/.env
+      - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
     depends_on:
       init:

@@ -219,7 +219,7 @@ class SystemUpdateDeploymentDiagnosticsService
                     'title' => __('admin.system_updates.diagnostics.command_key_generate'),
                     'description' => __('admin.system_updates.diagnostics.command_key_generate_desc'),
                     'commands' => [
-                        '$COMPOSE_PROD run --rm app php artisan key:generate --force',
+                        'printf \'base64:%s\\n\' "$(openssl rand -base64 32)"',
                     ],
                 ];
             }

@@ -151,7 +151,8 @@ class AdminSystemUpdatesPageTest extends TestCase
             ->implode("\n");
 
         $this->assertStringContainsString('docker compose --env-file .env.prod -f docker-compose.prod.yml', $commands);
-        $this->assertStringContainsString('$COMPOSE_PROD run --rm app php artisan key:generate --force', $commands);
+        $this->assertStringContainsString('openssl rand -base64 32', $commands);
+        $this->assertStringNotContainsString('$COMPOSE_PROD run --rm app php artisan key:generate --force', $commands);
         $this->assertStringContainsString('$COMPOSE_PROD run --rm app php artisan migrate --force', $commands);
         $this->assertStringContainsString('$COMPOSE_PROD run --rm app php artisan geoflow:install', $commands);
         $this->assertStringNotContainsString('$COMPOSE_PROD run --rm app php artisan db:seed --force', $commands);

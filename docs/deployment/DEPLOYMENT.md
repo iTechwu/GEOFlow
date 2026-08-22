@@ -84,7 +84,7 @@ REVERB_EXPOSE_PORT=18081
 
 说明：
 
-- `APP_KEY` 可留空：应用容器启动时会 `key:generate` 写回 `.env.prod`（可写挂载）；也可在宿主机执行 `php artisan key:generate --show` 后粘贴。
+- `APP_KEY` 必须在启动前写入 `.env.prod`，CI 部署通过 `GEOFLOW_APP_KEY` Secret 注入。手工首次部署可执行 `printf 'base64:%s\n' "$(openssl rand -base64 32)"` 生成；生产容器只读挂载 `.env.prod`，不会生成或轮换密钥。
 - `TRUSTED_PROXIES` 用于反向代理、CDN、负载均衡或一级目录部署。若外层代理会传 `X-Forwarded-Proto` / `X-Forwarded-Host` / `X-Forwarded-Prefix`，生产环境通常可设为 `*` 或具体代理 IP。
 - 如果部署在任意一级目录下，例如外部访问路径是 `/wiki`、`/docs`、`/site`，不要把目录写进 `ADMIN_BASE_PATH`；应由反向代理透传 `X-Forwarded-Prefix`，后台路径仍保持 `ADMIN_BASE_PATH=geo_admin`。
 - `AUTO_MIGRATE=true` 由生产 `init` 服务执行迁移；常驻服务不接收 `.env.prod` 作为容器环境变量，重启时不会重复初始化。

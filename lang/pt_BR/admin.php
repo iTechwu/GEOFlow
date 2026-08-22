@@ -285,7 +285,7 @@ return array_replace_recursive($base, [
             'command_env_check' => 'Verificar se .env.prod está ativo',
             'command_env_check_desc' => 'Confirme que APP_URL, banco, porta e caminho admin são lidos pelo Docker Compose.',
             'command_key_generate' => 'Gerar APP_KEY',
-            'command_key_generate_desc' => 'Execute apenas quando APP_KEY estiver ausente ou inválido. Não redefina casualmente em produção com dados criptografados.',
+            'command_key_generate_desc' => 'Gere apenas na primeira implantação e armazene a saída com segurança em .env.prod. Nunca redefina em produção com dados criptografados.',
             'command_init' => 'Executar inicialização',
             'command_init_desc' => 'Os comandos de inicialização devem rodar no contêiner app. A recuperação executa apenas migrações e o seeder do admin padrão, sem sobrescrever configurações, anúncios, prompts ou conteúdo.',
             'command_logs' => 'Verificar logs dos contêineres',
