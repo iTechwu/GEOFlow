@@ -7,6 +7,12 @@ node_modules
 .env
 .env.*
 !.env.example
+public/uploads
+public/assets/images
+public/build
+public/hot
+public/storage
+**/.DS_Store
 .phpunit.result.cache
 *.log
 bak
