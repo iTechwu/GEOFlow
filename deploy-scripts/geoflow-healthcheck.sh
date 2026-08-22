@@ -123,11 +123,12 @@ check_models_internal() {
   local base_url secret required
   base_url="$(runtime_env_value MODELS_INTERNAL_BASE_URL)"
   secret="$(runtime_env_value MODELS_INTERNAL_API_SECRET)"
+  secret="${secret:-$(runtime_env_value INTERNAL_API_SECRET)}"
   required="${GEOFLOW_HEALTHCHECK_REQUIRE_MODELS_INTERNAL:-1}"
 
   if [ -z "$base_url" ] || [ -z "$secret" ]; then
     if [ "$required" = "1" ]; then
-      fail "models internal check is required, but MODELS_INTERNAL_BASE_URL or MODELS_INTERNAL_API_SECRET is missing."
+      fail "models internal check is required, but MODELS_INTERNAL_BASE_URL or MODELS_INTERNAL_API_SECRET (or legacy INTERNAL_API_SECRET) is missing."
     fi
 
     warn "models internal HMAC is not fully configured; skipping the optional management-plane check."

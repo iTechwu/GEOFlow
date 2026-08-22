@@ -137,6 +137,8 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('php artisan geoflow:models-internal-check --no-interaction', $healthcheck);
         $this->assertStringContainsString('php artisan geoflow:models-gateway-check --no-interaction', $healthcheck);
         $this->assertStringContainsString('GEOFLOW_HEALTHCHECK_REQUIRE_MODELS_INTERNAL:-1', $healthcheck);
+        $this->assertStringContainsString('secret="${secret:-$(runtime_env_value INTERNAL_API_SECRET)}"', $healthcheck);
+        $this->assertStringContainsString('MODELS_INTERNAL_API_SECRET (or legacy INTERNAL_API_SECRET)', $healthcheck);
         $this->assertStringContainsString('"method":"initialize"', $healthcheck);
         $this->assertStringContainsString('"method":"tools/list"', $healthcheck);
         $this->assertStringContainsString('"name":"geoflow.catalog"', $healthcheck);
