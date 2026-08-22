@@ -92,9 +92,8 @@ final class ModelsInternalClient
     {
         $response = self::get('/internal/models', $query);
 
-        $payload = $response->json();
-        if (! is_array($payload)
-            || ! isset($payload['list'], $payload['total'])
+        $payload = self::responseData($response, '模型目录');
+        if (! isset($payload['list'], $payload['total'])
             || ! is_array($payload['list'])
             || ! is_int($payload['total'])) {
             throw new ModelsInternalCheckException('models internal 模型目录返回格式无效。');
@@ -112,11 +111,31 @@ final class ModelsInternalClient
     {
         $response = self::get('/internal/models/'.rawurlencode($modelId));
 
+        return self::responseData($response, '模型详情');
+    }
+
+    /**
+     * Models currently wraps successful internal responses in
+     * {code,msg,data}. Keep accepting the former bare payload during rolling
+     * deployments, while still rejecting malformed or failed envelopes.
+     *
+     * @return array<string,mixed>
+     */
+    private static function responseData(Response $response, string $resource): array
+    {
         $payload = $response->json();
         if (! is_array($payload)) {
-            throw new ModelsInternalCheckException('models internal 模型详情返回格式无效。');
+            throw new ModelsInternalCheckException("models internal {$resource}返回格式无效。");
         }
 
-        return $payload;
+        if (! array_key_exists('code', $payload)) {
+            return $payload;
+        }
+
+        if ($payload['code'] !== 200 || ! isset($payload['data']) || ! is_array($payload['data'])) {
+            throw new ModelsInternalCheckException("models internal {$resource}返回格式无效。");
+        }
+
+        return $payload['data'];
     }
 }

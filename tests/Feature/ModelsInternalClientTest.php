@@ -142,6 +142,63 @@ class ModelsInternalClientTest extends TestCase
         ModelsInternalClient::listModels();
     }
 
+    public function test_list_models_unwraps_the_current_models_success_envelope(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/internal/models' => Http::response([
+                'code' => 200,
+                'msg' => 'success',
+                'data' => ['list' => [], 'total' => 0, 'page' => 1, 'limit' => 20],
+            ]),
+        ]);
+
+        $this->assertSame(
+            ['list' => [], 'total' => 0, 'page' => 1, 'limit' => 20],
+            ModelsInternalClient::listModels(),
+        );
+    }
+
+    public function test_get_model_unwraps_the_current_models_success_envelope(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/internal/models/model-1' => Http::response([
+                'code' => 200,
+                'msg' => 'success',
+                'data' => [
+                    'model' => ['id' => 'model-1'],
+                    'supportedProtocols' => ['openai'],
+                    'isAvailable' => true,
+                    'codexReady' => true,
+                ],
+            ]),
+        ]);
+
+        $this->assertSame(
+            [
+                'model' => ['id' => 'model-1'],
+                'supportedProtocols' => ['openai'],
+                'isAvailable' => true,
+                'codexReady' => true,
+            ],
+            ModelsInternalClient::getModel('model-1'),
+        );
+    }
+
+    public function test_client_rejects_a_failed_business_envelope_returned_with_http_200(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/internal/models' => Http::response([
+                'code' => 503,
+                'msg' => 'secret-provider-detail',
+                'data' => null,
+            ]),
+        ]);
+
+        $this->expectExceptionMessage('返回格式无效');
+
+        ModelsInternalClient::listModels();
+    }
+
     public function test_client_retries_a_transient_server_failure(): void
     {
         Http::fakeSequence()
