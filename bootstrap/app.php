@@ -14,6 +14,7 @@ use App\Http\Middleware\AuthenticateApiToken;
 use App\Http\Middleware\AuthenticateMcpToken;
 use App\Http\Middleware\EnsureApiScope;
 use App\Http\Middleware\EnsureSuperAdmin;
+use App\Http\Middleware\EnsureTrustedForwardedHost;
 use App\Http\Middleware\LogAdminActivity;
 use App\Http\Middleware\RecordSiteViewLog;
 use App\Http\Middleware\SiteWebLocale;
@@ -36,6 +37,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // TrustProxies runs in Laravel's default global stack. Appending this
+        // guard validates the effective host after forwarded headers are read.
+        $middleware->append(EnsureTrustedForwardedHost::class);
+
         $middleware->alias([
             // 生成/透传 X-Request-Id，并写入响应头
             'api.request_id' => AssignApiRequestId::class,
