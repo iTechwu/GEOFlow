@@ -168,7 +168,9 @@ main() {
   run_readiness_gates
   start_release
 
-  GEOFLOW_APP_DIR="$APP_DIR" bash deploy-scripts/geoflow-healthcheck.sh
+  GEOFLOW_APP_DIR="$APP_DIR" \
+    GEOFLOW_COMPOSE_FILE=docker-compose.prebuilt.yml \
+    bash deploy-scripts/geoflow-healthcheck.sh
   RELEASE_STARTED="0"
   log "Release completed successfully."
 }

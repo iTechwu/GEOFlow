@@ -157,6 +157,21 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString('grep "^${key}="', $healthcheck);
     }
 
+    public function test_prebuilt_release_healthcheck_uses_the_prebuilt_compose_runtime(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $prebuilt = file_get_contents($root.'/docker-compose.prebuilt.yml');
+        $healthcheck = file_get_contents($root.'/deploy-scripts/geoflow-healthcheck.sh');
+        $release = file_get_contents($root.'/deploy-scripts/deploy-prebuilt-release.sh');
+
+        $this->assertIsString($prebuilt);
+        $this->assertIsString($healthcheck);
+        $this->assertIsString($release);
+        $this->assertSame(5, substr_count($prebuilt, 'env_file:'), 'All PHP runtime services must receive the rendered environment.');
+        $this->assertStringContainsString('GEOFLOW_COMPOSE_FILE', $healthcheck);
+        $this->assertStringContainsString('GEOFLOW_COMPOSE_FILE=docker-compose.prebuilt.yml', $release);
+    }
+
     public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/build-and-push-amd64-images.sh');

@@ -5,6 +5,7 @@ set -Eeuo pipefail
 # Run from the repository root or set GEOFLOW_APP_DIR=/path/to/GEOFlow.
 
 APP_DIR="${GEOFLOW_APP_DIR:-$(pwd)}"
+COMPOSE_FILE="${GEOFLOW_COMPOSE_FILE:-docker-compose.prod.yml}"
 WAIT_ATTEMPTS="${GEOFLOW_HEALTHCHECK_ATTEMPTS:-30}"
 WAIT_SECONDS="${GEOFLOW_HEALTHCHECK_INTERVAL_SECONDS:-2}"
 MCP_HEADER_FILE=""
@@ -222,13 +223,17 @@ check_mcp() {
 
 main() {
   [ -d "$APP_DIR" ] || fail "APP_DIR does not exist: ${APP_DIR}"
-  [ -f "${APP_DIR}/docker-compose.prod.yml" ] || fail "docker-compose.prod.yml not found in ${APP_DIR}"
+  case "$COMPOSE_FILE" in
+    docker-compose.prod.yml|docker-compose.prebuilt.yml) ;;
+    *) fail "GEOFLOW_COMPOSE_FILE must select docker-compose.prod.yml or docker-compose.prebuilt.yml." ;;
+  esac
+  [ -f "${APP_DIR}/${COMPOSE_FILE}" ] || fail "${COMPOSE_FILE} not found in ${APP_DIR}"
   [ -f "${APP_DIR}/.env.prod" ] || fail ".env.prod not found in ${APP_DIR}"
 
   detect_docker_command
   cd "$APP_DIR"
 
-  COMPOSE=("${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml)
+  COMPOSE=("${DOCKER_CMD[@]}" compose --env-file .env.prod -f "$COMPOSE_FILE")
   local web_port
 
   log "Checking container status."

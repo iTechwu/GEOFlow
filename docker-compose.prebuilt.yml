@@ -22,6 +22,8 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-app-prod
     working_dir: /var/www/html
+    env_file:
+      - ./.env.prod
     volumes:
       - ./.env.prod:/var/www/html/.env
       - ./storage:/var/www/html/storage
@@ -58,6 +60,8 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-queue-prod
     working_dir: /var/www/html
+    env_file:
+      - ./.env.prod
     command: ["php", "artisan", "queue:work", "redis", "--queue=geoflow,distribution,theme-replication,default", "--sleep=1", "--tries=1", "--timeout=300"]
     volumes:
       - ./.env.prod:/var/www/html/.env
@@ -71,6 +75,8 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-scheduler-prod
     working_dir: /var/www/html
+    env_file:
+      - ./.env.prod
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - ./.env.prod:/var/www/html/.env
@@ -84,6 +90,8 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-reverb-prod
     working_dir: /var/www/html
+    env_file:
+      - ./.env.prod
     # 端口由 .env.prod 的 REVERB_SERVER_PORT 决定（见 config/reverb.php）；nginx /reverb 反代端口须与之对齐
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0"]
     ports:
