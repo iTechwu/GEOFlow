@@ -147,6 +147,23 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('${AUTO_MIGRATE:-false}', $entrypoint);
     }
 
+    public function test_production_runtime_services_never_run_install_or_migrations_on_startup(): void
+    {
+        $root = dirname(__DIR__, 2);
+
+        foreach (['docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
+            $contents = file_get_contents($root.'/'.$composeFile);
+            $this->assertIsString($contents);
+            $this->assertSame(4, substr_count($contents, 'AUTO_MIGRATE: "false"'), $composeFile);
+            $this->assertSame(4, substr_count($contents, 'AUTO_INSTALL_ONCE: "false"'), $composeFile);
+        }
+
+        $productionEnv = file_get_contents($root.'/.env.prod.example');
+        $this->assertIsString($productionEnv);
+        $this->assertStringContainsString('AUTO_MIGRATE=false', $productionEnv);
+        $this->assertStringContainsString('AUTO_INSTALL_ONCE=false', $productionEnv);
+    }
+
     public function test_deployment_healthcheck_rejects_pending_migrations(): void
     {
         $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');
@@ -266,6 +283,8 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('fresh|upgrade', $script);
         $this->assertStringContainsString('GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true', $script);
         $this->assertStringContainsString('run --rm --no-deps', $script);
+        $this->assertStringContainsString('init php artisan migrate --force --no-interaction', $script);
+        $this->assertStringContainsString('init php artisan geoflow:install --no-interaction', $script);
         $this->assertStringContainsString('up -d --no-deps app queue scheduler reverb web', $script);
         $this->assertStringContainsString('geoflow:managed-images:readiness', $script);
         $this->assertStringContainsString('geoflow:security-audit', $script);

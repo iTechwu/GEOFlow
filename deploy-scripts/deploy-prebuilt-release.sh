@@ -116,8 +116,9 @@ run_upgrade() {
     -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=false \
     -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true \
     -e GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false \
+    -e AUTO_MIGRATE=false \
     -e AUTO_INSTALL_ONCE=false \
-    init php artisan about
+    init php artisan migrate --force --no-interaction
 }
 
 run_fresh_install() {
@@ -133,7 +134,17 @@ run_fresh_install() {
   "${COMPOSE[@]}" run --rm --no-deps \
     -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
     -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
-    init php artisan about
+    -e AUTO_MIGRATE=false \
+    -e AUTO_INSTALL_ONCE=false \
+    init php artisan migrate --force --no-interaction
+
+  log "Initializing GEOFlow application data once."
+  "${COMPOSE[@]}" run --rm --no-deps \
+    -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
+    -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
+    -e AUTO_MIGRATE=false \
+    -e AUTO_INSTALL_ONCE=false \
+    init php artisan geoflow:install --no-interaction
 }
 
 run_readiness_gates() {

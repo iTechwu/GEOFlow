@@ -24,6 +24,9 @@ services:
     working_dir: /var/www/html
     env_file:
       - ./.env.prod
+    environment:
+      AUTO_MIGRATE: "false"
+      AUTO_INSTALL_ONCE: "false"
     volumes:
       - ./.env.prod:/var/www/html/.env
       - ./storage:/var/www/html/storage
@@ -62,6 +65,9 @@ services:
     working_dir: /var/www/html
     env_file:
       - ./.env.prod
+    environment:
+      AUTO_MIGRATE: "false"
+      AUTO_INSTALL_ONCE: "false"
     command: ["php", "artisan", "queue:work", "redis", "--queue=geoflow,distribution,theme-replication,system-updates,default", "--sleep=1", "--tries=1", "--timeout=300"]
     volumes:
       - ./.env.prod:/var/www/html/.env
@@ -83,6 +89,9 @@ services:
     working_dir: /var/www/html
     env_file:
       - ./.env.prod
+    environment:
+      AUTO_MIGRATE: "false"
+      AUTO_INSTALL_ONCE: "false"
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - ./.env.prod:/var/www/html/.env
@@ -104,6 +113,9 @@ services:
     working_dir: /var/www/html
     env_file:
       - ./.env.prod
+    environment:
+      AUTO_MIGRATE: "false"
+      AUTO_INSTALL_ONCE: "false"
     # 端口由 .env.prod 的 REVERB_SERVER_PORT 决定（见 config/reverb.php）；nginx /reverb 反代端口须与之对齐
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0"]
     ports:
