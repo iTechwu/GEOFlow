@@ -5,7 +5,6 @@ namespace App\Services\Models;
 use App\Services\Outbound\SafeOutboundHttpClient;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
-use RuntimeException;
 
 final class ModelsGatewayClient
 {
@@ -21,7 +20,7 @@ final class ModelsGatewayClient
     {
         $missing = self::missingConfiguration();
         if ($missing !== []) {
-            throw new RuntimeException(
+            throw new ModelsGatewayCheckException(
                 'models 公共网关探针未配置完整，缺少：'.implode(', ', $missing).'。'
             );
         }
@@ -31,26 +30,38 @@ final class ModelsGatewayClient
         $client = app(SafeOutboundHttpClient::class);
         $maxBytes = (int) config('geoflow.outbound_ai_max_bytes', 8 * 1024 * 1024);
 
-        $chat = $client->post(self::request(), self::baseUrl().'/chat/completions', [
+        $chatResponse = $client->post(self::request(), self::baseUrl().'/chat/completions', [
             'model' => self::chatModel(),
             'messages' => [['role' => 'user', 'content' => 'ping']],
             'max_tokens' => 1,
             'stream' => false,
-        ], $maxBytes)->throw()->json();
+        ], $maxBytes);
 
-        $chatContent = $chat['choices'][0]['message']['content'] ?? null;
-        if (! is_string($chatContent) || trim($chatContent) === '') {
-            throw new RuntimeException('models Chat 探针返回格式无效。');
+        if (! $chatResponse->successful()) {
+            throw new ModelsGatewayCheckException('models Chat 探针上游返回 HTTP '.$chatResponse->status().'。');
         }
 
-        $embedding = $client->post(self::request(), self::baseUrl().'/embeddings', [
+        $chat = $chatResponse->json();
+
+        $chatContent = data_get($chat, 'choices.0.message.content');
+        if (! is_string($chatContent) || trim($chatContent) === '') {
+            throw new ModelsGatewayCheckException('models Chat 探针返回格式无效。');
+        }
+
+        $embeddingResponse = $client->post(self::request(), self::baseUrl().'/embeddings', [
             'model' => self::embeddingModel(),
             'input' => 'geoflow deployment smoke',
-        ], $maxBytes)->throw()->json();
-        $vector = $embedding['data'][0]['embedding'] ?? null;
+        ], $maxBytes);
+
+        if (! $embeddingResponse->successful()) {
+            throw new ModelsGatewayCheckException('models Embedding 探针上游返回 HTTP '.$embeddingResponse->status().'。');
+        }
+
+        $embedding = $embeddingResponse->json();
+        $vector = data_get($embedding, 'data.0.embedding');
 
         if (! self::isNumericVector($vector)) {
-            throw new RuntimeException('models Embedding 探针返回格式无效。');
+            throw new ModelsGatewayCheckException('models Embedding 探针返回格式无效。');
         }
     }
 
@@ -103,7 +114,7 @@ final class ModelsGatewayClient
         if (! is_array($parts)
             || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
             || trim((string) ($parts['host'] ?? '')) === '') {
-            throw new RuntimeException('MODELS_BASE_URL 必须是有效的 HTTPS 地址。');
+            throw new ModelsGatewayCheckException('MODELS_BASE_URL 必须是有效的 HTTPS 地址。');
         }
     }
 

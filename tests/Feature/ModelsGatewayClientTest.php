@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Services\Models\ModelsGatewayClient;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -100,5 +101,23 @@ class ModelsGatewayClientTest extends TestCase
         $this->expectExceptionMessage('models Embedding 探针返回格式无效');
 
         ModelsGatewayClient::check();
+    }
+
+    public function test_gateway_check_command_does_not_print_upstream_error_bodies(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/v1/chat/completions' => Http::response([
+                'error' => 'secret-provider-token',
+            ], 400),
+        ]);
+
+        $exitCode = Artisan::call('geoflow:models-gateway-check', ['--no-interaction' => true]);
+        $output = Artisan::output();
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringContainsString('HTTP 400', $output);
+        $this->assertStringNotContainsString('secret-provider-token', $output);
+        $this->assertStringNotContainsString('public-key', $output);
+        $this->assertStringNotContainsString('models.dofe.ai', $output);
     }
 }
