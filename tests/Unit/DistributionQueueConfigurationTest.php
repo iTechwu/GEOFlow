@@ -289,6 +289,16 @@ class DistributionQueueConfigurationTest extends TestCase
         }
     }
 
+    public function test_production_overlay_does_not_inherit_development_source_mounts_ports_or_dependencies(): void
+    {
+        $compose = file_get_contents(dirname(__DIR__, 2).'/docker-compose.prod.yml');
+
+        $this->assertIsString($compose);
+        $this->assertSame(5, substr_count($compose, 'volumes: !override'), 'Every production PHP service must replace development bind mounts.');
+        $this->assertStringContainsString('ports: !reset []', $compose);
+        $this->assertStringContainsString('depends_on: !override', $compose);
+    }
+
     public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/build-and-push-amd64-images.sh');
