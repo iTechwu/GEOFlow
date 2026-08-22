@@ -22,6 +22,18 @@ class CiWorkflowSecurityTest extends TestCase
         }
     }
 
+    public function test_checkout_does_not_persist_the_github_token_for_repository_scripts(): void
+    {
+        $workflow = file_get_contents(dirname(__DIR__, 2).'/.github/workflows/ci.yml');
+        $this->assertIsString($workflow);
+
+        $checkoutCount = preg_match_all('/uses:\s*actions\/checkout@[a-f0-9]{40}/', $workflow);
+        $disabledPersistenceCount = substr_count($workflow, 'persist-credentials: false');
+
+        $this->assertSame(3, $checkoutCount);
+        $this->assertSame($checkoutCount, $disabledPersistenceCount);
+    }
+
     public function test_production_image_builds_are_restricted_to_main(): void
     {
         $workflow = file_get_contents(dirname(__DIR__, 2).'/.github/workflows/ci.yml');
