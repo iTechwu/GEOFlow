@@ -39,8 +39,10 @@ class DistributionQueueConfigurationTest extends TestCase
     public function test_redis_retry_after_exceeds_every_queue_job_timeout(): void
     {
         $root = dirname(__DIR__, 2);
-        $queue = require $root.'/config/queue.php';
-        $retryAfter = (int) ($queue['connections']['redis']['retry_after'] ?? 0);
+        $queueConfig = file_get_contents($root.'/config/queue.php');
+        $this->assertIsString($queueConfig);
+        $this->assertSame(1, preg_match("/env\\('REDIS_QUEUE_RETRY_AFTER', (\\d+)\\)/", $queueConfig, $matches));
+        $retryAfter = (int) $matches[1];
         $timeouts = [];
 
         foreach (glob($root.'/app/Jobs/*Job.php') ?: [] as $jobFile) {
