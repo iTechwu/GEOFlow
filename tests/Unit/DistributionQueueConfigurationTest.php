@@ -262,11 +262,24 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString("--username='majin72'", $script);
     }
 
-    public function test_production_image_uses_the_composer_binary_from_its_supplied_image(): void
+    public function test_production_image_verifies_a_pinned_composer_release(): void
     {
-        $dockerfile = file_get_contents(dirname(__DIR__, 2).'/docker/Dockerfile.prod');
+        $root = dirname(__DIR__, 2);
+        $dockerfile = file_get_contents($root.'/docker/Dockerfile.prod');
+        $compose = file_get_contents($root.'/docker-compose.prod.yml');
+        $buildScript = file_get_contents($root.'/deploy-scripts/build-and-push-amd64-images.sh');
 
         $this->assertIsString($dockerfile);
+        $this->assertIsString($compose);
+        $this->assertIsString($buildScript);
+        $this->assertStringContainsString('ARG COMPOSER_VERSION=2.10.2', $dockerfile);
+        $this->assertStringContainsString('ARG COMPOSER_SHA256=5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027', $dockerfile);
+        $this->assertStringContainsString('getcomposer.org/download/${COMPOSER_VERSION}/composer.phar', $dockerfile);
+        $this->assertStringContainsString('sha256sum -c -', $dockerfile);
+        $this->assertStringContainsString('COMPOSER_VERSION: ${COMPOSER_VERSION:-2.10.2}', $compose);
+        $this->assertStringContainsString('COMPOSER_SHA256: ${COMPOSER_SHA256:-5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027}', $compose);
+        $this->assertStringContainsString('--build-arg COMPOSER_VERSION="${COMPOSER_VERSION}"', $buildScript);
+        $this->assertStringContainsString('--build-arg COMPOSER_SHA256="${COMPOSER_SHA256}"', $buildScript);
         $this->assertStringContainsString('RUN composer --version', $dockerfile);
         $this->assertStringNotContainsString('getcomposer.org/download/latest-stable', $dockerfile);
     }

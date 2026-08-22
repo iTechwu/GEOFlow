@@ -1,4 +1,6 @@
-ARG COMPOSER_IMAGE=composer:2
+ARG COMPOSER_IMAGE=composer:2.10.2
+ARG COMPOSER_VERSION=2.10.2
+ARG COMPOSER_SHA256=5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027
 ARG PHP_FPM_IMAGE=uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
 ARG PECL_REDIS_VERSION=6.3.0
 ARG HTTP_PROXY
@@ -7,6 +9,8 @@ ARG NO_PROXY
 
 FROM ${COMPOSER_IMAGE} AS vendor
 
+ARG COMPOSER_VERSION
+ARG COMPOSER_SHA256
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG NO_PROXY
@@ -16,10 +20,15 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
 
 WORKDIR /app
 
-# Composer 版本由 CI 传入的镜像决定，避免构建时下载 latest 覆盖已解析的镜像内容。
+# 不信任基础镜像内可能漂移或损坏的 PHAR；固定官方发布版本并在使用前校验内容。
+ADD https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar /tmp/composer.phar
+RUN echo "${COMPOSER_SHA256}  /tmp/composer.phar" | sha256sum -c - \
+ && install -m 0755 /tmp/composer.phar /usr/local/bin/composer \
+ && rm -f /tmp/composer.phar
+
 RUN composer --version
 
-# composer:2 基于 Alpine；国内 ECS 需替换 apk 源（与 dev Dockerfile 的 Debian 镜像策略一致）
+# Composer 基础镜像可能使用 Alpine 或 Debian，按实际包管理器安装解压工具。
 RUN set -eux; \
     if command -v apk >/dev/null 2>&1; then \
         if [ -f /etc/apk/repositories ]; then \
