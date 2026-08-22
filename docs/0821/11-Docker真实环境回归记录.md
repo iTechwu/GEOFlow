@@ -5,7 +5,7 @@
 - 验收时间：2026-08-22（Asia/Shanghai）。
 - 运行入口：`http://127.0.0.1:18080`。
 - 结论：本机 Docker 运行链路可用，GEOFlow MCP 读写与文章工作流通过真实 HTTP 回归；生产发布仍需在 CI 机按受保护流程执行。
-- 当前放行状态：应用、数据库迁移、MCP 和匿名 Web 均通过；官方 `geoflow-healthcheck.sh` 仅因最终环境未注入受管控的 models Chat/Embedding 凭据而 fail-closed，不能将该状态标记为完整 AI 生产放行。
+- 当前放行状态：应用、数据库迁移、MCP、匿名 Web 及 models Chat/Embedding 真实探针均通过；生产发布仍须由 CI 注入受管控凭据并执行同一门禁。
 
 ## 部署边界
 
@@ -20,6 +20,7 @@
 3. 镜像构建阶段移除不带运行时环境的 config/routes 缓存，并在入口重新生成配置缓存。
 4. 统一应用源码为目录 `755`、文件 `644`，修复宿主机 `0600` 文件导致 PHP-FPM 无法读取的问题。
 5. 统一清洗 Chat Completion 中的 `<think>`、`<analysis>`、`<reasoning>` 段，防止推理模型把内部思考写入文章正文、摘要和 meta description。
+6. 修复 models 项目 `embedding-vision` 的 `text_embedding` 分类、Ark multimodal endpoint profile 和 OpenAI facade 兼容证据，GEOFlow 真实 embedding 探针现在返回 200（2048 维向量）。
 
 ## MCP 真实回归
 
@@ -36,6 +37,7 @@
 | 文章 review/publish/list/trash | 通过；最近一轮审核后发布，公开 slug 返回 HTTP 200；回归完成后已删除文章和全部临时数据 |
 | MCP PHPUnit | 19 tests、46 assertions 全部通过 |
 | models 门禁诊断 | 通过；缺少 models 配置时逐项列出四个变量名，不输出任何 secret 值 |
+| models embedding-vision 真实调用 | 通过；`/v1/embeddings` 按 models 项目 Ark multimodal 路径执行并归一化为 OpenAI `data[]` 响应 |
 | Compose 边界/迁移门禁 | 通过；无 PostgreSQL/Redis/RabbitMQ 服务定义，`migrate:status --pending=1` 无 pending |
 
 ## 浏览器回归
@@ -49,12 +51,12 @@
 
 1. CI 机使用 amd64 builder 重新构建并推送不可变 digest。
 2. 按既有 CI/发布流程执行迁移、健康检查和 SSO 回调验证；本机不启动 Jenkins。
-3. 为测试环境配置受管控的 models API key 与 embedding 模型后，再执行知识库向量检索路径；本轮只使用 chat 模型完成真实文章闭环。
+3. 为测试环境配置受管控的 models API key 与 embedding 模型后，再执行知识库向量检索路径；本机已完成 Chat + Embedding 双探针，文章闭环仍以 chat 生成回归为主。
 4. 本轮生成的管理员、模型、任务、文章、标题库等临时数据及 models smoke key 已全部撤销，最终 catalog 仅保留内置 prompts。
 5. 清理并重启后的最终 Docker 栈再次通过 `app/web healthy` 与首页 HTTP 200 验证。
 
 ## 当前放行门禁
 
-执行 `./deploy-scripts/geoflow-healthcheck.sh` 的结果为：容器、`/up`、数据库连接和迁移均通过，随后在 `geoflow:models-gateway-check` 处因 `MODELS_BASE_URL`、`MODELS_API_KEY`、`MODELS_CHAT_SMOKE_MODEL`、`MODELS_EMBEDDING_SMOKE_MODEL` 未配置而失败。这是预期的发布保护，不是应用故障。
+本机临时注入 models Docker endpoint 后，执行 `./deploy-scripts/geoflow-healthcheck.sh` 的结果为：容器、`/up`、数据库连接、迁移和 models Chat/Embedding 双探针均通过。临时注入随后已撤销，默认无凭据时仍会按设计 fail-closed。
 
 CI/测试环境必须通过权限受控的 `.env.prod` 注入上述四项，并再次运行同一健康脚本；脚本还会继续验证内部 models HMAC（如启用）和 MCP `initialize`/`tools/list`/`geoflow.catalog`。本机回归使用的临时 models key 已撤销，不保留在工作区或数据库。

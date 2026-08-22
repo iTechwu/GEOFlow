@@ -122,9 +122,13 @@ final class ModelsGatewayClient
     {
         $parts = parse_url(self::baseUrl());
 
+        $scheme = strtolower((string) ($parts['scheme'] ?? ''));
+        $host = trim((string) ($parts['host'] ?? ''));
+        $allowInsecureLocal = (bool) config('geoflow.models_allow_insecure_local', false);
+        $isLocalHost = in_array($host, ['127.0.0.1', 'localhost', 'host.docker.internal', 'dofe-models-api-local'], true);
         if (! is_array($parts)
-            || strtolower((string) ($parts['scheme'] ?? '')) !== 'https'
-            || trim((string) ($parts['host'] ?? '')) === '') {
+            || $host === ''
+            || ($scheme !== 'https' && ! ($allowInsecureLocal && $scheme === 'http' && $isLocalHost))) {
             throw new ModelsGatewayCheckException('MODELS_BASE_URL 必须是有效的 HTTPS 地址。');
         }
     }
