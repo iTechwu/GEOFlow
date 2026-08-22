@@ -38,7 +38,26 @@ class ModelsGatewayClientTest extends TestCase
     {
         config()->set('geoflow.models_embedding_smoke_model', '');
 
-        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('MODELS_EMBEDDING_SMOKE_MODEL');
         ModelsGatewayClient::check();
+    }
+
+    public function test_check_lists_all_missing_deployment_inputs_without_values(): void
+    {
+        config()->set('geoflow.models_base_url', '');
+        config()->set('geoflow.models_api_key', '');
+        config()->set('geoflow.models_chat_smoke_model', '');
+        config()->set('geoflow.models_embedding_smoke_model', '');
+
+        try {
+            ModelsGatewayClient::check();
+            $this->fail('Expected the models gateway check to reject missing configuration.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('MODELS_BASE_URL', $exception->getMessage());
+            $this->assertStringContainsString('MODELS_API_KEY', $exception->getMessage());
+            $this->assertStringContainsString('MODELS_CHAT_SMOKE_MODEL', $exception->getMessage());
+            $this->assertStringContainsString('MODELS_EMBEDDING_SMOKE_MODEL', $exception->getMessage());
+            $this->assertStringNotContainsString('public-key', $exception->getMessage());
+        }
     }
 }

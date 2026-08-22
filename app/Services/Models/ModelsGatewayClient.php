@@ -19,8 +19,11 @@ final class ModelsGatewayClient
 
     public static function check(): void
     {
-        if (! self::isConfigured()) {
-            throw new RuntimeException('models 公共网关探针未配置完整。');
+        $missing = self::missingConfiguration();
+        if ($missing !== []) {
+            throw new RuntimeException(
+                'models 公共网关探针未配置完整，缺少：'.implode(', ', $missing).'。'
+            );
         }
 
         $client = app(SafeOutboundHttpClient::class);
@@ -46,6 +49,25 @@ final class ModelsGatewayClient
         if (! is_array($vector) || $vector === []) {
             throw new RuntimeException('models Embedding 探针返回格式无效。');
         }
+    }
+
+    /**
+     * Keep the release-gate failure actionable without exposing secret values.
+     * The healthcheck can therefore distinguish missing deployment input from
+     * a provider route or response-format failure.
+     *
+     * @return list<string>
+     */
+    private static function missingConfiguration(): array
+    {
+        $values = [
+            'MODELS_BASE_URL' => self::baseUrl(),
+            'MODELS_API_KEY' => self::apiKey(),
+            'MODELS_CHAT_SMOKE_MODEL' => self::chatModel(),
+            'MODELS_EMBEDDING_SMOKE_MODEL' => self::embeddingModel(),
+        ];
+
+        return array_keys(array_filter($values, static fn (string $value): bool => $value === ''));
     }
 
     private static function request(): PendingRequest

@@ -35,6 +35,7 @@
 | 文章 create/get/update | 通过 |
 | 文章 review/publish/list/trash | 通过；最近一轮审核后发布，公开 slug 返回 HTTP 200；回归完成后已删除文章和全部临时数据 |
 | MCP PHPUnit | 19 tests、46 assertions 全部通过 |
+| models 门禁诊断 | 通过；缺少 models 配置时逐项列出四个变量名，不输出任何 secret 值 |
 | Compose 边界/迁移门禁 | 通过；无 PostgreSQL/Redis/RabbitMQ 服务定义，`migrate:status --pending=1` 无 pending |
 
 ## 浏览器回归
