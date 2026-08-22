@@ -20,6 +20,7 @@ BUILDER_NAME="${DOCKER_BUILDX_BUILDER:-geoflow-builder}"
 PUSH_LATEST="${PUSH_LATEST:-0}"
 REGISTRY_USERNAME="${REGISTRY_USERNAME:-}"
 REGISTRY_PASSWORD="${REGISTRY_PASSWORD:-}"
+DOCKER_CONFIG_CREATED="0"
 
 COMPOSER_IMAGE="${COMPOSER_IMAGE:-composer:2.10.2}"
 COMPOSER_VERSION="${COMPOSER_VERSION:-2.10.2}"
@@ -36,12 +37,37 @@ fail() {
   exit 1
 }
 
+cleanup_docker_config() {
+  local temp_root="${TMPDIR:-/tmp}"
+
+  [ "$DOCKER_CONFIG_CREATED" = "1" ] || return 0
+  case "$DOCKER_CONFIG" in
+    "$temp_root"/geoflow-build-docker-config.*) ;;
+    *) echo ">>> 警告: 拒绝清理非预期 DOCKER_CONFIG 路径" >&2; return 0 ;;
+  esac
+  [ ! -L "$DOCKER_CONFIG" ] || { echo ">>> 警告: 拒绝清理符号链接 DOCKER_CONFIG 路径" >&2; return 0; }
+  [ ! -d "$DOCKER_CONFIG" ] || find "$DOCKER_CONFIG" -depth -delete
+}
+
+prepare_docker_config() {
+  if [ -n "${DOCKER_CONFIG:-}" ]; then
+    return
+  fi
+
+  DOCKER_CONFIG="$(mktemp -d "${TMPDIR:-/tmp}/geoflow-build-docker-config.XXXXXX")"
+  chmod 700 "$DOCKER_CONFIG"
+  export DOCKER_CONFIG
+  DOCKER_CONFIG_CREATED="1"
+  trap cleanup_docker_config EXIT
+}
+
 case "${VERSION}" in
   *[!A-Za-z0-9._-]*|'') fail "VERSION 只能包含字母、数字、点、下划线和连字符" ;;
 esac
 
 [ -n "${REGISTRY_USERNAME}" ] || fail "必须通过 CI Secret 提供 REGISTRY_USERNAME"
 [ -n "${REGISTRY_PASSWORD}" ] || fail "必须通过 CI Secret 提供 REGISTRY_PASSWORD"
+prepare_docker_config
 
 echo ">>> Registry: ${REGISTRY}"
 echo ">>> Namespace: ${NS}"

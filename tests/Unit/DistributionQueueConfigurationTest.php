@@ -308,6 +308,10 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('REGISTRY_USERNAME', $script);
         $this->assertStringContainsString('REGISTRY_PASSWORD', $script);
         $this->assertStringContainsString('PUSH_LATEST="${PUSH_LATEST:-0}"', $script);
+        $this->assertStringContainsString('prepare_docker_config()', $script);
+        $this->assertStringContainsString('mktemp -d "${TMPDIR:-/tmp}/geoflow-build-docker-config.XXXXXX"', $script);
+        $this->assertStringContainsString('trap cleanup_docker_config EXIT', $script);
+        $this->assertStringContainsString('find "$DOCKER_CONFIG" -depth -delete', $script);
         $this->assertStringNotContainsString("--username='majin72'", $script);
     }
 
