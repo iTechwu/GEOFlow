@@ -152,6 +152,12 @@ jobs:
           install -m 0755 deploy-scripts/geoflow-healthcheck.sh "$DEPLOY_DIR/deploy-scripts/geoflow-healthcheck.sh"
           install -m 0755 deploy-scripts/deploy-prebuilt-release.sh "$DEPLOY_DIR/deploy-scripts/deploy-prebuilt-release.sh"
 
+      - name: Prepare isolated production registry credentials
+        run: |
+          docker_config="$(mktemp -d "${RUNNER_TEMP}/geoflow-docker-config.XXXXXX")"
+          chmod 700 "$docker_config"
+          echo "DOCKER_CONFIG=${docker_config}" >> "$GITHUB_ENV"
+
       - name: Login to production registry
         env:
           REGISTRY: ${{ vars.GEOFLOW_REGISTRY }}
@@ -212,3 +218,17 @@ jobs:
           GEOFLOW_RELEASE_MODE: ${{ inputs.release_mode || 'upgrade' }}
           GEOFLOW_MCP_SMOKE_TOKEN: ${{ secrets.GEOFLOW_MCP_SMOKE_TOKEN }}
         run: bash "$GEOFLOW_APP_DIR/deploy-scripts/deploy-prebuilt-release.sh"
+
+      - name: Clean up production registry credentials
+        if: always()
+        env:
+          REGISTRY: ${{ vars.GEOFLOW_REGISTRY }}
+        run: |
+          [ -n "${DOCKER_CONFIG:-}" ] || exit 0
+          case "$DOCKER_CONFIG" in
+            "$RUNNER_TEMP"/geoflow-docker-config.*) ;;
+            *) echo 'Refusing to clean an unexpected DOCKER_CONFIG path.' >&2; exit 1 ;;
+          esac
+          docker logout "$REGISTRY" >/dev/null 2>&1 || true
+          [ ! -L "$DOCKER_CONFIG" ] || { echo 'Refusing to clean a symlinked DOCKER_CONFIG path.' >&2; exit 1; }
+          [ ! -d "$DOCKER_CONFIG" ] || find "$DOCKER_CONFIG" -depth -delete

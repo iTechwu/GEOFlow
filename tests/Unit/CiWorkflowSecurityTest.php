@@ -40,4 +40,22 @@ class CiWorkflowSecurityTest extends TestCase
             $buildJob,
         );
     }
+
+    public function test_self_hosted_deployment_uses_and_cleans_an_ephemeral_docker_config(): void
+    {
+        $workflow = file_get_contents(dirname(__DIR__, 2).'/.github/workflows/ci.yml');
+        $this->assertIsString($workflow);
+
+        $start = strpos($workflow, '  deploy-production:');
+        $this->assertNotFalse($start);
+        $deploymentJob = substr($workflow, $start);
+
+        $this->assertStringContainsString('mktemp -d "${RUNNER_TEMP}/geoflow-docker-config.XXXXXX"', $deploymentJob);
+        $this->assertStringContainsString('echo "DOCKER_CONFIG=${docker_config}" >> "$GITHUB_ENV"', $deploymentJob);
+        $this->assertStringContainsString('chmod 700 "$docker_config"', $deploymentJob);
+        $this->assertStringContainsString('if: always()', $deploymentJob);
+        $this->assertStringContainsString('docker logout "$REGISTRY"', $deploymentJob);
+        $this->assertStringContainsString('find "$DOCKER_CONFIG" -depth -delete', $deploymentJob);
+        $this->assertStringContainsString('"$RUNNER_TEMP"/geoflow-docker-config.*', $deploymentJob);
+    }
 }
