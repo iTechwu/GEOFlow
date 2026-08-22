@@ -31,6 +31,7 @@ validate_value() {
 
   case "$value" in
     *$'\n'*|*$'\r'*) fail "${key} must be a single-line value" ;;
+    *"'"*) fail "${key} must not contain a single quote" ;;
   esac
 }
 
@@ -45,7 +46,7 @@ set_env_value() {
   TMP_FILE="$(mktemp "${file}.tmp.XXXXXX")"
   while IFS= read -r line || [ -n "$line" ]; do
     if [[ "$line" == "${key}="* ]]; then
-      printf '%s=%s\n' "$key" "$value" >> "$TMP_FILE"
+      printf "%s='%s'\n" "$key" "$value" >> "$TMP_FILE"
       replaced="1"
     else
       printf '%s\n' "$line" >> "$TMP_FILE"
@@ -53,7 +54,7 @@ set_env_value() {
   done < "$file"
 
   if [ "$replaced" = "0" ]; then
-    printf '%s=%s\n' "$key" "$value" >> "$TMP_FILE"
+    printf "%s='%s'\n" "$key" "$value" >> "$TMP_FILE"
   fi
 
   chmod 600 "$TMP_FILE"
