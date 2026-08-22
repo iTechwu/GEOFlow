@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Services\Models\ModelsInternalCheckException;
 use App\Services\Models\ModelsInternalClient;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class ModelsInternalCheckCommand extends Command
@@ -35,7 +36,10 @@ class ModelsInternalCheckCommand extends Command
             $this->error('models internal check failed: '.$exception->getMessage());
 
             return self::FAILURE;
-        } catch (Throwable) {
+        } catch (Throwable $exception) {
+            Log::error('geoflow.models_internal_transport_failed', [
+                'exception_class' => $exception::class,
+            ]);
             $this->error('models internal transport failed. Review protected application logs for details.');
 
             return self::FAILURE;

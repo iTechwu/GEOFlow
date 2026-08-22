@@ -2,9 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Contracts\Outbound\OutboundTransport;
 use App\Services\Models\ModelsInternalClient;
+use App\Services\Outbound\OutboundRequestFailedException;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Mockery;
+use RuntimeException;
 use Tests\TestCase;
 
 class ModelsInternalClientTest extends TestCase
@@ -104,6 +109,26 @@ class ModelsInternalClientTest extends TestCase
         $this->assertStringNotContainsString('secret-provider-detail', $output);
         $this->assertStringNotContainsString('test-secret', $output);
         $this->assertStringNotContainsString('models.dofe.ai', $output);
+    }
+
+    public function test_internal_check_command_logs_unknown_transport_failures_without_sensitive_details(): void
+    {
+        $transport = Mockery::mock(OutboundTransport::class);
+        $transport->shouldReceive('send')
+            ->once()
+            ->andThrow(new RuntimeException('secret-provider-token at https://models.dofe.ai/internal/models'));
+        app()->instance(OutboundTransport::class, $transport);
+        Log::spy();
+
+        $exitCode = Artisan::call('geoflow:models-internal-check', ['--no-interaction' => true]);
+        $output = Artisan::output();
+
+        $this->assertSame(1, $exitCode);
+        $this->assertStringNotContainsString('secret-provider-token', $output);
+        $this->assertStringNotContainsString('models.dofe.ai', $output);
+        Log::shouldHaveReceived('error')
+            ->with('geoflow.models_internal_transport_failed', ['exception_class' => OutboundRequestFailedException::class])
+            ->once();
     }
 
     public function test_client_rejects_an_invalid_success_response(): void
