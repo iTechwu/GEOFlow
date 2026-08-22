@@ -64,6 +64,11 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-queue-prod
     working_dir: /var/www/html
+    user: "www-data"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     env_file:
       - ./.env.prod
     environment:
@@ -88,6 +93,11 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-scheduler-prod
     working_dir: /var/www/html
+    user: "www-data"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     env_file:
       - ./.env.prod
     environment:
@@ -112,6 +122,11 @@ services:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-reverb-prod
     working_dir: /var/www/html
+    user: "www-data"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     env_file:
       - ./.env.prod
     environment:

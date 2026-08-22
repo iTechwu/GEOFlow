@@ -161,7 +161,9 @@ COPY --from=assets /app/public/build /var/www/html/public/build
 # Source files may arrive from a host checkout with restrictive modes (for example 0600).
 # PHP-FPM runs as www-data, so keep application code readable without making it writable.
 RUN find app config database resources routes -type d -exec chmod 755 {} + \
- && find app config database resources routes -type f -exec chmod 644 {} +
+ && find app config database resources routes -type f -exec chmod 644 {} + \
+ && ln -s /var/www/html/storage/app/public public/storage \
+ && chown -R www-data:www-data storage bootstrap/cache
 
 ENTRYPOINT ["/usr/local/bin/geoflow-entrypoint-prod"]
 CMD ["php-fpm", "-F"]

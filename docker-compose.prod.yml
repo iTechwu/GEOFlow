@@ -104,6 +104,11 @@ services:
       args: *prod_app_build_args
     container_name: geoflow-queue-prod
     working_dir: /var/www/html
+    user: "www-data"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     env_file:
       - ./.env.prod
     environment:
@@ -134,6 +139,11 @@ services:
       args: *prod_app_build_args
     container_name: geoflow-scheduler-prod
     working_dir: /var/www/html
+    user: "www-data"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     env_file:
       - ./.env.prod
     environment:
@@ -164,6 +174,11 @@ services:
       args: *prod_app_build_args
     container_name: geoflow-reverb-prod
     working_dir: /var/www/html
+    user: "www-data"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
     env_file:
       - ./.env.prod
     environment:

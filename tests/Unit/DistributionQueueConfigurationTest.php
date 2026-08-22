@@ -187,6 +187,42 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString('key:generate', $entrypoint);
     }
 
+    public function test_production_background_services_run_as_an_unprivileged_user(): void
+    {
+        $root = dirname(__DIR__, 2);
+
+        foreach (['docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
+            $compose = file_get_contents($root.'/'.$composeFile);
+            $this->assertIsString($compose);
+
+            foreach (['queue', 'scheduler', 'reverb'] as $service) {
+                $serviceStart = strpos($compose, "\n  {$service}:\n");
+                $this->assertNotFalse($serviceStart, $composeFile.' must define '.$service.'.');
+                $nextService = preg_match(
+                    '/\n  [a-z][a-z0-9_-]*:\n/',
+                    $compose,
+                    $matches,
+                    PREG_OFFSET_CAPTURE,
+                    (int) $serviceStart + strlen("\n  {$service}:\n")
+                ) === 1 ? $matches[0][1] : false;
+                $serviceBlock = substr(
+                    $compose,
+                    (int) $serviceStart,
+                    $nextService === false ? null : $nextService - (int) $serviceStart
+                );
+
+                $this->assertStringContainsString('user: "www-data"', $serviceBlock, $composeFile.' '.$service);
+                $this->assertStringContainsString('- no-new-privileges:true', $serviceBlock, $composeFile.' '.$service);
+                $this->assertStringContainsString("cap_drop:\n      - ALL", $serviceBlock, $composeFile.' '.$service);
+            }
+        }
+
+        $dockerfile = file_get_contents($root.'/docker/Dockerfile.prod');
+        $this->assertIsString($dockerfile);
+        $this->assertStringContainsString('ln -s /var/www/html/storage/app/public public/storage', $dockerfile);
+        $this->assertStringContainsString('chown -R www-data:www-data storage bootstrap/cache', $dockerfile);
+    }
+
     public function test_deployment_healthcheck_rejects_pending_migrations(): void
     {
         $healthcheck = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/geoflow-healthcheck.sh');
