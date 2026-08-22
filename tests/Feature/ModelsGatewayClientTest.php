@@ -119,5 +119,18 @@ class ModelsGatewayClientTest extends TestCase
         $this->assertStringNotContainsString('secret-provider-token', $output);
         $this->assertStringNotContainsString('public-key', $output);
         $this->assertStringNotContainsString('models.dofe.ai', $output);
+        Http::assertSentCount(1);
+    }
+
+    public function test_check_retries_a_transient_upstream_failure(): void
+    {
+        Http::fakeSequence()
+            ->push(['error' => 'temporarily unavailable'], 503)
+            ->push(['choices' => [['message' => ['content' => 'ok']]]], 200)
+            ->push(['data' => [['embedding' => [0.1, 0.2]]]], 200);
+
+        ModelsGatewayClient::check();
+
+        Http::assertSentCount(3);
     }
 }

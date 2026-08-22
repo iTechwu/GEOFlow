@@ -3,8 +3,11 @@
 namespace App\Services\Models;
 
 use App\Services\Outbound\SafeOutboundHttpClient;
+use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Http;
+use Throwable;
 
 final class ModelsGatewayClient
 {
@@ -104,7 +107,15 @@ final class ModelsGatewayClient
         return Http::withToken(self::apiKey())
             ->acceptJson()
             ->connectTimeout(5)
-            ->timeout(30);
+            ->timeout(30)
+            ->retry([200, 500], when: static function (Throwable $exception): bool {
+                if ($exception instanceof ConnectionException) {
+                    return true;
+                }
+
+                return $exception instanceof RequestException
+                    && ($exception->response->status() === 429 || $exception->response->serverError());
+            }, throw: false);
     }
 
     private static function assertSecureBaseUrl(): void
