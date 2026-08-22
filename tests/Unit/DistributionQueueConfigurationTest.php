@@ -36,6 +36,36 @@ class DistributionQueueConfigurationTest extends TestCase
         );
     }
 
+    public function test_redis_retry_after_exceeds_every_queue_job_timeout(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $queue = require $root.'/config/queue.php';
+        $retryAfter = (int) ($queue['connections']['redis']['retry_after'] ?? 0);
+        $timeouts = [];
+
+        foreach (glob($root.'/app/Jobs/*Job.php') ?: [] as $jobFile) {
+            $contents = file_get_contents($jobFile);
+            $this->assertIsString($contents);
+
+            if (preg_match('/public int \$timeout = (\d+);/', $contents, $matches) !== 1) {
+                continue;
+            }
+
+            $timeouts[basename($jobFile)] = (int) $matches[1];
+        }
+
+        $this->assertNotEmpty($timeouts);
+        foreach ($timeouts as $job => $timeout) {
+            $this->assertLessThan($retryAfter, $timeout, $job.' timeout must be lower than Redis retry_after.');
+        }
+
+        foreach (['.env.example', '.env.prod.example'] as $envFile) {
+            $contents = file_get_contents($root.'/'.$envFile);
+            $this->assertIsString($contents);
+            $this->assertStringContainsString('REDIS_QUEUE_RETRY_AFTER='.$retryAfter, $contents, $envFile);
+        }
+    }
+
     public function test_compose_init_services_scope_the_fresh_install_confirmation(): void
     {
         $root = dirname(__DIR__, 2);
