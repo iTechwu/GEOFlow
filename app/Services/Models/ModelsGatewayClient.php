@@ -38,7 +38,8 @@ final class ModelsGatewayClient
             'stream' => false,
         ], $maxBytes)->throw()->json();
 
-        if (! is_array($chat) || ! is_array($chat['choices'] ?? null) || $chat['choices'] === []) {
+        $chatContent = $chat['choices'][0]['message']['content'] ?? null;
+        if (! is_string($chatContent) || trim($chatContent) === '') {
             throw new RuntimeException('models Chat 探针返回格式无效。');
         }
 
@@ -48,9 +49,24 @@ final class ModelsGatewayClient
         ], $maxBytes)->throw()->json();
         $vector = $embedding['data'][0]['embedding'] ?? null;
 
-        if (! is_array($vector) || $vector === []) {
+        if (! self::isNumericVector($vector)) {
             throw new RuntimeException('models Embedding 探针返回格式无效。');
         }
+    }
+
+    private static function isNumericVector(mixed $vector): bool
+    {
+        if (! is_array($vector) || $vector === []) {
+            return false;
+        }
+
+        foreach ($vector as $value) {
+            if ((! is_int($value) && ! is_float($value)) || ! is_finite((float) $value)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**

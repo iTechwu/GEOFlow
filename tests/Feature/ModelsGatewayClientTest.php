@@ -77,4 +77,28 @@ class ModelsGatewayClientTest extends TestCase
 
         Http::assertNothingSent();
     }
+
+    public function test_check_rejects_chat_response_without_non_empty_content(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/v1/chat/completions' => Http::response(['choices' => [[]]]),
+            'https://models.dofe.ai/v1/embeddings' => Http::response(['data' => [['embedding' => [0.1, 0.2]]]]),
+        ]);
+
+        $this->expectExceptionMessage('models Chat 探针返回格式无效');
+
+        ModelsGatewayClient::check();
+    }
+
+    public function test_check_rejects_embedding_response_with_non_numeric_values(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => 'ok']]]]),
+            'https://models.dofe.ai/v1/embeddings' => Http::response(['data' => [['embedding' => [0.1, 'not-a-number']]]]),
+        ]);
+
+        $this->expectExceptionMessage('models Embedding 探针返回格式无效');
+
+        ModelsGatewayClient::check();
+    }
 }
