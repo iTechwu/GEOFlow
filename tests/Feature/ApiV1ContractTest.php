@@ -15,8 +15,11 @@ use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\GeoFlow\TaskMonitoringQueryService;
 use App\Services\GeoFlow\TaskRealtimeBroadcastService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Mockery;
 use Tests\TestCase;
 
@@ -63,6 +66,42 @@ class ApiV1ContractTest extends TestCase
         $plain = 'sso-contract-token';
 
         return ['plain' => $plain];
+    }
+
+    public function test_every_api_v1_route_uses_the_shared_rate_limiter(): void
+    {
+        $routes = collect(Route::getRoutes()->getRoutes())
+            ->filter(static fn ($route): bool => str_starts_with($route->uri(), 'api/v1/'));
+
+        $this->assertNotEmpty($routes);
+
+        foreach ($routes as $route) {
+            $this->assertContains(
+                'throttle:api',
+                $route->gatherMiddleware(),
+                $route->methods()[0].' /'.$route->uri().' must use throttle:api',
+            );
+        }
+    }
+
+    public function test_api_rate_limiter_partitions_requests_without_exposing_bearer_tokens(): void
+    {
+        $limiter = RateLimiter::limiter('api');
+        $this->assertNotNull($limiter);
+
+        $first = $limiter(Request::create('/api/v1/catalog', 'GET', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer first-sensitive-token',
+            'REMOTE_ADDR' => '192.0.2.10',
+        ]));
+        $second = $limiter(Request::create('/api/v1/catalog', 'GET', server: [
+            'HTTP_AUTHORIZATION' => 'Bearer second-sensitive-token',
+            'REMOTE_ADDR' => '192.0.2.10',
+        ]));
+
+        $this->assertSame([120, 300], array_column($first, 'maxAttempts'));
+        $this->assertNotSame($first[0]->key, $second[0]->key);
+        $this->assertSame($first[1]->key, $second[1]->key);
+        $this->assertStringNotContainsString('first-sensitive-token', $first[0]->key);
     }
 
     public function test_catalog_requires_bearer_token(): void

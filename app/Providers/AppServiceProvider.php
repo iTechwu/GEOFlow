@@ -67,6 +67,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        RateLimiter::for('api', function (Request $request): array {
+            $bearerToken = (string) $request->bearerToken();
+            $credentialKey = $bearerToken !== ''
+                ? hash('sha256', $bearerToken)
+                : 'missing:'.$request->ip();
+
+            return [
+                Limit::perMinute(120)->by('api-token:'.$credentialKey),
+                Limit::perMinute(300)->by('api-ip:'.$request->ip()),
+            ];
+        });
         RateLimiter::for('admin-sensitive', function (Request $request): array {
             $adminId = (int) ($request->user('admin')?->getAuthIdentifier() ?? 0);
 

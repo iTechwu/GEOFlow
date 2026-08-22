@@ -3,7 +3,7 @@
 /**
  * GEOFlow REST API 路由（Laravel 默认挂载在 /api 前缀下，本文件内为 v1 子路径）。
  *
- * 中间件：api.request_id 注入/透传 X-Request-Id；api.auth 校验 Bearer；
+ * 中间件：api.request_id 注入/透传 X-Request-Id；throttle:api 实施令牌/IP 双层限流；api.auth 校验 Bearer；
  * api.scope:* 校验 Sanctum token abilities。幂等写操作在控制器内按 route_key 处理。
  *
  * @see bak/api/v1/index.php 遗留单入口对照
@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 
 // 实际路径形如：/api/v1/...
 Route::prefix('v1')
-    ->middleware(['api.request_id'])
+    ->middleware(['api.request_id', 'throttle:api'])
     ->group(function (): void {
         // API access uses an SSO Bearer token; local password and token issuance are disabled.
         Route::middleware(['api.auth'])->group(function (): void {
