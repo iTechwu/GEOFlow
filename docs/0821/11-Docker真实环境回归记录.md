@@ -5,6 +5,7 @@
 - 验收时间：2026-08-22（Asia/Shanghai）。
 - 运行入口：`http://127.0.0.1:18080`。
 - 结论：本机 Docker 运行链路可用，GEOFlow MCP 读写与文章工作流通过真实 HTTP 回归；生产发布仍需在 CI 机按受保护流程执行。
+- 当前放行状态：应用、数据库迁移、MCP 和匿名 Web 均通过；官方 `geoflow-healthcheck.sh` 仅因最终环境未注入受管控的 models Chat/Embedding 凭据而 fail-closed，不能将该状态标记为完整 AI 生产放行。
 
 ## 部署边界
 
@@ -34,6 +35,7 @@
 | 文章 create/get/update | 通过 |
 | 文章 review/publish/list/trash | 通过；最近一轮审核后发布，公开 slug 返回 HTTP 200；回归完成后已删除文章和全部临时数据 |
 | MCP PHPUnit | 19 tests、46 assertions 全部通过 |
+| Compose 边界/迁移门禁 | 通过；无 PostgreSQL/Redis/RabbitMQ 服务定义，`migrate:status --pending=1` 无 pending |
 
 ## 浏览器回归
 
@@ -49,3 +51,9 @@
 3. 为测试环境配置受管控的 models API key 与 embedding 模型后，再执行知识库向量检索路径；本轮只使用 chat 模型完成真实文章闭环。
 4. 本轮生成的管理员、模型、任务、文章、标题库等临时数据及 models smoke key 已全部撤销，最终 catalog 仅保留内置 prompts。
 5. 清理并重启后的最终 Docker 栈再次通过 `app/web healthy` 与首页 HTTP 200 验证。
+
+## 当前放行门禁
+
+执行 `./deploy-scripts/geoflow-healthcheck.sh` 的结果为：容器、`/up`、数据库连接和迁移均通过，随后在 `geoflow:models-gateway-check` 处因 `MODELS_BASE_URL`、`MODELS_API_KEY`、`MODELS_CHAT_SMOKE_MODEL`、`MODELS_EMBEDDING_SMOKE_MODEL` 未配置而失败。这是预期的发布保护，不是应用故障。
+
+CI/测试环境必须通过权限受控的 `.env.prod` 注入上述四项，并再次运行同一健康脚本；脚本还会继续验证内部 models HMAC（如启用）和 MCP `initialize`/`tools/list`/`geoflow.catalog`。本机回归使用的临时 models key 已撤销，不保留在工作区或数据库。
