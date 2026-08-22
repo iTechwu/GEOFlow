@@ -26,6 +26,7 @@ COMPOSER_VERSION="${COMPOSER_VERSION:-2.10.2}"
 COMPOSER_SHA256="${COMPOSER_SHA256:-5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027}"
 PHP_FPM_IMAGE="${PHP_FPM_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm}"
 PECL_REDIS_VERSION="${PECL_REDIS_VERSION:-6.3.0}"
+PECL_REDIS_SHA256="${PECL_REDIS_SHA256:-0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5}"
 NGINX_IMAGE="${NGINX_IMAGE:-nginx:1.31.1-alpine}"
 
 cd "${PROJECT_DIR}"
@@ -69,6 +70,7 @@ docker buildx build --platform "${PLATFORM}" \
   --build-arg COMPOSER_SHA256="${COMPOSER_SHA256}" \
   --build-arg PHP_FPM_IMAGE="${PHP_FPM_IMAGE}" \
   --build-arg PECL_REDIS_VERSION="${PECL_REDIS_VERSION}" \
+  --build-arg PECL_REDIS_SHA256="${PECL_REDIS_SHA256}" \
   --push .
 
 echo ">>> 构建并推送 web 镜像"

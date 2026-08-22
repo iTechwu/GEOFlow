@@ -333,6 +333,24 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringNotContainsString('getcomposer.org/download/latest-stable', $dockerfile);
     }
 
+    public function test_production_image_verifies_the_pinned_pecl_redis_archive(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $dockerfile = file_get_contents($root.'/docker/Dockerfile.prod');
+        $compose = file_get_contents($root.'/docker-compose.prod.yml');
+        $buildScript = file_get_contents($root.'/deploy-scripts/build-and-push-amd64-images.sh');
+        $productionEnv = file_get_contents($root.'/.env.prod.example');
+        $sha256 = '0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5';
+
+        foreach ([$dockerfile, $compose, $buildScript, $productionEnv] as $contents) {
+            $this->assertIsString($contents);
+            $this->assertStringContainsString($sha256, $contents);
+        }
+        $this->assertStringContainsString('ARG PECL_REDIS_SHA256=', $dockerfile);
+        $this->assertStringContainsString('echo "${PECL_REDIS_SHA256}  /tmp/redis.tgz" | sha256sum -c -', $dockerfile);
+        $this->assertStringContainsString('--build-arg PECL_REDIS_SHA256="${PECL_REDIS_SHA256}"', $buildScript);
+    }
+
     public function test_prebuilt_release_script_enforces_stopped_and_drained_upgrade_gates(): void
     {
         $script = file_get_contents(dirname(__DIR__, 2).'/deploy-scripts/deploy-prebuilt-release.sh');

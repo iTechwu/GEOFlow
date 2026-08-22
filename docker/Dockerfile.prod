@@ -3,6 +3,7 @@ ARG COMPOSER_VERSION=2.10.2
 ARG COMPOSER_SHA256=5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027
 ARG PHP_FPM_IMAGE=uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
 ARG PECL_REDIS_VERSION=6.3.0
+ARG PECL_REDIS_SHA256=0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG NO_PROXY
@@ -97,6 +98,7 @@ RUN npm run build
 FROM ${PHP_FPM_IMAGE}
 
 ARG PECL_REDIS_VERSION
+ARG PECL_REDIS_SHA256
 ARG HTTP_PROXY
 ARG HTTPS_PROXY
 ARG NO_PROXY
@@ -140,6 +142,7 @@ RUN apt-get update \
         pdo_sqlite \
         zip \
     && curl -fsSL "https://pecl.php.net/get/redis-${PECL_REDIS_VERSION}.tgz" -o /tmp/redis.tgz \
+    && echo "${PECL_REDIS_SHA256}  /tmp/redis.tgz" | sha256sum -c - \
     && pecl install /tmp/redis.tgz \
     && docker-php-ext-enable redis \
     && rm -f /tmp/redis.tgz \
