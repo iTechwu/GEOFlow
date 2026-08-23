@@ -166,7 +166,9 @@ class McpEndpointTest extends TestCase
         $names = collect($response->json('result.tools'))->pluck('name')->all();
         $this->assertContains('geoflow.catalog', $names);
         $this->assertContains('geoflow.tasks.list', $names);
+        $this->assertContains('geoflow.enterprise_knowledge.list', $names);
         $this->assertNotContains('geoflow.tasks.create', $names);
+        $this->assertNotContains('geoflow.enterprise_knowledge.delete', $names);
         $this->assertNotContains('geoflow.articles.publish', $names);
         $this->assertNotContains('geoflow.jobs.cancel', $names);
     }
