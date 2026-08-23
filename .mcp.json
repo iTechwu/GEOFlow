@@ -1,5 +1,12 @@
 {
     "mcpServers": {
+        "geoflow": {
+            "type": "http",
+            "url": "https://geo.local.dofe.ai/mcp",
+            "headers": {
+                "Authorization": "Bearer ${GEOFLOW_MCP_TOKEN}"
+            }
+        },
         "chrome-devtools": {
             "command": "npx",
             "args": [
