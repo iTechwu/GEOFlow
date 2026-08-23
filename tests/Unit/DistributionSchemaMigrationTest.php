@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
@@ -35,6 +36,32 @@ class DistributionSchemaMigrationTest extends TestCase
         $this->assertTrue(Schema::hasColumn('article_distributions', 'idempotency_key'));
         $this->assertTrue(Schema::hasColumn('article_distributions', 'remote_meta'));
         $this->assertTrue(Schema::hasColumn('distribution_logs', 'event'));
+    }
+
+    public function test_distribution_channel_ownership_is_backfilled_from_admin_claims(): void
+    {
+        $adminId = (int) DB::table('admins')->insertGetId([
+            'username' => 'migration-owner',
+            'email' => 'migration-owner@example.test',
+            'password' => 'hashed',
+            'sso_claims' => json_encode(['selected_team_id' => 'team-a']),
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+        DB::table('distribution_channels')->insert([
+            'name' => 'Legacy channel',
+            'domain' => 'legacy.example.test',
+            'endpoint_url' => 'https://legacy.example.test',
+            'status' => 'active',
+            'created_by_admin_id' => $adminId,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $migration = require database_path('migrations/2026_08_24_130000_backfill_distribution_channel_sso_team.php');
+        $migration->up();
+
+        $this->assertSame('team-a', DB::table('distribution_channels')->value('sso_team_id'));
     }
 
     private function createLegacyDistributionTables(): void
