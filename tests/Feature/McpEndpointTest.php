@@ -11,6 +11,7 @@ use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpAnalyticsService;
 use App\Services\Mcp\McpDistributionService;
 use App\Services\Mcp\McpEnterpriseKnowledgeService;
+use App\Services\Mcp\McpFrontendService;
 use App\Services\Mcp\McpLeadService;
 use App\Services\Mcp\McpSiteService;
 use App\Services\Mcp\McpUrlImportService;
@@ -264,6 +265,25 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
             ->assertJsonPath('result.structuredContent.items.0.payload_fields.0', 'email')
             ->assertJsonMissingPath('result.structuredContent.items.0.payload');
+    }
+
+    public function test_frontend_capabilities_are_exposed_to_read_tokens(): void
+    {
+        $this->enableMcp('ci-secret', 'ci-read');
+        $this->mockServices();
+        $frontend = Mockery::mock(McpFrontendService::class);
+        app()->instance(McpFrontendService::class, $frontend);
+        $frontend->shouldReceive('capabilities')->once()->with(Mockery::type(McpAuthContext::class))->andReturn([
+            'tenant_id' => 'team-a',
+            'scope' => 'read_only_global_catalog',
+            'themes' => [['id' => 'default']],
+            'homepage' => ['module_types' => ['hero']],
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-read')
+            ->postJson('/mcp', $this->toolCall('geoflow.site.capabilities', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.homepage.module_types.0', 'hero');
     }
 
     public function test_system_token_uses_configured_default_tenant_scope(): void

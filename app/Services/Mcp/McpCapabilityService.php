@@ -86,6 +86,13 @@ final class McpCapabilityService
                     'notes' => '仅返回已发布且属于当前 SSO team 的站点内容；详情读取不增加 view_count，正文有长度上限。',
                 ],
                 [
+                    'domain' => 'frontend_discovery',
+                    'status' => 'available',
+                    'tools' => ['geoflow.site.capabilities'],
+                    'permission' => 'catalog:read',
+                    'notes' => '只读返回主题 manifest 和主页模块契约；主题切换、复制、发布仍需 Admin。',
+                ],
+                [
                     'domain' => 'distribution_read',
                     'status' => 'available',
                     'tools' => [

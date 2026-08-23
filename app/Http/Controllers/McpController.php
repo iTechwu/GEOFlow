@@ -12,6 +12,7 @@ use App\Services\Mcp\McpAnalyticsService;
 use App\Services\Mcp\McpCapabilityService;
 use App\Services\Mcp\McpDistributionService;
 use App\Services\Mcp\McpEnterpriseKnowledgeService;
+use App\Services\Mcp\McpFrontendService;
 use App\Services\Mcp\McpIdempotencyService;
 use App\Services\Mcp\McpLeadService;
 use App\Services\Mcp\McpSiteService;
@@ -31,7 +32,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpLeadService $leads, McpToolInputValidator $inputValidator): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpLeadService $leads, McpFrontendService $frontend, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -55,7 +56,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $site, $distribution, $leads, $inputValidator),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $site, $distribution, $leads, $frontend, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -145,10 +146,11 @@ final class McpController extends Controller
             ['name' => 'geoflow.leads.submissions', 'description' => 'List tenant-owned lead submissions with status and payload field names only.', 'inputSchema' => ['type' => 'object', 'properties' => ['status' => ['type' => 'string', 'enum' => ['new', 'contacted', 'qualified', 'invalid', 'converted']], 'form_id' => ['type' => 'integer', 'minimum' => 1], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
             ['name' => 'geoflow.leads.get', 'description' => 'Read one tenant-owned lead submission. Payload requires the separate leads:pii scope.', 'inputSchema' => ['type' => 'object', 'properties' => ['submission_id' => ['type' => 'integer', 'minimum' => 1], 'include_payload' => ['type' => 'boolean']], 'required' => ['submission_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.leads.update_status', 'description' => 'Update the status and internal note of one tenant-owned lead submission.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['submission_id' => ['type' => 'integer', 'minimum' => 1], 'status' => ['type' => 'string', 'enum' => ['new', 'contacted', 'qualified', 'invalid', 'converted']], 'note' => ['type' => 'string']], $idempotency), 'required' => ['submission_id', 'status'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.site.capabilities', 'description' => 'Discover the read-only theme catalog and homepage builder contract, including modules, layouts, presets, and limits.', 'inputSchema' => $empty],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpLeadService $leads, McpToolInputValidator $inputValidator): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpLeadService $leads, McpFrontendService $frontend, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
@@ -259,6 +261,7 @@ final class McpController extends Controller
             'geoflow.leads.submissions' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $leads->submissions($args, $auth)),
             'geoflow.leads.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $leads->get((int) $args['submission_id'], $args, $auth)),
             'geoflow.leads.update_status' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $leads->updateStatus((int) $args['submission_id'], $args, $auth)),
+            'geoflow.site.capabilities' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $frontend->capabilities($auth)),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -481,6 +484,7 @@ final class McpController extends Controller
             $tool === 'geoflow.capabilities' => 'catalog:read',
             $tool === 'geoflow.analytics.overview' => 'analytics:read',
             str_starts_with($tool, 'geoflow.enterprise_knowledge.') => $tool === 'geoflow.enterprise_knowledge.status' ? 'materials:read' : 'materials:write',
+            $tool === 'geoflow.site.capabilities' => 'catalog:read',
             str_starts_with($tool, 'geoflow.site.') => 'articles:read',
             str_starts_with($tool, 'geoflow.distribution.') => 'distribution:read',
             str_starts_with($tool, 'geoflow.leads.') => $tool === 'geoflow.leads.update_status' ? 'leads:write' : 'leads:read',

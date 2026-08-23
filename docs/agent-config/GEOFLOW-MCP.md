@@ -41,6 +41,7 @@ claude -p '只使用 geoflow MCP 查询当前任务和素材摘要。'
 | Analytics | `geoflow.analytics.overview` (tenant-scoped aggregate metrics) |
 | Enterprise knowledge | `geoflow.enterprise_knowledge.create`, `.status`, `.validate`, `.autosave`, `.publish` |
 | Published site read | `geoflow.site.search`, `.article`, `.archive` (tenant-scoped, no view counter side effect) |
+| Frontend discovery | `geoflow.site.capabilities` (theme catalog and homepage builder contract) |
 | Distribution read | `geoflow.distribution.channels`, `.jobs`, `.health` (tenant-scoped, redacted, no remote call) |
 | Leads | `geoflow.leads.forms`, `.submissions`, `.get`, `.update_status` (tenant-scoped; payload requires `leads:pii`) |
 
@@ -88,6 +89,12 @@ The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX
 1. Call `geoflow.leads.forms` to list forms owned by the current SSO team.
 2. Call `geoflow.leads.submissions` to inspect statuses and payload field names. Values, IP addresses, user agents, source URLs, and notes are excluded by default.
 3. Call `geoflow.leads.get` with `include_payload: true` only when the token has the separate `leads:pii` scope. Use `geoflow.leads.update_status` for status transitions; CSV export and anonymous public submission remain Admin/site operations.
+
+### Frontend Discovery Workflow
+
+1. Call `geoflow.site.capabilities` before generating homepage or theme-related instructions.
+2. Use the returned theme IDs, module types, layouts, presets, and limits as the only allowed frontend vocabulary.
+3. Theme switching, replication, preview publishing, and site settings changes remain Admin operations.
 
 ## Deliberate Boundaries
 
