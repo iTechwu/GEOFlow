@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\McpAuditLog;
 use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\CatalogGeoFlowService;
+use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -34,16 +35,18 @@ class McpEndpointTest extends TestCase
     }
 
     /**
-     * @return array{CatalogGeoFlowService&MockInterface, TaskLifecycleService&MockInterface}
+     * @return array{CatalogGeoFlowService&MockInterface, TaskLifecycleService&MockInterface, MaterialLibraryService&MockInterface}
      */
     private function mockServices(): array
     {
         $catalog = Mockery::mock(CatalogGeoFlowService::class);
         $tasks = Mockery::mock(TaskLifecycleService::class);
+        $materials = Mockery::mock(MaterialLibraryService::class);
         app()->instance(CatalogGeoFlowService::class, $catalog);
         app()->instance(TaskLifecycleService::class, $tasks);
+        app()->instance(MaterialLibraryService::class, $materials);
 
-        return [$catalog, $tasks];
+        return [$catalog, $tasks, $materials];
     }
 
     /**
@@ -101,7 +104,9 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.tools.2.inputSchema.properties.image_library_id.anyOf.1.type', 'null')
             ->assertJsonPath('result.tools.6.name', 'geoflow.tasks.enqueue')
             ->assertJsonPath('result.tools.7.name', 'geoflow.articles.list')
-            ->assertJsonPath('result.tools.9.inputSchema.properties.task_id.anyOf.1.type', 'null');
+            ->assertJsonPath('result.tools.9.inputSchema.properties.task_id.anyOf.1.type', 'null')
+            ->assertJsonPath('result.tools.14.name', 'geoflow.materials.summary')
+            ->assertJsonPath('result.tools.22.name', 'geoflow.materials.items.delete');
 
         $this->assertStringContainsString('"properties":{}', $toolsResponse->getContent());
     }
@@ -195,6 +200,81 @@ class McpEndpointTest extends TestCase
         $this->assertSame('缺少必填参数', $fieldErrors['arguments.ai_model_id']);
         $this->assertSame('参数类型必须为 integer', $fieldErrors['arguments.title_library_id']);
         $this->assertSame('不支持该参数', $fieldErrors['arguments.unexpected']);
+    }
+
+    public function test_material_tools_use_the_default_tenant_scope(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog, $tasks, $materials] = $this->mockServices();
+        $materials->shouldReceive('list')
+            ->once()
+            ->with('title-libraries', 1, 20, ['search' => 'GEO'], 'team-a')
+            ->andReturn(['type' => 'title-libraries', 'items' => []]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.materials.list', [
+                'type' => 'title-libraries',
+                'search' => 'GEO',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.type', 'title-libraries');
+    }
+
+    public function test_material_item_write_is_tenant_scoped_and_idempotent(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog, $tasks, $materials] = $this->mockServices();
+        $materials->shouldReceive('createItem')
+            ->once()
+            ->with('title-libraries', 9, ['title' => 'GEO 标题'], 'team-a')
+            ->andReturn(['type' => 'title-libraries', 'parent_id' => 9, 'item' => ['id' => 21]]);
+
+        $payload = $this->toolCall('geoflow.materials.items.create', [
+            'type' => 'title-libraries',
+            'parent_id' => 9,
+            'title' => 'GEO 标题',
+            'idempotency_key' => 'title-21',
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $payload)
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.item.id', 21);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $payload)
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.item.id', 21);
+    }
+
+    public function test_article_create_checks_all_associated_records_against_the_tenant(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog, $tasks, $materials] = $this->mockServices();
+        $articles = Mockery::mock(ArticleGeoFlowService::class);
+        app()->instance(ArticleGeoFlowService::class, $articles);
+
+        $tasks->shouldReceive('ensureTaskInScope')->once()->with(5, 'team-a');
+        $materials->shouldReceive('show')->once()->with('categories', 7, 'team-a')->andReturn(['item' => ['id' => 7]]);
+        $materials->shouldReceive('show')->once()->with('authors', 8, 'team-a')->andReturn(['item' => ['id' => 8]]);
+        $articles->shouldReceive('createArticle')
+            ->once()
+            ->with(Mockery::on(static fn (array $input): bool => $input['task_id'] === 5 && $input['category_id'] === 7 && $input['author_id'] === 8), null)
+            ->andReturn(['id' => 13, 'title' => 'Scoped article']);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.articles.create', [
+                'title' => 'Scoped article',
+                'content' => 'Content',
+                'category_id' => 7,
+                'author_id' => 8,
+                'task_id' => 5,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.id', 13);
     }
 
     public function test_write_tool_with_idempotency_key_replays_cached_result(): void

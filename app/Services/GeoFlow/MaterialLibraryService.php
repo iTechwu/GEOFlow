@@ -52,16 +52,16 @@ class MaterialLibraryService
     /**
      * @return array{types:list<array{type:string,count:int}>}
      */
-    public function summary(): array
+    public function summary(?string $teamId = null): array
     {
         return [
             'types' => [
-                ['type' => 'categories', 'count' => Category::query()->count()],
-                ['type' => 'authors', 'count' => Author::query()->count()],
-                ['type' => 'keyword-libraries', 'count' => KeywordLibrary::query()->count()],
-                ['type' => 'title-libraries', 'count' => TitleLibrary::query()->count()],
-                ['type' => 'image-libraries', 'count' => ImageLibrary::query()->count()],
-                ['type' => 'knowledge-bases', 'count' => KnowledgeBase::query()->count()],
+                ['type' => 'categories', 'count' => $this->tenantScope(Category::query(), $teamId)->count()],
+                ['type' => 'authors', 'count' => $this->tenantScope(Author::query(), $teamId)->count()],
+                ['type' => 'keyword-libraries', 'count' => $this->tenantScope(KeywordLibrary::query(), $teamId)->count()],
+                ['type' => 'title-libraries', 'count' => $this->tenantScope(TitleLibrary::query(), $teamId)->count()],
+                ['type' => 'image-libraries', 'count' => $this->tenantScope(ImageLibrary::query(), $teamId)->count()],
+                ['type' => 'knowledge-bases', 'count' => $this->tenantScope(KnowledgeBase::query(), $teamId)->count()],
             ],
         ];
     }
@@ -70,10 +70,10 @@ class MaterialLibraryService
      * @param  array<string,mixed>  $filters
      * @return array<string,mixed>
      */
-    public function list(string $type, int $page = 1, int $perPage = 20, array $filters = []): array
+    public function list(string $type, int $page = 1, int $perPage = 20, array $filters = [], ?string $teamId = null): array
     {
         $type = $this->normalizeType($type);
-        $query = $this->buildListQuery($type);
+        $query = $this->buildListQuery($type, $teamId);
         $search = trim((string) ($filters['search'] ?? ''));
         if ($search !== '') {
             $this->applySearch($query, $type, $search);
@@ -85,10 +85,10 @@ class MaterialLibraryService
     /**
      * @return array<string,mixed>
      */
-    public function show(string $type, int $id): array
+    public function show(string $type, int $id, ?string $teamId = null): array
     {
         $type = $this->normalizeType($type);
-        $row = $this->buildListQuery($type)->whereKey($id)->first();
+        $row = $this->buildListQuery($type, $teamId)->whereKey($id)->first();
         if (! $row) {
             throw new ApiException('material_not_found', '素材不存在', 404);
         }
@@ -103,32 +103,35 @@ class MaterialLibraryService
      * @param  array<string,mixed>  $data
      * @return array<string,mixed>
      */
-    public function create(string $type, array $data): array
+    public function create(string $type, array $data, ?string $teamId = null): array
     {
         $type = $this->normalizeType($type);
+        if ($teamId !== null && $teamId !== '') {
+            $data['sso_team_id'] = $teamId;
+        }
 
         $row = DB::transaction(function () use ($type, $data): Model {
             return match ($type) {
                 'categories' => $this->createCategory($data),
-                'authors' => Author::query()->create($this->normalizeAuthorPayload($data, false)),
-                'keyword-libraries' => KeywordLibrary::query()->create($this->normalizeBasicLibraryPayload($data, false) + ['keyword_count' => 0]),
-                'title-libraries' => TitleLibrary::query()->create($this->normalizeBasicLibraryPayload($data, false) + [
+                'authors' => Author::query()->create($this->withTenant($this->normalizeAuthorPayload($data, false), $data)),
+                'keyword-libraries' => KeywordLibrary::query()->create($this->withTenant($this->normalizeBasicLibraryPayload($data, false) + ['keyword_count' => 0], $data)),
+                'title-libraries' => TitleLibrary::query()->create($this->withTenant($this->normalizeBasicLibraryPayload($data, false) + [
                     'title_count' => 0,
                     'generation_type' => 'manual',
                     'generation_rounds' => 1,
                     'is_ai_generated' => 0,
-                ]),
-                'image-libraries' => ImageLibrary::query()->create($this->normalizeBasicLibraryPayload($data, false) + [
+                ], $data)),
+                'image-libraries' => ImageLibrary::query()->create($this->withTenant($this->normalizeBasicLibraryPayload($data, false) + [
                     'image_count' => 0,
                     'used_task_count' => 0,
-                ]),
+                ], $data)),
                 'knowledge-bases' => $this->createKnowledgeBase($data),
             };
         });
 
         return [
             'type' => $type,
-            'item' => $this->serializeMaterial($type, $this->freshMaterial($type, (int) $row->getKey())),
+            'item' => $this->serializeMaterial($type, $this->freshMaterial($type, (int) $row->getKey(), $teamId)),
         ];
     }
 
@@ -136,10 +139,10 @@ class MaterialLibraryService
      * @param  array<string,mixed>  $data
      * @return array<string,mixed>
      */
-    public function update(string $type, int $id, array $data): array
+    public function update(string $type, int $id, array $data, ?string $teamId = null): array
     {
         $type = $this->normalizeType($type);
-        $row = $this->findMaterial($type, $id);
+        $row = $this->findMaterial($type, $id, $teamId);
 
         DB::transaction(function () use ($type, $row, $data): void {
             match ($type) {
@@ -152,17 +155,17 @@ class MaterialLibraryService
 
         return [
             'type' => $type,
-            'item' => $this->serializeMaterial($type, $this->freshMaterial($type, (int) $row->getKey())),
+            'item' => $this->serializeMaterial($type, $this->freshMaterial($type, (int) $row->getKey(), $teamId)),
         ];
     }
 
     /**
      * @return array{id:int,type:string,deleted:bool,cleanup_failed_count:int}
      */
-    public function delete(string $type, int $id): array
+    public function delete(string $type, int $id, ?string $teamId = null): array
     {
         $type = $this->normalizeType($type);
-        $row = $this->findMaterial($type, $id);
+        $row = $this->findMaterial($type, $id, $teamId);
         $imageFilePaths = [];
 
         DB::transaction(function () use ($type, $row, $id, &$imageFilePaths): void {
@@ -190,10 +193,10 @@ class MaterialLibraryService
     /**
      * @return array<string,mixed>
      */
-    public function listItems(string $type, int $parentId, int $page = 1, int $perPage = 20): array
+    public function listItems(string $type, int $parentId, int $page = 1, int $perPage = 20, ?string $teamId = null): array
     {
         $type = $this->normalizeItemType($type);
-        $this->findMaterial($type, $parentId);
+        $this->findMaterial($type, $parentId, $teamId);
         $query = $this->buildItemQuery($type, $parentId);
 
         return $this->paginate($type, $query, $page, $perPage, fn (Model $row): array => $this->serializeItem($type, $row), $parentId);
@@ -203,10 +206,10 @@ class MaterialLibraryService
      * @param  array<string,mixed>  $data
      * @return array<string,mixed>
      */
-    public function createItem(string $type, int $parentId, array $data): array
+    public function createItem(string $type, int $parentId, array $data, ?string $teamId = null): array
     {
         $type = $this->normalizeWritableItemType($type);
-        $this->findMaterial($type, $parentId);
+        $this->findMaterial($type, $parentId, $teamId);
 
         $row = $type === 'image-libraries'
             ? $this->createImageItem($parentId, $data)
@@ -299,10 +302,10 @@ class MaterialLibraryService
      * @param  array<string,mixed>  $data
      * @return array{type:string,parent_id:int,deleted_count:int,cleanup_failed_count:int}
      */
-    public function deleteItems(string $type, int $parentId, array $data): array
+    public function deleteItems(string $type, int $parentId, array $data, ?string $teamId = null): array
     {
         $type = $this->normalizeWritableItemType($type);
-        $this->findMaterial($type, $parentId);
+        $this->findMaterial($type, $parentId, $teamId);
         $ids = $this->extractIds($data);
         if ($ids === []) {
             throw new ApiException('validation_failed', '请选择要删除的素材条目', 422, [
@@ -373,9 +376,9 @@ class MaterialLibraryService
         return $type;
     }
 
-    private function buildListQuery(string $type): Builder
+    private function buildListQuery(string $type, ?string $teamId = null): Builder
     {
-        return match ($type) {
+        $query = match ($type) {
             'categories' => Category::query()
                 ->select(['id', 'name', 'slug', 'description', 'sort_order', 'created_at'])
                 ->withCount('articles as article_count')
@@ -409,6 +412,16 @@ class MaterialLibraryService
                 ->withCount('chunks as chunk_count')
                 ->orderByDesc('created_at'),
         };
+
+        return $this->tenantScope($query, $teamId);
+    }
+
+    private function tenantScope(Builder $query, ?string $teamId): Builder
+    {
+        return $query->when(
+            $teamId !== null && $teamId !== '',
+            static fn (Builder $builder): Builder => $builder->where('sso_team_id', $teamId),
+        );
     }
 
     private function buildItemQuery(string $type, int $parentId): Builder
@@ -475,9 +488,9 @@ class MaterialLibraryService
         return $data;
     }
 
-    private function findMaterial(string $type, int $id): Model
+    private function findMaterial(string $type, int $id, ?string $teamId = null): Model
     {
-        $row = $this->buildListQuery($type)->whereKey($id)->first();
+        $row = $this->buildListQuery($type, $teamId)->whereKey($id)->first();
         if (! $row) {
             throw new ApiException('material_not_found', '素材不存在', 404);
         }
@@ -485,9 +498,9 @@ class MaterialLibraryService
         return $row;
     }
 
-    private function freshMaterial(string $type, int $id): Model
+    private function freshMaterial(string $type, int $id, ?string $teamId = null): Model
     {
-        return $this->findMaterial($type, $id);
+        return $this->findMaterial($type, $id, $teamId);
     }
 
     /**
@@ -633,12 +646,12 @@ class MaterialLibraryService
         $name = $this->requiredString($data, 'name', '分类名称不能为空', 255);
         $this->ensureUniqueCategoryName($name);
 
-        return Category::query()->create([
+        return Category::query()->create($this->withTenant([
             'name' => $name,
             'slug' => $this->buildCategorySlug($name, (string) ($data['slug'] ?? ''), 0),
             'description' => $this->optionalString($data, 'description'),
             'sort_order' => max(0, (int) ($data['sort_order'] ?? 0)),
-        ]);
+        ], $data));
     }
 
     private function updateCategory(Model $row, array $data): void
@@ -708,11 +721,26 @@ class MaterialLibraryService
 
     private function createKnowledgeBase(array $data): KnowledgeBase
     {
-        $payload = $this->normalizeKnowledgePayload($data, false);
+        $payload = $this->withTenant($this->normalizeKnowledgePayload($data, false), $data);
         $knowledgeBase = KnowledgeBase::query()->create($payload);
         $this->chunkSyncService->sync((int) $knowledgeBase->id, (string) $payload['content']);
 
         return $knowledgeBase;
+    }
+
+    /**
+     * @param  array<string,mixed>  $payload
+     * @param  array<string,mixed>  $source
+     * @return array<string,mixed>
+     */
+    private function withTenant(array $payload, array $source): array
+    {
+        $teamId = trim((string) ($source['sso_team_id'] ?? ''));
+        if ($teamId !== '') {
+            $payload['sso_team_id'] = $teamId;
+        }
+
+        return $payload;
     }
 
     private function updateKnowledgeBase(Model $row, array $data): void

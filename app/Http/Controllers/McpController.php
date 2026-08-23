@@ -6,6 +6,7 @@ use App\Exceptions\ApiException;
 use App\Http\McpAuthContext;
 use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\CatalogGeoFlowService;
+use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpIdempotencyService;
 use App\Services\Mcp\McpToolException;
@@ -23,7 +24,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, McpToolInputValidator $inputValidator): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -47,7 +48,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $inputValidator),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -71,6 +72,8 @@ final class McpController extends Controller
         $articleId = ['type' => 'object', 'properties' => ['article_id' => ['type' => 'integer']], 'required' => ['article_id'], 'additionalProperties' => false];
         $idempotency = ['idempotency_key' => ['type' => 'string', 'description' => 'Optional idempotency key; retries with the same key return the cached result.']];
         $nullableInteger = ['anyOf' => [['type' => 'integer'], ['type' => 'null']]];
+        $materialType = ['type' => 'string', 'enum' => ['categories', 'authors', 'keyword-libraries', 'title-libraries', 'image-libraries', 'knowledge-bases']];
+        $materialItemType = ['type' => 'string', 'enum' => ['keyword-libraries', 'title-libraries']];
 
         return [
             ['name' => 'geoflow.catalog', 'description' => 'Read available GEOFlow models, prompts, libraries, knowledge bases and categories.', 'inputSchema' => $empty],
@@ -87,10 +90,32 @@ final class McpController extends Controller
             ['name' => 'geoflow.articles.review', 'description' => 'Review an article; approved content can proceed to publish.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['article_id' => ['type' => 'integer'], 'review_status' => ['type' => 'string', 'enum' => ['pending', 'approved', 'rejected', 'auto_approved']], 'review_note' => ['type' => 'string'], 'risk_override_reason' => ['type' => 'string']], $idempotency), 'required' => ['article_id', 'review_status'], 'additionalProperties' => false]],
             ['name' => 'geoflow.articles.publish', 'description' => 'Publish an approved article.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['article_id' => ['type' => 'integer']], $idempotency), 'required' => ['article_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.articles.trash', 'description' => 'Move an article to the trash.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['article_id' => ['type' => 'integer']], $idempotency), 'required' => ['article_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.materials.summary', 'description' => 'Count tenant-scoped categories, authors, libraries and knowledge bases.', 'inputSchema' => $empty],
+            ['name' => 'geoflow.materials.list', 'description' => 'List one tenant-scoped material type.', 'inputSchema' => ['type' => 'object', 'properties' => ['type' => $materialType, 'search' => ['type' => 'string'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'required' => ['type'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.materials.get', 'description' => 'Read one tenant-scoped material library or record.', 'inputSchema' => ['type' => 'object', 'properties' => ['type' => $materialType, 'id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['type', 'id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.materials.items.list', 'description' => 'List keyword, title, image metadata, or knowledge chunks in a tenant-scoped library.', 'inputSchema' => ['type' => 'object', 'properties' => ['type' => $materialType, 'parent_id' => ['type' => 'integer', 'minimum' => 1], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'required' => ['type', 'parent_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.materials.create', 'description' => 'Create a tenant-scoped category, author, library, or knowledge base.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['type' => $materialType, 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'sort_order' => ['type' => 'integer', 'minimum' => 0], 'email' => ['type' => 'string'], 'bio' => ['type' => 'string'], 'avatar' => ['type' => 'string'], 'website' => ['type' => 'string'], 'social_links' => ['type' => 'string'], 'content' => ['type' => 'string'], 'file_type' => ['type' => 'string', 'enum' => ['markdown', 'word', 'text']], 'file_path' => ['type' => 'string']], $idempotency), 'required' => ['type', 'name'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.materials.update', 'description' => 'Update a tenant-scoped category, author, library, or knowledge base.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['type' => $materialType, 'id' => ['type' => 'integer', 'minimum' => 1], 'name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'slug' => ['type' => 'string'], 'sort_order' => ['type' => 'integer', 'minimum' => 0], 'email' => ['type' => 'string'], 'bio' => ['type' => 'string'], 'avatar' => ['type' => 'string'], 'website' => ['type' => 'string'], 'social_links' => ['type' => 'string'], 'content' => ['type' => 'string'], 'file_type' => ['type' => 'string', 'enum' => ['markdown', 'word', 'text']], 'file_path' => ['type' => 'string']], $idempotency), 'required' => ['type', 'id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.materials.delete', 'description' => 'Delete a tenant-scoped material record when it is not in use.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['type' => $materialType, 'id' => ['type' => 'integer', 'minimum' => 1]], $idempotency), 'required' => ['type', 'id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.materials.items.create', 'description' => 'Add one keyword or title to a tenant-scoped library.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['type' => $materialItemType, 'parent_id' => ['type' => 'integer', 'minimum' => 1], 'keyword' => ['type' => 'string'], 'title' => ['type' => 'string']], $idempotency), 'required' => ['type', 'parent_id'], 'additionalProperties' => false]],
+            [
+                'name' => 'geoflow.materials.items.delete',
+                'description' => 'Delete keyword or title items from a tenant-scoped library.',
+                'inputSchema' => [
+                    'type' => 'object',
+                    'properties' => array_merge([
+                        'type' => $materialItemType,
+                        'parent_id' => ['type' => 'integer', 'minimum' => 1],
+                        'ids' => ['type' => 'array', 'items' => ['type' => 'integer', 'minimum' => 1]],
+                    ], $idempotency),
+                    'required' => ['type', 'parent_id', 'ids'],
+                    'additionalProperties' => false,
+                ],
+            ],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, McpToolInputValidator $inputValidator): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
@@ -112,20 +137,22 @@ final class McpController extends Controller
             'geoflow.tasks.enqueue' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->enqueueTask($scoped($this->taskId($args)), (string) ($args['job_type'] ?? 'generate_article'), is_array($args['payload'] ?? null) ? $args['payload'] : [])),
             'geoflow.articles.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $articles->listArticles((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), $this->articleFilters($auth, $args))),
             'geoflow.articles.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $articles->getArticle($scopedArticle($this->articleId($args)))),
-            'geoflow.articles.create' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $tasks, $auth): array {
+            'geoflow.articles.create' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $tasks, $materials, $auth): array {
                 if ($auth->tenantId !== null && (! isset($args['task_id']) || $args['task_id'] === null)) {
                     throw new McpToolException('SSO 租户文章必须绑定 task_id');
                 }
                 if (isset($args['task_id']) && $args['task_id'] !== null) {
                     $this->scopedTaskId($tasks, $auth, (int) $args['task_id']);
                 }
+                $this->ensureArticleReferencesInScope($materials, $auth, $args);
 
                 return $articles->createArticle($args, $auth->auditAdminId);
             }),
-            'geoflow.articles.update' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $auth): array {
+            'geoflow.articles.update' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $materials, $auth): array {
                 $articleId = $this->articleId($args);
                 $this->scopedArticleId($articles, $auth, $articleId);
                 unset($args['article_id']);
+                $this->ensureArticleReferencesInScope($materials, $auth, $args);
 
                 return $articles->updateArticle($articleId, $args, $auth->auditAdminId);
             }),
@@ -137,6 +164,32 @@ final class McpController extends Controller
             }),
             'geoflow.articles.publish' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $articles->publishArticle($scopedArticle($this->articleId($args)), $this->requiredAuditAdminId($auth))),
             'geoflow.articles.trash' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $articles->trashArticle($scopedArticle($this->articleId($args)))),
+            'geoflow.materials.summary' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $materials->summary($auth->tenantId)),
+            'geoflow.materials.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $materials->list((string) $args['type'], (int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), ['search' => (string) ($args['search'] ?? '')], $auth->tenantId)),
+            'geoflow.materials.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $materials->show((string) $args['type'], (int) $args['id'], $auth->tenantId)),
+            'geoflow.materials.items.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $materials->listItems((string) $args['type'], (int) $args['parent_id'], (int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), $auth->tenantId)),
+            'geoflow.materials.create' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($materials, $auth): array {
+                $type = (string) $args['type'];
+                unset($args['type']);
+
+                return $materials->create($type, $args, $auth->tenantId);
+            }),
+            'geoflow.materials.update' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($materials, $auth): array {
+                $type = (string) $args['type'];
+                $materialId = (int) $args['id'];
+                unset($args['type'], $args['id']);
+
+                return $materials->update($type, $materialId, $args, $auth->tenantId);
+            }),
+            'geoflow.materials.delete' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $materials->delete((string) $args['type'], (int) $args['id'], $auth->tenantId)),
+            'geoflow.materials.items.create' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($materials, $auth): array {
+                $type = (string) $args['type'];
+                $parentId = (int) $args['parent_id'];
+                unset($args['type'], $args['parent_id']);
+
+                return $materials->createItem($type, $parentId, $args, $auth->tenantId);
+            }),
+            'geoflow.materials.items.delete' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $materials->deleteItems((string) $args['type'], (int) $args['parent_id'], ['ids' => $args['ids']], $auth->tenantId)),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -249,6 +302,21 @@ final class McpController extends Controller
     }
 
     /** @param array<string,mixed> $arguments */
+    private function ensureArticleReferencesInScope(MaterialLibraryService $materials, McpAuthContext $auth, array $arguments): void
+    {
+        if ($auth->tenantId === null || $auth->tenantId === '') {
+            return;
+        }
+
+        if (isset($arguments['category_id'])) {
+            $materials->show('categories', (int) $arguments['category_id'], $auth->tenantId);
+        }
+        if (isset($arguments['author_id'])) {
+            $materials->show('authors', (int) $arguments['author_id'], $auth->tenantId);
+        }
+    }
+
+    /** @param array<string,mixed> $arguments */
     private function scopedTaskCreateArguments(McpAuthContext $auth, array $arguments): array
     {
         unset($arguments['idempotency_key'], $arguments['sso_owner_admin_id']);
@@ -328,7 +396,7 @@ final class McpController extends Controller
             str_ends_with($tool, '.review'), str_ends_with($tool, '.publish') => 'articles:publish',
             str_starts_with($tool, 'geoflow.articles.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') ? 'articles:read' : 'articles:write',
             str_starts_with($tool, 'geoflow.tasks.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') || str_ends_with($tool, '.jobs') ? 'tasks:read' : 'tasks:write',
-            str_starts_with($tool, 'geoflow.materials.') => str_contains($tool, '.list') || str_ends_with($tool, '.get') ? 'materials:read' : 'materials:write',
+            str_starts_with($tool, 'geoflow.materials.') => in_array($tool, ['geoflow.materials.summary', 'geoflow.materials.list', 'geoflow.materials.get', 'geoflow.materials.items.list'], true) ? 'materials:read' : 'materials:write',
             $tool === 'geoflow.catalog' => 'catalog:read',
             default => null,
         };
