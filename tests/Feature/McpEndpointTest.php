@@ -231,9 +231,15 @@ class McpEndpointTest extends TestCase
         $this->mockServices();
         $knowledge = Mockery::mock(McpEnterpriseKnowledgeService::class);
         app()->instance(McpEnterpriseKnowledgeService::class, $knowledge);
+        $knowledge->shouldReceive('list')->once()->with(['search' => 'Company'], Mockery::type(McpAuthContext::class))->andReturn(['tenant_id' => 'team-a', 'items' => [['id' => 12, 'name' => 'Company']], 'count' => 1]);
         $knowledge->shouldReceive('create')->once()->andReturn(['id' => 12, 'status' => 'queued']);
         $knowledge->shouldReceive('publish')->once()->with(12, 'PUBLISH', Mockery::type(McpAuthContext::class))->andReturn(['project_id' => 12, 'status' => 'published', 'knowledge_base_id' => 8]);
         $knowledge->shouldReceive('delete')->once()->with(12, 'DELETE', Mockery::type(McpAuthContext::class))->andReturn(['project_id' => 12, 'knowledge_base_id' => 8, 'deleted' => true]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.list', ['search' => 'Company']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.count', 1);
 
         $this->withHeader('Authorization', 'Bearer ci-secret')
             ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.create', ['name' => 'Company', 'content' => 'Source text']))

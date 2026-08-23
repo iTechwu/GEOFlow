@@ -66,6 +66,7 @@ final class McpCapabilityService
                     'domain' => 'enterprise_knowledge',
                     'status' => 'available',
                     'tools' => [
+                        'geoflow.enterprise_knowledge.list',
                         'geoflow.enterprise_knowledge.create',
                         'geoflow.enterprise_knowledge.status',
                         'geoflow.enterprise_knowledge.validate',
@@ -74,7 +75,7 @@ final class McpCapabilityService
                         'geoflow.enterprise_knowledge.delete',
                     ],
                     'permission' => 'materials:read/materials:write',
-                    'notes' => '文本创建 → 异步生成 → status/validate/autosave → confirmation=PUBLISH 发布；文件上传、图片编辑和删除仍走 Admin。',
+                    'notes' => 'list/status 查询 → 文本创建 → 异步生成 → validate/autosave → confirmation=PUBLISH 发布；删除要求 confirmation=DELETE 且拒绝仍被任务引用的知识库。',
                 ],
                 [
                     'domain' => 'site_read',

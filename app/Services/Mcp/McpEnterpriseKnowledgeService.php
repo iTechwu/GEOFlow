@@ -61,6 +61,43 @@ class McpEnterpriseKnowledgeService
     }
 
     /** @param array<string,mixed> $input */
+    public function list(array $input, McpAuthContext $auth): array
+    {
+        $teamId = $this->requiredTenant($auth);
+        $search = trim((string) ($input['search'] ?? ''));
+        $status = trim((string) ($input['status'] ?? ''));
+        $limit = min(100, max(1, (int) ($input['limit'] ?? 50)));
+        if (mb_strlen($search, 'UTF-8') > 120) {
+            throw new ApiException('enterprise_knowledge_search_invalid', '企业知识搜索词不能超过 120 个字符', 422);
+        }
+        if ($status !== '' && ! in_array($status, ['draft', 'queued', 'processing', 'reviewing', 'published', 'failed'], true)) {
+            throw new ApiException('enterprise_knowledge_status_invalid', '企业知识状态筛选无效', 422);
+        }
+
+        $projects = EnterpriseKnowledgeProject::query()
+            ->where('sso_team_id', $teamId)
+            ->when($search !== '', fn ($query) => $query->where('name', 'like', '%'.$search.'%'))
+            ->when($status !== '', fn ($query) => $query->where('status', $status))
+            ->latest('updated_at')
+            ->latest('id')
+            ->limit($limit)
+            ->get();
+
+        return [
+            'tenant_id' => $teamId,
+            'items' => $projects->map(static fn (EnterpriseKnowledgeProject $project): array => [
+                'id' => (int) $project->id,
+                'name' => (string) $project->name,
+                'description' => (string) $project->description,
+                'status' => (string) $project->status,
+                'published_knowledge_base_id' => $project->published_knowledge_base_id !== null ? (int) $project->published_knowledge_base_id : null,
+                'updated_at' => optional($project->updated_at)->toIso8601String(),
+            ])->values()->all(),
+            'count' => $projects->count(),
+        ];
+    }
+
+    /** @param array<string,mixed> $input */
     public function validate(array $input, McpAuthContext $auth): array
     {
         $project = $this->find((int) ($input['project_id'] ?? 0), $this->requiredTenant($auth));

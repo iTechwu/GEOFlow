@@ -48,6 +48,40 @@ class McpEnterpriseKnowledgeServiceTest extends TestCase
         $service->status((int) $project->id, $this->auth('team-a'));
     }
 
+    public function test_list_returns_only_bounded_tenant_project_metadata(): void
+    {
+        EnterpriseKnowledgeProject::query()->create([
+            'name' => 'AgentSpace GEO regression current',
+            'description' => 'Current tenant',
+            'status' => 'published',
+            'draft_content' => 'Sensitive draft body',
+            'sso_team_id' => 'team-a',
+        ]);
+        EnterpriseKnowledgeProject::query()->create([
+            'name' => 'AgentSpace GEO regression other tenant',
+            'status' => 'published',
+            'sso_team_id' => 'team-b',
+        ]);
+        EnterpriseKnowledgeProject::query()->create([
+            'name' => 'Unrelated project',
+            'status' => 'reviewing',
+            'sso_team_id' => 'team-a',
+        ]);
+        $service = new McpEnterpriseKnowledgeService(app(EnterpriseKnowledgeDraftService::class));
+
+        $result = $service->list([
+            'search' => 'AgentSpace GEO regression',
+            'status' => 'published',
+            'limit' => 1,
+        ], $this->auth('team-a'));
+
+        $this->assertSame('team-a', $result['tenant_id']);
+        $this->assertSame(1, $result['count']);
+        $this->assertSame('AgentSpace GEO regression current', $result['items'][0]['name']);
+        $this->assertArrayNotHasKey('draft_content', $result['items'][0]);
+        $this->assertArrayNotHasKey('draft_preview', $result['items'][0]);
+    }
+
     public function test_validate_and_autosave_persist_reviewable_tenant_draft(): void
     {
         $project = EnterpriseKnowledgeProject::query()->create([
