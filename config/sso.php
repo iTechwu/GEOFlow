@@ -16,5 +16,7 @@ return [
     'scope' => (string) env('SSO_SCOPE', 'openid profile email tenant'),
     'state_ttl_seconds' => (int) env('SSO_STATE_TTL_SECONDS', 600),
     'token_cache_seconds' => (int) env('SSO_TOKEN_CACHE_SECONDS', 15),
+    'mcp_userinfo_connect_timeout_seconds' => max(1, (int) env('SSO_MCP_USERINFO_CONNECT_TIMEOUT_SECONDS', 1)),
+    'mcp_userinfo_timeout_seconds' => max(1, (int) env('SSO_MCP_USERINFO_TIMEOUT_SECONDS', 3)),
     'session_lifetime' => (int) env('SSO_SESSION_LIFETIME', 3600),
 ];

@@ -99,7 +99,7 @@ final class AuthenticateMcpToken
     private function resolveSsoToken(string $provided): ?McpAuthContext
     {
         try {
-            $claims = $this->oidc->userInfoClaims($provided);
+            $claims = $this->oidc->userInfoClaimsForMcp($provided);
         } catch (Throwable) {
             return null;
         }

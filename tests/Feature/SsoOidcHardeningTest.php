@@ -103,6 +103,25 @@ class SsoOidcHardeningTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_mcp_userinfo_validation_uses_the_same_success_cache(): void
+    {
+        Http::fake([
+            'http://sso-internal.example/api/oauth/userinfo' => Http::response(['sub' => 'mcp-sso-user']),
+        ]);
+        config()->set([
+            'sso.internal_api_url' => 'http://sso-internal.example/api',
+            'sso.token_cache_seconds' => 15,
+            'sso.mcp_userinfo_connect_timeout_seconds' => 1,
+            'sso.mcp_userinfo_timeout_seconds' => 3,
+        ]);
+
+        $client = app(SsoOidcClient::class);
+        $this->assertSame('mcp-sso-user', $client->userInfoClaimsForMcp('mcp-access-token')['sub']);
+        $this->assertSame('mcp-sso-user', $client->userInfoClaimsForMcp('mcp-access-token')['sub']);
+
+        Http::assertSentCount(1);
+    }
+
     public function test_sso_identity_uses_selected_team_id_for_ixicai_context(): void
     {
         $admin = app(SsoIdentityService::class)->synchronize([

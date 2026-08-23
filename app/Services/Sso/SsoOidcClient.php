@@ -106,6 +106,32 @@ final class SsoOidcClient
      */
     public function userInfoClaims(string $accessToken, ?string $endpoint = null): array
     {
+        return $this->rememberUserInfo($accessToken, $endpoint, 5, 10, 2);
+    }
+
+    /**
+     * MCP accepts either a static deployment token or an SSO access token. Keep
+     * the SSO fallback bounded so an invalid bearer cannot occupy an FPM worker
+     * for the full interactive-login retry window.
+     *
+     * @return array<string,mixed>
+     */
+    public function userInfoClaimsForMcp(string $accessToken): array
+    {
+        $connectTimeout = max(1, (int) config('sso.mcp_userinfo_connect_timeout_seconds', 1));
+        $timeout = max($connectTimeout, (int) config('sso.mcp_userinfo_timeout_seconds', 3));
+
+        return $this->rememberUserInfo($accessToken, null, $connectTimeout, $timeout, 1);
+    }
+
+    /** @return array<string,mixed> */
+    private function rememberUserInfo(
+        string $accessToken,
+        ?string $endpoint,
+        int $connectTimeout,
+        int $timeout,
+        int $attempts
+    ): array {
         $cacheKey = 'sso:token:userinfo:'.hash('sha256', $accessToken);
         $ttl = max(1, (int) config('sso.token_cache_seconds'));
 
@@ -114,6 +140,9 @@ final class SsoOidcClient
         return Cache::remember($cacheKey, $ttl, fn (): array => $this->userInfo(
             $accessToken,
             $endpoint ?? $this->internalApiUrl('/oauth/userinfo'),
+            $connectTimeout,
+            $timeout,
+            $attempts,
         ));
     }
 
@@ -146,19 +175,27 @@ final class SsoOidcClient
             if (! hash_equals((string) config('sso.issuer'), rtrim((string) $metadata['issuer'], '/'))) {
                 throw new RuntimeException('SSO discovery issuer does not match configured issuer.');
             }
+
             return $metadata;
         });
     }
 
     /** @return array<string,mixed> */
-    private function userInfo(string $accessToken, string $endpoint): array
-    {
-        $response = $this->http->acceptJson()->withToken($accessToken)->connectTimeout(5)->timeout(10)->retry(2, 200, throw: false)
+    private function userInfo(
+        string $accessToken,
+        string $endpoint,
+        int $connectTimeout = 5,
+        int $timeout = 10,
+        int $attempts = 2
+    ): array {
+        $response = $this->http->acceptJson()->withToken($accessToken)
+            ->connectTimeout($connectTimeout)->timeout($timeout)->retry($attempts, 200, throw: false)
             ->get($endpoint);
         $profile = $response->json();
         if (! $response->successful() || ! is_array($profile) || ! is_string($profile['sub'] ?? null)) {
             throw new RuntimeException('Unable to load the SSO user profile.');
         }
+
         return $profile;
     }
 
@@ -194,6 +231,7 @@ final class SsoOidcClient
             || ! hash_equals($expectedNonce, (string) ($claims['nonce'] ?? ''))) {
             throw new RuntimeException('SSO identity token claims are invalid.');
         }
+
         return $claims;
     }
 
@@ -223,12 +261,13 @@ final class SsoOidcClient
             $response = $this->http->acceptJson()->connectTimeout(5)->timeout(10)->retry(2, 200, throw: false)
                 ->get($this->internalizeUrl((string) config('sso.jwks_uri')));
             $payload = $response->json();
+
             return $response->successful() && is_array($payload) && is_array($payload['keys'] ?? null) ? $payload['keys'] : [];
         });
     }
 
     /** @param list<array<string,mixed>> $keys
-     *  @return array<string,mixed>|null
+     * @return array<string,mixed>|null
      */
     private function findJwksKey(array $keys, string $kid): ?array
     {
@@ -291,6 +330,7 @@ final class SsoOidcClient
         $rsa = $this->asn1Sequence($this->asn1Integer($n).$this->asn1Integer($e));
         $algorithm = "\x30\x0d\x06\x09\x2a\x86\x48\x86\xf7\x0d\x01\x01\x01\x05\x00";
         $subjectPublicKeyInfo = $this->asn1Sequence($algorithm."\x03".$this->asn1Length(strlen($rsa) + 1)."\x00".$rsa);
+
         return "-----BEGIN PUBLIC KEY-----\n".chunk_split(base64_encode($subjectPublicKeyInfo), 64, "\n")."-----END PUBLIC KEY-----\n";
     }
 
@@ -300,19 +340,29 @@ final class SsoOidcClient
         if ($value === '' || (ord($value[0]) & 0x80) !== 0) {
             $value = "\x00".$value;
         }
+
         return "\x02".$this->asn1Length(strlen($value)).$value;
     }
 
-    private function asn1Sequence(string $value): string { return "\x30".$this->asn1Length(strlen($value)).$value; }
+    private function asn1Sequence(string $value): string
+    {
+        return "\x30".$this->asn1Length(strlen($value)).$value;
+    }
+
     private function asn1Length(int $length): string
     {
-        if ($length < 128) return chr($length);
+        if ($length < 128) {
+            return chr($length);
+        }
         $bytes = ltrim(pack('N', $length), "\x00");
+
         return chr(0x80 | strlen($bytes)).$bytes;
     }
+
     private function base64UrlDecode(string $value): string
     {
         $decoded = base64_decode(strtr($value, '-_', '+/').str_repeat('=', (4 - strlen($value) % 4) % 4), true);
+
         return $decoded === false ? '' : $decoded;
     }
 }
