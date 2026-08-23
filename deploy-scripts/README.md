@@ -101,6 +101,9 @@ bash geoflow-docker-deploy.sh
 | `GEOFLOW_MCP_READ_TOKEN` | MCP 开启时至少提供一个令牌 | MCP 只读 Bearer Token；系统令牌关闭时可作为唯一令牌 |
 | `GEOFLOW_MCP_DEFAULT_TENANT` | 可选 | 系统 MCP Token 默认绑定的 SSO team ID；留空时允许跨租户 |
 | `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | 是否允许部署级系统令牌；设为 `false` 时必须配置只读令牌 |
+| `GEOFLOW_MCP_AUDIT_ADMIN_ID` | 可选 | 系统令牌执行文章审核/发布或写入审计归属时使用的管理员 ID |
+| `GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE` | `600` | 单个 MCP 凭据每分钟请求上限 |
+| `GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE` | `3000` | 单个来源 IP 每分钟 MCP 请求上限 |
 | `GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE` | `3` | 单个 MCP 租户同时处于 queued/running 的 URL 导入任务上限 |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | 反向代理、CDN、二级目录部署时的可信代理设置 |
 | `GEOFLOW_SELF_DELETE` | `0` | 设置为 `1` 时，部署成功后删除当前执行的部署脚本 |
@@ -286,6 +289,9 @@ Optional variables:
 | `GEOFLOW_MCP_READ_TOKEN` | at least one token is required when MCP is enabled | MCP read-only Bearer Token; it can be the only token when system access is disabled |
 | `GEOFLOW_MCP_DEFAULT_TENANT` | optional | SSO team ID used as the default scope for system MCP tokens; empty allows cross-tenant access |
 | `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | Allow deployment-level system tokens; set `false` to require read-only or SSO credentials |
+| `GEOFLOW_MCP_AUDIT_ADMIN_ID` | optional | Admin ID used for system-token article audit/review/publish attribution |
+| `GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE` | `600` | Requests per minute allowed for one MCP credential |
+| `GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE` | `3000` | Requests per minute allowed for one source IP |
 | `GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE` | `3` | Maximum queued/running URL import jobs per MCP tenant |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | Trusted proxy setting for reverse proxy/CDN/subdirectory deployments |
 | `GEOFLOW_SELF_DELETE` | `0` | Set to `1` to remove the deployment script after a successful deployment |

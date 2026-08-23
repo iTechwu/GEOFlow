@@ -222,6 +222,9 @@ jobs:
           GEOFLOW_MCP_READ_TOKEN: ${{ secrets.GEOFLOW_MCP_READ_TOKEN }}
           GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN: ${{ vars.GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN || 'true' }}
           GEOFLOW_MCP_SERVER_NAME: geoflow
+          GEOFLOW_MCP_AUDIT_ADMIN_ID: ${{ vars.GEOFLOW_MCP_AUDIT_ADMIN_ID }}
+          GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE: ${{ vars.GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE || '600' }}
+          GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE: ${{ vars.GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE || '3000' }}
           GEOFLOW_APP_IMAGE: ${{ needs.build-images.outputs.app_image }}
           GEOFLOW_WEB_IMAGE: ${{ needs.build-images.outputs.web_image }}
           DOCKER_COMMON_NETWORK_NAME: ${{ vars.DOCKER_COMMON_NETWORK_NAME || 'common_network' }}

@@ -40,6 +40,9 @@ class ProdEnvRendererTest extends TestCase
         $values['GEOFLOW_MCP_ENABLED'] = 'true';
         $values['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN'] = 'false';
         $values['GEOFLOW_MCP_READ_TOKEN'] = 'read-only-token';
+        $values['GEOFLOW_MCP_AUDIT_ADMIN_ID'] = '42';
+        $values['GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE'] = '900';
+        $values['GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE'] = '4000';
 
         [$process, $directory] = $this->render($values);
 
@@ -47,6 +50,9 @@ class ProdEnvRendererTest extends TestCase
         $parsed = Dotenv::createArrayBacked($directory, '.env.prod')->load();
         $this->assertSame('false', $parsed['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN']);
         $this->assertSame('read-only-token', $parsed['GEOFLOW_MCP_READ_TOKEN']);
+        $this->assertSame('42', $parsed['GEOFLOW_MCP_AUDIT_ADMIN_ID']);
+        $this->assertSame('900', $parsed['GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE']);
+        $this->assertSame('4000', $parsed['GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE']);
     }
 
     public function test_renderer_rejects_enabled_mcp_without_any_usable_token(): void
