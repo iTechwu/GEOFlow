@@ -126,6 +126,11 @@ return [
     'mcp_allow_cross_tenant' => filter_var(env('GEOFLOW_MCP_ALLOW_CROSS_TENANT', false), FILTER_VALIDATE_BOOLEAN),
     'mcp_url_import_max_active' => max(1, (int) env('GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE', 3)),
     'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
+    // 精确追加可信 Host（逗号分隔，不支持通配符或端口）；APP_URL 主机始终自动包含。
+    'additional_trusted_hosts' => array_values(array_filter(array_map(
+        static fn (string $host): string => strtolower(trim($host)),
+        explode(',', (string) env('GEOFLOW_ADDITIONAL_TRUSTED_HOSTS', '')),
+    ))),
     // 系统令牌执行文章风险/审核/发布时使用的审计管理员；不配置则禁止这些需要管理员身份的操作。
     'mcp_audit_admin_id' => max(0, (int) env('GEOFLOW_MCP_AUDIT_ADMIN_ID', 0)),
     // 是否允许部署级系统令牌（跨租户）。多租户生产可置 false 强制仅接受 SSO 令牌。

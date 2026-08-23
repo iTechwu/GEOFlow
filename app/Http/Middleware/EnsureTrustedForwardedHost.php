@@ -19,8 +19,18 @@ final class EnsureTrustedForwardedHost
 
         $configuredHost = parse_url((string) config('app.url'), PHP_URL_HOST);
         $requestHost = strtolower($request->getHost());
+        $additionalHosts = array_values(array_filter(
+            (array) config('geoflow.additional_trusted_hosts', []),
+            static fn (mixed $host): bool => is_string($host) && $host !== '',
+        ));
+        $trustedHosts = array_map(
+            static fn (string $host): string => strtolower($host),
+            is_string($configuredHost) && $configuredHost !== ''
+                ? [$configuredHost, ...$additionalHosts]
+                : $additionalHosts,
+        );
 
-        if (! is_string($configuredHost) || $configuredHost === '' || $requestHost !== strtolower($configuredHost)) {
+        if (! in_array($requestHost, $trustedHosts, true)) {
             abort(Response::HTTP_BAD_REQUEST, 'Invalid Host header.');
         }
 
