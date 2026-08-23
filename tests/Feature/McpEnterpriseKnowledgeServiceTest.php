@@ -117,6 +117,23 @@ class McpEnterpriseKnowledgeServiceTest extends TestCase
         $this->assertSame((int) $knowledgeBase->id, (int) $project->published_knowledge_base_id);
     }
 
+    public function test_repeated_publish_returns_existing_knowledge_base_without_duplicate_revision(): void
+    {
+        $project = EnterpriseKnowledgeProject::query()->create([
+            'name' => 'Idempotent knowledge',
+            'status' => 'reviewing',
+            'draft_content' => '# 企业介绍\n可重复发布测试',
+            'sso_team_id' => 'team-a',
+        ]);
+        $service = new McpEnterpriseKnowledgeService(app(EnterpriseKnowledgeDraftService::class));
+
+        $first = $service->publish((int) $project->id, 'PUBLISH', $this->auth('team-a'));
+        $second = $service->publish((int) $project->id, 'PUBLISH', $this->auth('team-a'));
+
+        $this->assertSame($first['knowledge_base_id'], $second['knowledge_base_id']);
+        $this->assertSame(1, $project->fresh()->revisions()->count());
+    }
+
     private function auth(?string $tenantId): McpAuthContext
     {
         return new McpAuthContext(

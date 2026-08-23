@@ -98,36 +98,61 @@ class McpEnterpriseKnowledgeService
         if ($confirmation !== 'PUBLISH') {
             throw new McpToolException('发布企业知识必须提供 confirmation=PUBLISH');
         }
-        $project = $this->find($projectId, $this->requiredTenant($auth));
-        $content = trim((string) $project->draft_content);
-        if ($content === '') {
-            throw new ApiException('enterprise_knowledge_content_required', '企业知识草稿内容不能为空', 422);
-        }
+        $teamId = $this->requiredTenant($auth);
 
-        $result = $this->draftService->publishToKnowledgeBase($project, $content);
-        $knowledgeBase = $result['knowledge_base'];
-        $project->update([
-            'status' => 'published',
-            'published_knowledge_base_id' => (int) $knowledgeBase->id,
-            'validation_json' => json_encode($this->draftService->validateDraft($content), JSON_UNESCAPED_UNICODE),
-            'error_message' => $result['chunk_error'],
-        ]);
-        EnterpriseKnowledgeRevision::query()->create([
-            'enterprise_knowledge_project_id' => (int) $project->id,
-            'content' => $content,
-            'source' => 'publish',
-            'summary' => 'MCP 发布',
-            'created_by_admin_id' => $auth->auditAdminId,
-            'content_hash' => hash('sha256', $content),
-        ]);
+        return DB::transaction(function () use ($projectId, $teamId, $auth): array {
+            $project = EnterpriseKnowledgeProject::query()
+                ->whereKey($projectId)
+                ->where('sso_team_id', $teamId)
+                ->lockForUpdate()
+                ->first();
+            if (! $project) {
+                throw new ApiException('enterprise_knowledge_not_found', '企业知识项目不存在', 404);
+            }
 
-        return [
-            'project_id' => (int) $project->id,
-            'status' => 'published',
-            'knowledge_base_id' => (int) $knowledgeBase->id,
-            'chunk_count' => (int) $result['chunk_count'],
-            'chunk_error' => $result['chunk_error'] !== null ? '知识库已发布，但分块同步失败' : null,
-        ];
+            if ((string) $project->status === 'published' && $project->published_knowledge_base_id !== null) {
+                $knowledgeBase = $project->publishedKnowledgeBase()->first();
+                if ($knowledgeBase) {
+                    return [
+                        'project_id' => (int) $project->id,
+                        'status' => 'published',
+                        'knowledge_base_id' => (int) $knowledgeBase->id,
+                        'chunk_count' => (int) $knowledgeBase->chunks()->count(),
+                        'chunk_error' => null,
+                    ];
+                }
+            }
+
+            $content = trim((string) $project->draft_content);
+            if ($content === '') {
+                throw new ApiException('enterprise_knowledge_content_required', '企业知识草稿内容不能为空', 422);
+            }
+
+            $result = $this->draftService->publishToKnowledgeBase($project, $content);
+            $knowledgeBase = $result['knowledge_base'];
+            $project->update([
+                'status' => 'published',
+                'published_knowledge_base_id' => (int) $knowledgeBase->id,
+                'validation_json' => json_encode($this->draftService->validateDraft($content), JSON_UNESCAPED_UNICODE),
+                'error_message' => $result['chunk_error'],
+            ]);
+            EnterpriseKnowledgeRevision::query()->create([
+                'enterprise_knowledge_project_id' => (int) $project->id,
+                'content' => $content,
+                'source' => 'publish',
+                'summary' => 'MCP 发布',
+                'created_by_admin_id' => $auth->auditAdminId,
+                'content_hash' => hash('sha256', $content),
+            ]);
+
+            return [
+                'project_id' => (int) $project->id,
+                'status' => 'published',
+                'knowledge_base_id' => (int) $knowledgeBase->id,
+                'chunk_count' => (int) $result['chunk_count'],
+                'chunk_error' => $result['chunk_error'] !== null ? '知识库已发布，但分块同步失败' : null,
+            ];
+        });
     }
 
     private function find(int $projectId, string $teamId): EnterpriseKnowledgeProject
