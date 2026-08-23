@@ -89,7 +89,7 @@ final class AuthenticateMcpToken
                 hash('sha256', $readToken),
                 $defaultTenant !== '' ? $defaultTenant : null,
                 null,
-                ['catalog:read', 'tasks:read', 'articles:read', 'materials:read', 'jobs:read', 'analytics:read', 'distribution:read'],
+                ['catalog:read', 'tasks:read', 'articles:read', 'materials:read', 'jobs:read', 'analytics:read', 'distribution:read', 'leads:read'],
             );
         }
 

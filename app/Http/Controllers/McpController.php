@@ -13,6 +13,7 @@ use App\Services\Mcp\McpCapabilityService;
 use App\Services\Mcp\McpDistributionService;
 use App\Services\Mcp\McpEnterpriseKnowledgeService;
 use App\Services\Mcp\McpIdempotencyService;
+use App\Services\Mcp\McpLeadService;
 use App\Services\Mcp\McpSiteService;
 use App\Services\Mcp\McpToolException;
 use App\Services\Mcp\McpToolInputValidator;
@@ -30,7 +31,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpToolInputValidator $inputValidator): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpLeadService $leads, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -54,7 +55,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $site, $distribution, $inputValidator),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $site, $distribution, $leads, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -140,10 +141,14 @@ final class McpController extends Controller
             ['name' => 'geoflow.distribution.channels', 'description' => 'List tenant-owned distribution channels with cached health status. Secrets and channel configuration are excluded.', 'inputSchema' => $empty],
             ['name' => 'geoflow.distribution.jobs', 'description' => 'List tenant-owned article distribution jobs and bounded delivery metadata. Error details and secrets are excluded.', 'inputSchema' => ['type' => 'object', 'properties' => ['status' => ['type' => 'string'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
             ['name' => 'geoflow.distribution.health', 'description' => 'Read cached health status for one tenant-owned distribution channel without making a remote request.', 'inputSchema' => ['type' => 'object', 'properties' => ['channel_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['channel_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.leads.forms', 'description' => 'List tenant-owned lead forms and submission counts without exposing lead payloads.', 'inputSchema' => $empty],
+            ['name' => 'geoflow.leads.submissions', 'description' => 'List tenant-owned lead submissions with status and payload field names only.', 'inputSchema' => ['type' => 'object', 'properties' => ['status' => ['type' => 'string', 'enum' => ['new', 'contacted', 'qualified', 'invalid', 'converted']], 'form_id' => ['type' => 'integer', 'minimum' => 1], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
+            ['name' => 'geoflow.leads.get', 'description' => 'Read one tenant-owned lead submission. Payload requires the separate leads:pii scope.', 'inputSchema' => ['type' => 'object', 'properties' => ['submission_id' => ['type' => 'integer', 'minimum' => 1], 'include_payload' => ['type' => 'boolean']], 'required' => ['submission_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.leads.update_status', 'description' => 'Update the status and internal note of one tenant-owned lead submission.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['submission_id' => ['type' => 'integer', 'minimum' => 1], 'status' => ['type' => 'string', 'enum' => ['new', 'contacted', 'qualified', 'invalid', 'converted']], 'note' => ['type' => 'string']], $idempotency), 'required' => ['submission_id', 'status'], 'additionalProperties' => false]],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpToolInputValidator $inputValidator): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpLeadService $leads, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
@@ -250,6 +255,10 @@ final class McpController extends Controller
             'geoflow.distribution.channels' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $distribution->channels($auth)),
             'geoflow.distribution.jobs' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $distribution->jobs($args, $auth)),
             'geoflow.distribution.health' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $distribution->health((int) $args['channel_id'], $auth)),
+            'geoflow.leads.forms' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $leads->forms($auth)),
+            'geoflow.leads.submissions' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $leads->submissions($args, $auth)),
+            'geoflow.leads.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $leads->get((int) $args['submission_id'], $args, $auth)),
+            'geoflow.leads.update_status' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $leads->updateStatus((int) $args['submission_id'], $args, $auth)),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -474,6 +483,7 @@ final class McpController extends Controller
             str_starts_with($tool, 'geoflow.enterprise_knowledge.') => $tool === 'geoflow.enterprise_knowledge.status' ? 'materials:read' : 'materials:write',
             str_starts_with($tool, 'geoflow.site.') => 'articles:read',
             str_starts_with($tool, 'geoflow.distribution.') => 'distribution:read',
+            str_starts_with($tool, 'geoflow.leads.') => $tool === 'geoflow.leads.update_status' ? 'leads:write' : 'leads:read',
             default => null,
         };
 

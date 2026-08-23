@@ -11,6 +11,7 @@ use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpAnalyticsService;
 use App\Services\Mcp\McpDistributionService;
 use App\Services\Mcp\McpEnterpriseKnowledgeService;
+use App\Services\Mcp\McpLeadService;
 use App\Services\Mcp\McpSiteService;
 use App\Services\Mcp\McpUrlImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -242,6 +243,27 @@ class McpEndpointTest extends TestCase
             ->assertOk()
             ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
             ->assertJsonPath('result.structuredContent.channel.last_health_status', 'ok');
+    }
+
+    public function test_lead_submissions_are_exposed_without_payload_by_default(): void
+    {
+        $this->enableMcp('ci-secret', 'ci-read');
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+        $leads = Mockery::mock(McpLeadService::class);
+        app()->instance(McpLeadService::class, $leads);
+        $leads->shouldReceive('submissions')->once()->with([], Mockery::type(McpAuthContext::class))->andReturn([
+            'tenant_id' => 'team-a',
+            'items' => [['id' => 12, 'status' => 'new', 'payload_fields' => ['email']]],
+            'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 1, 'total_pages' => 1],
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-read')
+            ->postJson('/mcp', $this->toolCall('geoflow.leads.submissions', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
+            ->assertJsonPath('result.structuredContent.items.0.payload_fields.0', 'email')
+            ->assertJsonMissingPath('result.structuredContent.items.0.payload');
     }
 
     public function test_system_token_uses_configured_default_tenant_scope(): void

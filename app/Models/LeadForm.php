@@ -2,12 +2,15 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\StampsSsoTeam;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class LeadForm extends Model
 {
+    use StampsSsoTeam;
+
     private const RESERVED_FIELD_NAMES = [
         'source_url',
         'website',
@@ -34,6 +37,7 @@ class LeadForm extends Model
         'submit_button_label',
         'success_message',
         'fields',
+        'sso_team_id',
     ];
 
     protected $attributes = [

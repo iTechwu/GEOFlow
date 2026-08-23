@@ -42,6 +42,7 @@ claude -p '只使用 geoflow MCP 查询当前任务和素材摘要。'
 | Enterprise knowledge | `geoflow.enterprise_knowledge.create`, `.status`, `.validate`, `.autosave`, `.publish` |
 | Published site read | `geoflow.site.search`, `.article`, `.archive` (tenant-scoped, no view counter side effect) |
 | Distribution read | `geoflow.distribution.channels`, `.jobs`, `.health` (tenant-scoped, redacted, no remote call) |
+| Leads | `geoflow.leads.forms`, `.submissions`, `.get`, `.update_status` (tenant-scoped; payload requires `leads:pii`) |
 
 All tool arguments are validated against the advertised JSON Schema. Write tools support `idempotency_key`; retries with the same key are tenant-isolated and audited.
 
@@ -81,6 +82,12 @@ The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX
 1. Call `geoflow.distribution.channels` to list channels explicitly owned by the authenticated SSO team.
 2. Call `geoflow.distribution.jobs` to inspect article delivery status and retry timing. Jobs are visible only when both the article task and channel belong to the same team.
 3. Call `geoflow.distribution.health` to read the last cached health result. It does not make a remote request.
+
+### Leads Workflow
+
+1. Call `geoflow.leads.forms` to list forms owned by the current SSO team.
+2. Call `geoflow.leads.submissions` to inspect statuses and payload field names. Values, IP addresses, user agents, source URLs, and notes are excluded by default.
+3. Call `geoflow.leads.get` with `include_payload: true` only when the token has the separate `leads:pii` scope. Use `geoflow.leads.update_status` for status transitions; CSV export and anonymous public submission remain Admin/site operations.
 
 ## Deliberate Boundaries
 

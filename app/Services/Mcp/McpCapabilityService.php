@@ -96,6 +96,18 @@ final class McpCapabilityService
                     'permission' => 'distribution:read',
                     'notes' => '只读取已补充 sso_team_id 的渠道及其文章分发作业；不会触发远端健康检查，不返回密钥、配置或错误原文。',
                 ],
+                [
+                    'domain' => 'leads_read',
+                    'status' => 'available',
+                    'tools' => [
+                        'geoflow.leads.forms',
+                        'geoflow.leads.submissions',
+                        'geoflow.leads.get',
+                        'geoflow.leads.update_status',
+                    ],
+                    'permission' => 'leads:read/leads:write; leads:pii for payload',
+                    'notes' => '表单必须有 sso_team_id；默认只返回状态、时间和 payload 字段名，原始 payload 需要独立 leads:pii scope。',
+                ],
             ],
             'admin_only' => [
                 [
@@ -106,9 +118,9 @@ final class McpCapabilityService
                 ],
                 [
                     'domain' => 'leads',
-                    'status' => 'tenant_scope_required',
+                    'status' => 'explicit_admin_operation',
                     'route' => 'admin.lead-forms.* / admin.leads.*',
-                    'reason' => '表单和线索含 PII，当前为全局模型；公共提交入口不适合作为 Agent 工具。',
+                    'reason' => '表单删除、结构修改、原始 CSV 导出和公共提交仍需 Admin；MCP 不替代匿名公共提交，也不开放原始导出。',
                 ],
                 [
                     'domain' => 'themes_and_system_updates',
