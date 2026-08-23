@@ -54,6 +54,16 @@ function start(name) {
   let buffer = '';
   const pending = new Map();
   const stderr = [];
+  let terminalError = null;
+  let closing = false;
+  const rejectPending = (error) => {
+    terminalError ??= error;
+    for (const waiter of pending.values()) {
+      clearTimeout(waiter.timer);
+      waiter.reject(terminalError);
+    }
+    pending.clear();
+  };
   child.stderr.on('data', (chunk) => stderr.push(chunk.toString()));
   child.stdout.on('data', (chunk) => {
     buffer += chunk.toString();
@@ -76,36 +86,41 @@ function start(name) {
     }
   });
   const request = (method, params = {}) => new Promise((resolve, reject) => {
+    if (terminalError) {
+      reject(terminalError);
+      return;
+    }
     const id = Math.floor(Math.random() * 1e9);
     const timer = setTimeout(() => {
       pending.delete(id);
       reject(new Error(`${name} timeout: ${method}`));
     }, 30000);
     pending.set(id, { resolve, reject, timer });
-    child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id, method, params })}\n`);
+    child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id, method, params })}\n`, (error) => {
+      if (!error) return;
+      const waiter = pending.get(id);
+      if (!waiter) return;
+      clearTimeout(waiter.timer);
+      pending.delete(id);
+      waiter.reject(new Error(`${name} request failed: ${error.message}`));
+    });
   });
   const notify = (method, params = {}) => child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method, params })}\n`);
   const cleanup = () => {
+    closing = true;
     child.kill('SIGTERM');
     spawnSync('docker', ['rm', '-f', container], { stdio: 'ignore' });
     activeServers.delete(server);
   };
   const server = { child, request, notify, cleanup, stderr, container };
   child.once('error', (error) => {
-    for (const waiter of pending.values()) {
-      clearTimeout(waiter.timer);
-      waiter.reject(new Error(`${name} docker process failed: ${error.message}`));
-    }
-    pending.clear();
+    rejectPending(new Error(`${name} docker process failed: ${error.message}`));
   });
+  child.stdin.on('error', (error) => rejectPending(new Error(`${name} stdin failed: ${error.message}`)));
   child.once('exit', (code, signal) => {
-    if (shuttingDown || pending.size === 0) return;
+    if (shuttingDown || closing) return;
     const detail = server.stderr.join('').trim().split('\n').slice(-3).join(' ');
-    for (const waiter of pending.values()) {
-      clearTimeout(waiter.timer);
-      waiter.reject(new Error(`${name} exited (${code ?? signal})${detail ? `: ${detail}` : ''}`));
-    }
-    pending.clear();
+    rejectPending(new Error(`${name} exited (${code ?? signal})${detail ? `: ${detail}` : ''}`));
   });
   activeServers.add(server);
   return server;
