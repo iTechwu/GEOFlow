@@ -4,8 +4,10 @@ namespace App\Services\Mcp;
 
 use App\Exceptions\ApiException;
 use App\Http\McpAuthContext;
+use App\Jobs\ProcessMcpUrlImportJob;
 use App\Models\UrlImportJob;
 use App\Services\GeoFlow\UrlImportProcessingService;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class McpUrlImportService
@@ -60,10 +62,36 @@ class McpUrlImportService
 
     public function run(int $jobId, McpAuthContext $auth): array
     {
-        $job = $this->find($jobId, $this->requiredTenant($auth));
-        if (! in_array((string) $job->status, ['completed', 'imported'], true)) {
-            $job = $this->processor->process($job);
-        }
+        $teamId = $this->requiredTenant($auth);
+        $job = DB::transaction(function () use ($jobId, $teamId): UrlImportJob {
+            $job = UrlImportJob::query()
+                ->whereKey($jobId)
+                ->where('sso_team_id', $teamId)
+                ->lockForUpdate()
+                ->first();
+            if (! $job) {
+                throw new ApiException('url_import_not_found', 'URL 导入任务不存在', 404);
+            }
+            if (in_array((string) $job->status, ['completed', 'imported'], true)) {
+                return $job;
+            }
+            if ((string) $job->status === 'running') {
+                return $job;
+            }
+
+            $job->forceFill([
+                'status' => 'running',
+                'current_step' => 'queued',
+                'progress_percent' => max(1, (int) $job->progress_percent),
+                'error_message' => '',
+                'started_at' => now(),
+                'finished_at' => null,
+            ])->save();
+
+            ProcessMcpUrlImportJob::dispatch((int) $job->id)->afterCommit();
+
+            return $job->refresh();
+        });
 
         return $this->serialize($job);
     }
@@ -75,8 +103,19 @@ class McpUrlImportService
 
     public function commit(int $jobId, McpAuthContext $auth): array
     {
-        $job = $this->find($jobId, $this->requiredTenant($auth));
-        $summary = $this->processor->commit($job);
+        $teamId = $this->requiredTenant($auth);
+        $summary = DB::transaction(function () use ($jobId, $teamId): array {
+            $job = UrlImportJob::query()
+                ->whereKey($jobId)
+                ->where('sso_team_id', $teamId)
+                ->lockForUpdate()
+                ->first();
+            if (! $job) {
+                throw new ApiException('url_import_not_found', 'URL 导入任务不存在', 404);
+            }
+
+            return $this->processor->commit($job);
+        });
 
         return [
             'job_id' => $jobId,
@@ -125,7 +164,8 @@ class McpUrlImportService
             'url' => (string) $job->url,
             'source_domain' => (string) $job->source_domain,
             'page_title' => (string) $job->page_title,
-            'error_message' => (string) $job->error_message,
+            'error_code' => (string) $job->status === 'failed' ? 'processing_failed' : null,
+            'error_message' => (string) $job->status === 'failed' ? 'URL 导入处理失败' : '',
             'started_at' => $job->started_at?->toIso8601String(),
             'finished_at' => $job->finished_at?->toIso8601String(),
             'preview' => [

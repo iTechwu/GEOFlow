@@ -60,7 +60,7 @@ All tool arguments are validated against the advertised JSON Schema. Write tools
 ### URL Import Workflow
 
 1. Call `geoflow.url_import.create` with the public URL and an optional output selection. The job is always created in the authenticated tenant and remains a preview until committed.
-2. Call `geoflow.url_import.run` once, then poll `geoflow.url_import.status` until the status is `completed` or `failed`. The URL parser keeps the existing SSRF, private-network, redirect, timeout, and response-size protections.
+2. Call `geoflow.url_import.run` once. It atomically queues the network/AI work and returns immediately; poll `geoflow.url_import.status` until the status is `completed` or `failed`. The URL parser keeps the existing SSRF, private-network, redirect, timeout, and response-size protections.
 3. Review the returned redacted preview. Only after explicit user approval call `geoflow.url_import.commit` with `confirmation: "IMPORT"`. This creates the knowledge, keyword, and title libraries under the same tenant; retries should provide an `idempotency_key`.
 
 The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE` (default `3`). A job from another tenant is returned as not found, and an MCP token without a concrete tenant cannot create, run, inspect, or commit URL imports.
