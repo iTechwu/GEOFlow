@@ -36,7 +36,7 @@ final class ModelsGatewayClient
         $chatResponse = $client->post(self::request(), self::baseUrl().'/chat/completions', [
             'model' => self::chatModel(),
             'messages' => [['role' => 'user', 'content' => 'ping']],
-            'max_tokens' => 1,
+            'max_tokens' => 64,
             'stream' => false,
         ], $maxBytes);
 

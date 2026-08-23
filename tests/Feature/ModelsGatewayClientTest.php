@@ -31,7 +31,7 @@ class ModelsGatewayClientTest extends TestCase
 
         Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/chat/completions'
             && $request['model'] === 'chat-smoke'
-            && $request['max_tokens'] === 1);
+            && $request['max_tokens'] === 64);
         Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/embeddings'
             && $request['model'] === 'embedding-smoke');
     }
