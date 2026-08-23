@@ -10,6 +10,7 @@ use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpAnalyticsService;
 use App\Services\Mcp\McpEnterpriseKnowledgeService;
+use App\Services\Mcp\McpSiteService;
 use App\Services\Mcp\McpUrlImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -182,6 +183,26 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.publish', ['project_id' => 12, 'confirmation' => 'PUBLISH']))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.status', 'published');
+    }
+
+    public function test_published_site_search_is_exposed_as_a_tenant_scoped_read_tool(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+        $site = Mockery::mock(McpSiteService::class);
+        app()->instance(McpSiteService::class, $site);
+        $site->shouldReceive('search')->once()->with([], Mockery::type(McpAuthContext::class))->andReturn([
+            'tenant_id' => 'team-a',
+            'items' => [['slug' => 'hello-world']],
+            'pagination' => ['page' => 1, 'per_page' => 20, 'total' => 1, 'total_pages' => 1],
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.site.search', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
+            ->assertJsonPath('result.structuredContent.items.0.slug', 'hello-world');
     }
 
     public function test_system_token_uses_configured_default_tenant_scope(): void

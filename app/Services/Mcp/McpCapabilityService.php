@@ -74,6 +74,17 @@ final class McpCapabilityService
                     'permission' => 'materials:read/materials:write',
                     'notes' => '文本创建 → 异步生成 → status/validate/autosave → confirmation=PUBLISH 发布；文件上传、图片编辑和删除仍走 Admin。',
                 ],
+                [
+                    'domain' => 'site_read',
+                    'status' => 'available',
+                    'tools' => [
+                        'geoflow.site.search',
+                        'geoflow.site.article',
+                        'geoflow.site.archive',
+                    ],
+                    'permission' => 'articles:read',
+                    'notes' => '仅返回已发布且属于当前 SSO team 的站点内容；详情读取不增加 view_count，正文有长度上限。',
+                ],
             ],
             'admin_only' => [
                 [
