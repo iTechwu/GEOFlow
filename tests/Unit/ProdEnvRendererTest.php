@@ -34,12 +34,12 @@ class ProdEnvRendererTest extends TestCase
         $this->assertStringNotContainsString($values['DB_PASSWORD'], $process->getErrorOutput());
     }
 
-    public function test_renderer_allows_read_only_mcp_deployment_without_system_token(): void
+    public function test_renderer_allows_sso_only_mcp_deployment_without_system_token(): void
     {
         $values = $this->requiredEnvironment();
         $values['GEOFLOW_MCP_ENABLED'] = 'true';
         $values['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN'] = 'false';
-        $values['GEOFLOW_MCP_READ_TOKEN'] = 'read-only-token';
+        $values['GEOFLOW_MCP_READ_TOKEN'] = '';
         $values['GEOFLOW_MCP_AUDIT_ADMIN_ID'] = '42';
         $values['GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE'] = '900';
         $values['GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE'] = '4000';
@@ -49,22 +49,22 @@ class ProdEnvRendererTest extends TestCase
         $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
         $parsed = Dotenv::createArrayBacked($directory, '.env.prod')->load();
         $this->assertSame('false', $parsed['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN']);
-        $this->assertSame('read-only-token', $parsed['GEOFLOW_MCP_READ_TOKEN']);
+        $this->assertSame('', $parsed['GEOFLOW_MCP_READ_TOKEN']);
         $this->assertSame('42', $parsed['GEOFLOW_MCP_AUDIT_ADMIN_ID']);
         $this->assertSame('900', $parsed['GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE']);
         $this->assertSame('4000', $parsed['GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE']);
     }
 
-    public function test_renderer_rejects_enabled_mcp_without_any_usable_token(): void
+    public function test_renderer_rejects_enabled_mcp_when_system_token_access_is_enabled_without_write_token(): void
     {
         $values = $this->requiredEnvironment();
         $values['GEOFLOW_MCP_ENABLED'] = 'true';
-        $values['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN'] = 'false';
+        $values['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN'] = 'true';
 
         [$process] = $this->render($values);
 
         $this->assertFalse($process->isSuccessful());
-        $this->assertStringContainsString('GEOFLOW_MCP_READ_TOKEN', $process->getErrorOutput());
+        $this->assertStringContainsString('GEOFLOW_MCP_TOKEN', $process->getErrorOutput());
     }
 
     /** @param array<string, string> $environment */

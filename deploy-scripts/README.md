@@ -98,9 +98,9 @@ bash geoflow-docker-deploy.sh
 | `MODELS_INTERNAL_API_SECRET` | 必填 | models 管理面服务间 HMAC 密钥 |
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` 默认值 | 是否开放 `/mcp`；开启时至少提供一个 Token |
 | `GEOFLOW_MCP_TOKEN` | 系统令牌开启时必填 | MCP 全量（读+写）Bearer Token |
-| `GEOFLOW_MCP_READ_TOKEN` | MCP 开启时至少提供一个令牌 | MCP 只读 Bearer Token；系统令牌关闭时可作为唯一令牌 |
+| `GEOFLOW_MCP_READ_TOKEN` | 可选 | MCP 只读 Bearer Token；仅在允许系统令牌时生效 |
 | `GEOFLOW_MCP_DEFAULT_TENANT` | 可选 | 系统 MCP Token 默认绑定的 SSO team ID；留空时允许跨租户 |
-| `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | 是否允许部署级系统令牌；设为 `false` 时必须配置只读令牌 |
+| `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | 是否允许部署级静态令牌；设为 `false` 时仅接受 SSO 令牌 |
 | `GEOFLOW_MCP_AUDIT_ADMIN_ID` | 可选 | 系统令牌执行文章审核/发布或写入审计归属时使用的管理员 ID |
 | `GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE` | `600` | 单个 MCP 凭据每分钟请求上限 |
 | `GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE` | `3000` | 单个来源 IP 每分钟 MCP 请求上限 |
@@ -286,9 +286,9 @@ Optional variables:
 | `MODELS_INTERNAL_API_SECRET` | required | models management-plane service-to-service HMAC secret |
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` default | Whether to open `/mcp`; at least one token is required when enabled |
 | `GEOFLOW_MCP_TOKEN` | required when system-token access is enabled | MCP full (read+write) Bearer Token |
-| `GEOFLOW_MCP_READ_TOKEN` | at least one token is required when MCP is enabled | MCP read-only Bearer Token; it can be the only token when system access is disabled |
+| `GEOFLOW_MCP_READ_TOKEN` | optional | MCP read-only Bearer Token; effective only when system-token access is enabled |
 | `GEOFLOW_MCP_DEFAULT_TENANT` | optional | SSO team ID used as the default scope for system MCP tokens; empty allows cross-tenant access |
-| `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | Allow deployment-level system tokens; set `false` to require read-only or SSO credentials |
+| `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | Allow deployment-level static tokens; set `false` to accept SSO tokens only |
 | `GEOFLOW_MCP_AUDIT_ADMIN_ID` | optional | Admin ID used for system-token article audit/review/publish attribution |
 | `GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE` | `600` | Requests per minute allowed for one MCP credential |
 | `GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE` | `3000` | Requests per minute allowed for one source IP |

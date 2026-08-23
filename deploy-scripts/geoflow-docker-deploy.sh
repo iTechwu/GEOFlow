@@ -319,9 +319,6 @@ prepare_env() {
   if [ "$mcp_enabled" = "true" ] && [ "$mcp_allow_system_token" != "false" ] && [ -z "$mcp_token" ]; then
     fail "Set GEOFLOW_MCP_TOKEN or set GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN=false."
   fi
-  if [ "$mcp_enabled" = "true" ] && [ "$mcp_allow_system_token" = "false" ] && [ -z "$mcp_read_token" ]; then
-    fail "Set GEOFLOW_MCP_READ_TOKEN when GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN=false."
-  fi
   mcp_token="${mcp_token:-}"
   mcp_read_token="${mcp_read_token:-}"
   mcp_url_import_max_active="${mcp_url_import_max_active:-3}"

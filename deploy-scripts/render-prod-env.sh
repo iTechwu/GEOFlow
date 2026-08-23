@@ -104,9 +104,6 @@ if [ "$mcp_enabled" = "true" ]; then
   if [ "$allow_system_token" != "false" ] && [ -z "${GEOFLOW_MCP_TOKEN:-}" ]; then
     fail "GEOFLOW_MCP_TOKEN is required when MCP and system-token access are enabled"
   fi
-  if [ "$allow_system_token" = "false" ] && [ -z "${GEOFLOW_MCP_READ_TOKEN:-}" ]; then
-    fail "GEOFLOW_MCP_READ_TOKEN is required when MCP system-token access is disabled"
-  fi
 fi
 
 umask 077
