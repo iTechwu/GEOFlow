@@ -8,6 +8,7 @@ use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
+use App\Services\Mcp\McpAnalyticsService;
 use App\Services\Mcp\McpUrlImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -102,14 +103,14 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list'])
             ->assertOk()
             ->assertJsonPath('result.tools.0.name', 'geoflow.catalog')
-            ->assertJsonPath('result.tools.2.inputSchema.properties.image_library_id.anyOf.0.type', 'integer')
-            ->assertJsonPath('result.tools.2.inputSchema.properties.image_library_id.anyOf.1.type', 'null')
-            ->assertJsonPath('result.tools.6.name', 'geoflow.tasks.enqueue')
-            ->assertJsonPath('result.tools.7.name', 'geoflow.articles.list')
-            ->assertJsonPath('result.tools.9.inputSchema.properties.task_id.anyOf.1.type', 'null')
-            ->assertJsonPath('result.tools.14.name', 'geoflow.materials.summary')
-            ->assertJsonPath('result.tools.17.inputSchema.properties.type.enum', ['keyword-libraries', 'title-libraries', 'image-libraries', 'knowledge-bases'])
-            ->assertJsonPath('result.tools.22.name', 'geoflow.materials.items.delete');
+            ->assertJsonPath('result.tools.3.inputSchema.properties.image_library_id.anyOf.0.type', 'integer')
+            ->assertJsonPath('result.tools.3.inputSchema.properties.image_library_id.anyOf.1.type', 'null')
+            ->assertJsonPath('result.tools.7.name', 'geoflow.tasks.enqueue')
+            ->assertJsonPath('result.tools.8.name', 'geoflow.articles.list')
+            ->assertJsonPath('result.tools.10.inputSchema.properties.task_id.anyOf.1.type', 'null')
+            ->assertJsonPath('result.tools.15.name', 'geoflow.materials.summary')
+            ->assertJsonPath('result.tools.18.inputSchema.properties.type.enum', ['keyword-libraries', 'title-libraries', 'image-libraries', 'knowledge-bases'])
+            ->assertJsonPath('result.tools.23.name', 'geoflow.materials.items.delete');
 
         $this->assertStringContainsString('"properties":{}', $toolsResponse->getContent());
     }
@@ -124,6 +125,41 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', $this->toolCall('geoflow.catalog', []))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.models', []);
+    }
+
+    public function test_capabilities_describe_tenant_scope_and_protected_domains(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.capabilities', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.tenant.id', 'team-a')
+            ->assertJsonPath('result.structuredContent.tenant.mode', 'tenant_scoped')
+            ->assertJsonPath('result.structuredContent.exposed.2.domain', 'url_import')
+            ->assertJsonPath('result.structuredContent.exposed.3.domain', 'analytics')
+            ->assertJsonPath('result.structuredContent.admin_only.0.domain', 'distribution');
+    }
+
+    public function test_analytics_overview_is_exposed_as_a_tenant_scoped_read_tool(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+        $analytics = Mockery::mock(McpAnalyticsService::class);
+        app()->instance(McpAnalyticsService::class, $analytics);
+        $analytics->shouldReceive('overview')->once()->with([], Mockery::type(McpAuthContext::class))->andReturn([
+            'tenant_id' => 'team-a',
+            'kpis' => ['articles' => 2],
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.analytics.overview', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
+            ->assertJsonPath('result.structuredContent.kpis.articles', 2);
     }
 
     public function test_system_token_uses_configured_default_tenant_scope(): void

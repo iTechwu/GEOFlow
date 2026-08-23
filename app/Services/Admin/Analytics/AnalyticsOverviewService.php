@@ -317,6 +317,9 @@ class AnalyticsOverviewService
     public function taskHealth(AnalyticsFilter $filter): array
     {
         $taskQuery = Task::query();
+        if ($filter->tenantId !== null) {
+            $taskQuery->where('sso_team_id', $filter->tenantId);
+        }
         if ($filter->taskId !== null) {
             $taskQuery->where('id', $filter->taskId);
         }
@@ -335,6 +338,7 @@ class AnalyticsOverviewService
             ->leftJoin('tasks as t', 'tr.task_id', '=', 't.id')
             ->where('tr.status', 'failed')
             ->whereBetween('tr.created_at', [$filter->start(), $filter->end()])
+            ->when($filter->tenantId !== null, fn ($query) => $query->where('t.sso_team_id', $filter->tenantId))
             ->when($filter->taskId !== null, fn ($query) => $query->where('tr.task_id', $filter->taskId))
             ->orderByDesc('tr.created_at')
             ->select('tr.id', 'tr.error_message', 'tr.created_at', 't.name as task_name')
@@ -415,6 +419,9 @@ class AnalyticsOverviewService
     public function urlImportHealth(AnalyticsFilter $filter): array
     {
         $query = UrlImportJob::query()->whereBetween('created_at', [$filter->start(), $filter->end()]);
+        if ($filter->tenantId !== null) {
+            $query->where('sso_team_id', $filter->tenantId);
+        }
         $statusCounts = (clone $query)
             ->selectRaw('status, COUNT(*) as c')
             ->groupBy('status')
@@ -454,6 +461,10 @@ class AnalyticsOverviewService
     private function baseArticleQuery(AnalyticsFilter $filter): Builder
     {
         $query = Article::query()->whereNull('articles.deleted_at');
+
+        if ($filter->tenantId !== null) {
+            $query->whereHas('task', fn (Builder $taskQuery) => $taskQuery->where('sso_team_id', $filter->tenantId));
+        }
 
         if ($filter->taskId !== null) {
             $query->where('articles.task_id', $filter->taskId);
@@ -499,6 +510,10 @@ class AnalyticsOverviewService
     {
         $query = TaskRun::query()->whereBetween('created_at', [$filter->start(), $filter->end()]);
 
+        if ($filter->tenantId !== null) {
+            $query->whereHas('task', fn (Builder $taskQuery) => $taskQuery->where('sso_team_id', $filter->tenantId));
+        }
+
         if ($filter->taskId !== null) {
             $query->where('task_id', $filter->taskId);
         }
@@ -512,6 +527,10 @@ class AnalyticsOverviewService
     private function filteredDistributions(AnalyticsFilter $filter): Builder
     {
         $query = ArticleDistribution::query()->whereBetween('article_distributions.created_at', [$filter->start(), $filter->end()]);
+
+        if ($filter->tenantId !== null) {
+            $query->whereHas('article.task', fn (Builder $taskQuery) => $taskQuery->where('sso_team_id', $filter->tenantId));
+        }
 
         if ($filter->channelId !== null) {
             $query->where('distribution_channel_id', $filter->channelId);
@@ -584,7 +603,12 @@ class AnalyticsOverviewService
         $query = DB::table('view_logs')
             ->leftJoin('articles as a', 'view_logs.article_id', '=', 'a.id')
             ->leftJoin('categories as c', 'a.category_id', '=', 'c.id')
+            ->leftJoin('tasks as t', 'a.task_id', '=', 't.id')
             ->whereBetween('view_logs.created_at', [$filter->start(), $filter->end()]);
+
+        if ($filter->tenantId !== null) {
+            $query->whereNotNull('view_logs.article_id')->where('t.sso_team_id', $filter->tenantId);
+        }
 
         if (Schema::hasColumn('view_logs', 'method')) {
             $query->where('view_logs.method', 'GET');

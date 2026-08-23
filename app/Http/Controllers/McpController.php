@@ -8,6 +8,8 @@ use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
+use App\Services\Mcp\McpAnalyticsService;
+use App\Services\Mcp\McpCapabilityService;
 use App\Services\Mcp\McpIdempotencyService;
 use App\Services\Mcp\McpToolException;
 use App\Services\Mcp\McpToolInputValidator;
@@ -25,7 +27,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpToolInputValidator $inputValidator): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -49,7 +51,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $inputValidator),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -79,6 +81,7 @@ final class McpController extends Controller
 
         return [
             ['name' => 'geoflow.catalog', 'description' => 'Read available GEOFlow models, prompts, libraries, knowledge bases and categories.', 'inputSchema' => $empty],
+            ['name' => 'geoflow.capabilities', 'description' => 'Describe exposed MCP tools, tenant scope, permissions, and protected Admin-only GEOFlow domains.', 'inputSchema' => $empty],
             ['name' => 'geoflow.tasks.list', 'description' => 'List GEOFlow tasks with status and queue progress.', 'inputSchema' => ['type' => 'object', 'properties' => ['status' => ['type' => 'string'], 'search' => ['type' => 'string'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
             ['name' => 'geoflow.tasks.create', 'description' => 'Create a GEOFlow task from catalog references and scheduling options.', 'inputSchema' => ['type' => 'object', 'properties' => ['name' => ['type' => 'string'], 'title_library_id' => ['type' => 'integer'], 'image_library_id' => $nullableInteger, 'prompt_id' => ['type' => 'integer'], 'ai_model_id' => ['type' => 'integer'], 'author_id' => $nullableInteger, 'knowledge_base_id' => $nullableInteger, 'knowledge_base_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'status' => ['type' => 'string', 'enum' => ['active', 'paused']], 'need_review' => ['type' => 'boolean'], 'article_limit' => ['type' => 'integer'], 'draft_limit' => ['type' => 'integer'], 'sso_team_id' => ['type' => 'string'], ...$idempotency], 'required' => ['name', 'title_library_id', 'prompt_id', 'ai_model_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.tasks.get', 'description' => 'Read one GEOFlow task and its monitoring summary.', 'inputSchema' => $taskId],
@@ -122,10 +125,11 @@ final class McpController extends Controller
             ['name' => 'geoflow.url_import.run', 'description' => 'Run a tenant-scoped URL import preview and return structured analysis.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['job_id' => ['type' => 'integer', 'minimum' => 1]], $idempotency), 'required' => ['job_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.url_import.status', 'description' => 'Read a tenant-scoped URL import status and redacted preview.', 'inputSchema' => ['type' => 'object', 'properties' => ['job_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['job_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.url_import.commit', 'description' => 'Commit a completed URL import preview into tenant-scoped knowledge, keyword, and title libraries. Requires confirmation=IMPORT.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['job_id' => ['type' => 'integer', 'minimum' => 1], 'confirmation' => ['type' => 'string', 'enum' => ['IMPORT']]], $idempotency), 'required' => ['job_id', 'confirmation'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.analytics.overview', 'description' => 'Read tenant-scoped aggregate production, task, article, distribution, URL import, and traffic metrics. Raw IP, UA, prompts, content, and shared model usage are excluded.', 'inputSchema' => ['type' => 'object', 'properties' => ['preset' => ['type' => 'string', 'enum' => ['today', 'yesterday', '7d', '30d', '90d', 'custom']], 'date_from' => ['type' => 'string'], 'date_to' => ['type' => 'string'], 'task_id' => ['type' => 'integer', 'minimum' => 1], 'category_id' => ['type' => 'integer', 'minimum' => 1], 'article_id' => ['type' => 'integer', 'minimum' => 1], 'traffic_type' => ['type' => 'string', 'enum' => ['all', 'human', 'search_bot', 'ai_bot', 'other_bot', 'unknown']], 'log_source' => ['type' => 'string', 'enum' => ['all', 'local', 'server', 'channel']]], 'additionalProperties' => false]],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpToolInputValidator $inputValidator): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
@@ -139,6 +143,7 @@ final class McpController extends Controller
 
         $data = match ($name) {
             'geoflow.catalog' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $catalog->getCatalog($auth->tenantId)),
+            'geoflow.capabilities' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $capabilities->describe($auth)),
             'geoflow.tasks.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTasks((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), $this->scopeFilters($auth, $args))),
             'geoflow.tasks.create' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->createTask($this->scopedTaskCreateArguments($auth, $args))),
             'geoflow.tasks.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getTask($scoped($this->taskId($args)))),
@@ -219,6 +224,7 @@ final class McpController extends Controller
 
                 return $urlImports->commit((int) $args['job_id'], $auth);
             }),
+            'geoflow.analytics.overview' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $analytics->overview($args, $auth)),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -438,6 +444,8 @@ final class McpController extends Controller
             str_starts_with($tool, 'geoflow.url_import.') => $tool === 'geoflow.url_import.status' ? 'materials:read' : 'materials:write',
             str_starts_with($tool, 'geoflow.materials.') => in_array($tool, ['geoflow.materials.summary', 'geoflow.materials.list', 'geoflow.materials.get', 'geoflow.materials.items.list'], true) ? 'materials:read' : 'materials:write',
             $tool === 'geoflow.catalog' => 'catalog:read',
+            $tool === 'geoflow.capabilities' => 'catalog:read',
+            $tool === 'geoflow.analytics.overview' => 'analytics:read',
             default => null,
         };
 

@@ -63,7 +63,12 @@ class AnalyticsLogQueryService
     {
         $query = DB::table('view_logs')
             ->leftJoin('articles as a', 'view_logs.article_id', '=', 'a.id')
+            ->leftJoin('tasks as t', 'a.task_id', '=', 't.id')
             ->whereBetween('view_logs.created_at', [$filter->start(), $filter->end()]);
+
+        if ($filter->tenantId !== null) {
+            $query->whereNotNull('view_logs.article_id')->where('t.sso_team_id', $filter->tenantId);
+        }
 
         if (Schema::hasColumn('view_logs', 'method')) {
             $query->where('view_logs.method', 'GET');

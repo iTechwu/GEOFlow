@@ -9,7 +9,7 @@ class AnalyticsFilter
     /**
      * @param  array<string, mixed>  $input
      */
-    public static function fromRequest(array $input): self
+    public static function fromRequest(array $input, ?string $tenantId = null): self
     {
         $hasDateInput = trim((string) ($input['date_from'] ?? '')) !== '' || trim((string) ($input['date_to'] ?? '')) !== '';
         $preset = self::normalizePreset((string) ($input['preset'] ?? ($hasDateInput ? 'custom' : '7d')));
@@ -25,6 +25,7 @@ class AnalyticsFilter
             articleId: self::nullablePositiveInt($input['article_id'] ?? null),
             trafficType: self::normalizeChoice((string) ($input['traffic_type'] ?? 'all'), ['all', 'human', 'search_bot', 'ai_bot', 'other_bot', 'unknown']),
             logSource: self::normalizeChoice((string) ($input['log_source'] ?? 'all'), ['all', 'local', 'server', 'channel']),
+            tenantId: $tenantId !== null && trim($tenantId) !== '' ? trim($tenantId) : null,
         );
     }
 
@@ -38,6 +39,7 @@ class AnalyticsFilter
         public readonly ?int $articleId,
         public readonly string $trafficType,
         public readonly string $logSource,
+        public readonly ?string $tenantId = null,
     ) {}
 
     public function start(): Carbon
@@ -65,6 +67,7 @@ class AnalyticsFilter
             'article_id' => $this->articleId,
             'traffic_type' => $this->trafficType,
             'log_source' => $this->logSource,
+            'tenant_id' => $this->tenantId,
         ];
     }
 

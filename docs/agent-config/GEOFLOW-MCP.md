@@ -31,13 +31,14 @@ claude -p '只使用 geoflow MCP 查询当前任务和素材摘要。'
 
 | Domain | Tools |
 | --- | --- |
-| Catalog | `geoflow.catalog` |
+| Discovery | `geoflow.capabilities`, `geoflow.catalog` |
 | Materials | `geoflow.materials.summary`, `.list`, `.get`, `.create`, `.update`, `.delete` |
 | Material items | `geoflow.materials.items.list`, `.create`, `.delete` |
 | Tasks | `geoflow.tasks.list`, `.create`, `.get`, `.update`, `.delete`, `.start`, `.stop`, `.enqueue` |
 | Task monitoring | `geoflow.tasks.jobs`, `geoflow.jobs.get` |
 | Articles | `geoflow.articles.list`, `.get`, `.create`, `.update`, `.review`, `.publish`, `.trash` |
 | URL import | `geoflow.url_import.create`, `.run`, `.status`, `.commit` |
+| Analytics | `geoflow.analytics.overview` (tenant-scoped aggregate metrics) |
 
 All tool arguments are validated against the advertised JSON Schema. Write tools support `idempotency_key`; retries with the same key are tenant-isolated and audited.
 
@@ -58,6 +59,8 @@ All tool arguments are validated against the advertised JSON Schema. Write tools
 
 The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE` (default `3`). A job from another tenant is returned as not found, and an MCP token without a concrete tenant cannot create, run, inspect, or commit URL imports.
 
+`geoflow.analytics.overview` requires a concrete tenant and supports `today`, `yesterday`, `7d`, `30d`, `90d`, or a custom date range up to 90 days. It returns production/task/article/distribution/import/traffic aggregates only; raw IP, user-agent, prompts, article bodies, lead payloads, and shared model usage are excluded.
+
 ## Deliberate Boundaries
 
-The existing REST/Admin surfaces remain authoritative for binary image uploads, public site/channel management, distribution packages, theme replication, analytics, lead capture, system updates, and direct model/prompt administration. URL import is the exception: only the four tenant-scoped MCP workflow tools above are exposed; Admin HTML routes and arbitrary worker shell execution are not. Add another dedicated tool only after defining its tenant, permission, idempotency, and error contract.
+The existing REST/Admin surfaces remain authoritative for binary image uploads, public site/channel management, distribution packages, theme replication, lead capture, system updates, and direct model/prompt administration. URL import and tenant-scoped analytics are exposed through the dedicated MCP contracts above; Admin HTML routes and arbitrary worker shell execution are not. Add another dedicated tool only after defining its tenant, permission, idempotency, and error contract.
