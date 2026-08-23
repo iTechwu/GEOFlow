@@ -481,6 +481,40 @@ class TaskLifecycleService
     }
 
     /**
+     * 取消一个仍在 pending/running 状态的执行记录。
+     *
+     * @return array<string,mixed>
+     */
+    public function cancelJob(int $jobId, ?string $teamId, string $reason = 'MCP 请求取消执行'): array
+    {
+        $this->ensureJobInScope($jobId, $teamId);
+        $reason = trim($reason);
+        if ($reason === '') {
+            $reason = 'MCP 请求取消执行';
+        }
+        if (mb_strlen($reason) > 500) {
+            throw new ApiException('validation_failed', '取消原因不能超过 500 个字符', 422);
+        }
+
+        // 锁住执行记录后再检查状态，避免 worker 在检查与更新之间完成任务。
+        DB::transaction(function () use ($jobId, $reason): void {
+            $run = TaskRun::query()->lockForUpdate()->find($jobId);
+            if (! $run) {
+                throw new ApiException('job_not_found', 'Job 不存在', 404);
+            }
+            if (! in_array((string) $run->status, ['pending', 'running'], true)) {
+                throw new ApiException('job_not_cancellable', '当前 Job 已完成，不能取消', 409, [
+                    'status' => (string) $run->status,
+                ]);
+            }
+
+            $this->queueService->cancelJob($jobId, (int) $run->task_id, $reason);
+        });
+
+        return $this->getJob($jobId);
+    }
+
+    /**
      * 归一化并校验任务输入。
      *
      * - create 场景：补默认值并强校验必填；

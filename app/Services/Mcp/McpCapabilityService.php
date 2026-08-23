@@ -37,10 +37,11 @@ final class McpCapabilityService
                         'geoflow.materials.*',
                         'geoflow.tasks.*',
                         'geoflow.jobs.get',
+                        'geoflow.jobs.cancel',
                         'geoflow.articles.*',
                     ],
                     'permission' => 'materials/tasks/articles/jobs scopes',
-                    'notes' => '任务、素材、文章和执行记录按 SSO team 约束；文章审核/发布还需要 articles:publish 与审计管理员。',
+                    'notes' => '任务、素材、文章和执行记录按 SSO team 约束；取消 pending/running Job 需要 jobs:write，文章审核/发布还需要 articles:publish 与审计管理员。',
                 ],
                 [
                     'domain' => 'url_import',

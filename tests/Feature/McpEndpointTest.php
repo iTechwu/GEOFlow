@@ -307,6 +307,26 @@ class McpEndpointTest extends TestCase
             ->assertJsonMissingPath('result.structuredContent.database.host');
     }
 
+    public function test_job_cancel_is_exposed_as_a_write_tool(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+        $mockTasks = Mockery::mock(TaskLifecycleService::class);
+        app()->instance(TaskLifecycleService::class, $mockTasks);
+        $mockTasks->shouldReceive('ensureJobInScope')->once()->with(8, 'team-a');
+        $mockTasks->shouldReceive('cancelJob')->once()->with(8, 'team-a', 'stop')->andReturn([
+            'id' => 8,
+            'task_id' => 3,
+            'status' => 'cancelled',
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.jobs.cancel', ['job_id' => 8, 'reason' => 'stop']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.status', 'cancelled');
+    }
+
     public function test_system_token_uses_configured_default_tenant_scope(): void
     {
         $this->enableMcp();
