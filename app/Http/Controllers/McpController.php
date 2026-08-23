@@ -112,6 +112,10 @@ final class McpController extends Controller
                     'additionalProperties' => false,
                 ],
             ],
+            ['name' => 'geoflow.tasks.update', 'description' => 'Update a tenant-scoped task configuration.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['task_id' => ['type' => 'integer', 'minimum' => 1], 'name' => ['type' => 'string'], 'title_library_id' => ['type' => 'integer'], 'image_library_id' => $nullableInteger, 'prompt_id' => ['type' => 'integer'], 'ai_model_id' => ['type' => 'integer'], 'author_id' => $nullableInteger, 'knowledge_base_id' => $nullableInteger, 'knowledge_base_ids' => ['type' => 'array', 'items' => ['type' => 'integer']], 'status' => ['type' => 'string', 'enum' => ['active', 'paused']], 'need_review' => ['type' => 'boolean'], 'article_limit' => ['type' => 'integer'], 'draft_limit' => ['type' => 'integer']], $idempotency), 'required' => ['task_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.tasks.delete', 'description' => 'Delete a tenant-scoped task and its pending work.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['task_id' => ['type' => 'integer', 'minimum' => 1]], $idempotency), 'required' => ['task_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.tasks.jobs', 'description' => 'List recent execution records for a tenant-scoped task.', 'inputSchema' => ['type' => 'object', 'properties' => ['task_id' => ['type' => 'integer', 'minimum' => 1], 'status' => ['type' => 'string'], 'limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'required' => ['task_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.jobs.get', 'description' => 'Read one tenant-scoped task execution record and failure details.', 'inputSchema' => ['type' => 'object', 'properties' => ['job_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['job_id'], 'additionalProperties' => false]],
         ];
     }
 
@@ -190,6 +194,15 @@ final class McpController extends Controller
                 return $materials->createItem($type, $parentId, $args, $auth->tenantId);
             }),
             'geoflow.materials.items.delete' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $materials->deleteItems((string) $args['type'], (int) $args['parent_id'], ['ids' => $args['ids']], $auth->tenantId)),
+            'geoflow.tasks.update' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($tasks, $auth): array {
+                $taskId = $this->scopedTaskId($tasks, $auth, $this->taskId($args));
+                unset($args['task_id']);
+
+                return $tasks->updateTask($taskId, $args);
+            }),
+            'geoflow.tasks.delete' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->deleteTask($this->scopedTaskId($tasks, $auth, $this->taskId($args)))),
+            'geoflow.tasks.jobs' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTaskJobs($this->scopedTaskId($tasks, $auth, $this->taskId($args)), isset($args['status']) ? (string) $args['status'] : null, (int) ($args['limit'] ?? 20))),
+            'geoflow.jobs.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getJob($this->scopedJobId($tasks, $auth, (int) $args['job_id']))),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -365,6 +378,15 @@ final class McpController extends Controller
         return $taskId;
     }
 
+    private function scopedJobId(TaskLifecycleService $tasks, McpAuthContext $auth, int $jobId): int
+    {
+        if ($auth->tenantId !== null && $auth->tenantId !== '') {
+            $tasks->ensureJobInScope($jobId, $auth->tenantId);
+        }
+
+        return $jobId;
+    }
+
     /**
      * 任务列表过滤：在用户过滤之上，按 SSO 租户追加 sso_team_id 过滤（系统令牌不追加）。
      *
@@ -396,6 +418,7 @@ final class McpController extends Controller
             str_ends_with($tool, '.review'), str_ends_with($tool, '.publish') => 'articles:publish',
             str_starts_with($tool, 'geoflow.articles.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') ? 'articles:read' : 'articles:write',
             str_starts_with($tool, 'geoflow.tasks.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') || str_ends_with($tool, '.jobs') ? 'tasks:read' : 'tasks:write',
+            str_starts_with($tool, 'geoflow.jobs.') => 'jobs:read',
             str_starts_with($tool, 'geoflow.materials.') => in_array($tool, ['geoflow.materials.summary', 'geoflow.materials.list', 'geoflow.materials.get', 'geoflow.materials.items.list'], true) ? 'materials:read' : 'materials:write',
             $tool === 'geoflow.catalog' => 'catalog:read',
             default => null,

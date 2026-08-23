@@ -175,6 +175,23 @@ class TaskLifecycleService
     }
 
     /**
+     * MCP 多租户隔离：执行记录只能通过同租户任务访问。
+     */
+    public function ensureJobInScope(int $jobId, ?string $teamId): void
+    {
+        if ($teamId === null || $teamId === '') {
+            return;
+        }
+
+        if (! TaskRun::query()
+            ->whereKey($jobId)
+            ->whereHas('task', static fn ($query) => $query->where('sso_team_id', $teamId))
+            ->exists()) {
+            throw new ApiException('job_not_found', 'Job 不存在', 404);
+        }
+    }
+
+    /**
      * 解析任务创建时的租户归属：优先使用显式传入的 sso_team_id，
      * 否则回退到创建者 SSO 身份已同步的 selected_team_id（以 SSO 为准）。
      *

@@ -249,6 +249,20 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.structuredContent.item.id', 21);
     }
 
+    public function test_task_monitoring_tools_are_exposed_with_tenant_scope(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog, $tasks] = $this->mockServices();
+        $tasks->shouldReceive('ensureTaskInScope')->once()->with(5, 'team-a');
+        $tasks->shouldReceive('listTaskJobs')->once()->with(5, 'failed', 10)->andReturn(['items' => [['id' => 9, 'status' => 'failed']]]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.tasks.jobs', ['task_id' => 5, 'status' => 'failed', 'limit' => 10]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.items.0.id', 9);
+    }
+
     public function test_article_create_checks_all_associated_records_against_the_tenant(): void
     {
         $this->enableMcp();
