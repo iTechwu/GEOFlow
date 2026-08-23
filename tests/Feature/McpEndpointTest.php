@@ -106,6 +106,7 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.tools.7.name', 'geoflow.articles.list')
             ->assertJsonPath('result.tools.9.inputSchema.properties.task_id.anyOf.1.type', 'null')
             ->assertJsonPath('result.tools.14.name', 'geoflow.materials.summary')
+            ->assertJsonPath('result.tools.17.inputSchema.properties.type.enum', ['keyword-libraries', 'title-libraries', 'image-libraries', 'knowledge-bases'])
             ->assertJsonPath('result.tools.22.name', 'geoflow.materials.items.delete');
 
         $this->assertStringContainsString('"properties":{}', $toolsResponse->getContent());
@@ -261,6 +262,20 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', $this->toolCall('geoflow.tasks.jobs', ['task_id' => 5, 'status' => 'failed', 'limit' => 10]))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.items.0.id', 9);
+    }
+
+    public function test_job_detail_is_checked_against_the_tenant_before_loading(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog, $tasks] = $this->mockServices();
+        $tasks->shouldReceive('ensureJobInScope')->once()->with(9, 'team-a');
+        $tasks->shouldReceive('getJob')->once()->with(9)->andReturn(['id' => 9, 'status' => 'failed']);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.jobs.get', ['job_id' => 9]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.id', 9);
     }
 
     public function test_article_create_checks_all_associated_records_against_the_tenant(): void
