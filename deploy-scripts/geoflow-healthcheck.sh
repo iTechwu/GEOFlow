@@ -183,7 +183,7 @@ mcp_request() {
 
 check_mcp() {
   local web_port="$1"
-  local enabled allow_system token url response maintenance_secret maintenance_cookie
+  local enabled allow_system token url response maintenance_secret maintenance_cookie app_url mcp_host
   enabled="$(runtime_env_value GEOFLOW_MCP_ENABLED)"
   case "$enabled" in
     true) ;;
@@ -214,6 +214,21 @@ check_mcp() {
   MCP_HEADER_FILE="$(mktemp)"
   chmod 600 "$MCP_HEADER_FILE"
   printf 'Authorization: Bearer %s\n' "$token" > "$MCP_HEADER_FILE"
+
+  app_url="$(runtime_env_value APP_URL)"
+  mcp_host="$(
+    "${COMPOSE[@]}" exec -T app php -r '
+      $host = parse_url($argv[1] ?? "", PHP_URL_HOST);
+      if (! is_string($host) || $host === "") {
+          exit(1);
+      }
+      echo $host;
+    ' "$app_url"
+  )" || fail "The running APP_URL does not contain a valid host for MCP verification."
+  case "$mcp_host" in
+    ""|*$'\r'*|*$'\n'*) fail "The MCP verification host is invalid." ;;
+  esac
+  printf 'Host: %s\n' "$mcp_host" >> "$MCP_HEADER_FILE"
 
   maintenance_secret="${GEOFLOW_HEALTHCHECK_MAINTENANCE_SECRET:-}"
   case "$maintenance_secret" in

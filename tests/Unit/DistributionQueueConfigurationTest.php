@@ -257,6 +257,8 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('"method":"initialize"', $healthcheck);
         $this->assertStringContainsString('"method":"tools/list"', $healthcheck);
         $this->assertStringContainsString('"name":"geoflow.catalog"', $healthcheck);
+        $this->assertStringContainsString('runtime_env_value APP_URL', $healthcheck);
+        $this->assertStringContainsString("printf 'Host: %s\\n'", $healthcheck);
         $this->assertStringNotContainsString('Authorization: Bearer $token', $healthcheck);
     }
 
