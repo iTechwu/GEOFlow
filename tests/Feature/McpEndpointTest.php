@@ -121,6 +121,28 @@ class McpEndpointTest extends TestCase
         $this->assertStringContainsString('"properties":{}', $toolsResponse->getContent());
     }
 
+    public function test_mcp_rate_limit_is_isolated_by_credential_behind_the_same_ip(): void
+    {
+        $suffix = bin2hex(random_bytes(8));
+        $writeToken = 'write-'.$suffix;
+        $readToken = 'read-'.$suffix;
+        $this->enableMcp($writeToken, $readToken);
+        config([
+            'geoflow.mcp_rate_limit_per_minute' => 2,
+            'geoflow.mcp_ip_rate_limit_per_minute' => 10,
+        ]);
+
+        $initialize = ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'];
+
+        $this->withHeader('Authorization', 'Bearer '.$writeToken)->postJson('/mcp', $initialize)->assertOk();
+        $this->withHeader('Authorization', 'Bearer '.$writeToken)->postJson('/mcp', $initialize)->assertOk();
+        $this->withHeader('Authorization', 'Bearer '.$writeToken)->postJson('/mcp', $initialize)->assertTooManyRequests();
+
+        $this->withHeader('Authorization', 'Bearer '.$readToken)
+            ->postJson('/mcp', $initialize)
+            ->assertOk();
+    }
+
     public function test_read_token_allows_read_tools(): void
     {
         $this->enableMcp('ci-secret', 'ci-read');

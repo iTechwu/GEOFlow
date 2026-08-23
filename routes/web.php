@@ -32,26 +32,31 @@ use App\Http\Controllers\Admin\SystemUpdateController;
 use App\Http\Controllers\Admin\TaskController;
 use App\Http\Controllers\Admin\TitleLibraryController;
 use App\Http\Controllers\Admin\UrlImportController;
+use App\Http\Controllers\Auth\SsoAuthController;
+use App\Http\Controllers\McpController;
 use App\Http\Controllers\Site\ArchiveController;
 use App\Http\Controllers\Site\ArticleController as SiteArticleController;
 use App\Http\Controllers\Site\CategoryController as SiteCategoryController;
 use App\Http\Controllers\Site\HomeController;
 use App\Http\Controllers\Site\LeadFormController as SiteLeadFormController;
-use App\Http\Controllers\Auth\SsoAuthController;
-use App\Http\Controllers\McpController;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use Illuminate\Session\Middleware\StartSession;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 Route::post('/mcp', McpController::class)
-    ->middleware(['mcp.auth', 'throttle:120,1'])
+    ->middleware(['mcp.auth', 'throttle:mcp'])
     // MCP 是无状态 JSON-RPC 端点：移除 web 组里的 cookie/session/CSRF 中间件，
     // 避免 CI Agent 的 curl 请求被 419 拦截，也避免每次调用产生会话 Cookie。
     ->withoutMiddleware([
-        \Illuminate\Cookie\Middleware\EncryptCookies::class,
-        \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
-        \Illuminate\Session\Middleware\StartSession::class,
-        \Illuminate\View\Middleware\ShareErrorsFromSession::class,
-        \Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class,
+        EncryptCookies::class,
+        AddQueuedCookiesToResponse::class,
+        StartSession::class,
+        ShareErrorsFromSession::class,
+        ValidateCsrfToken::class,
     ])
     ->name('mcp');
 

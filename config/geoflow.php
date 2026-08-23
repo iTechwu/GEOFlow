@@ -126,6 +126,10 @@ return [
     'mcp_allow_cross_tenant' => filter_var(env('GEOFLOW_MCP_ALLOW_CROSS_TENANT', false), FILTER_VALIDATE_BOOLEAN),
     'mcp_url_import_max_active' => max(1, (int) env('GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE', 3)),
     'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
+    // MCP clients initialize and call tools over the same endpoint. Keep credentials isolated
+    // while retaining a broader per-IP ceiling for abuse protection behind shared proxies.
+    'mcp_rate_limit_per_minute' => max(1, (int) env('GEOFLOW_MCP_RATE_LIMIT_PER_MINUTE', 600)),
+    'mcp_ip_rate_limit_per_minute' => max(1, (int) env('GEOFLOW_MCP_IP_RATE_LIMIT_PER_MINUTE', 3000)),
     // 精确追加可信 Host（逗号分隔，不支持通配符或端口）；APP_URL 主机始终自动包含。
     'additional_trusted_hosts' => array_values(array_filter(array_map(
         static fn (string $host): string => strtolower(trim($host)),

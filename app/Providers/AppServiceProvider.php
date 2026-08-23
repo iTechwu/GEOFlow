@@ -78,6 +78,19 @@ class AppServiceProvider extends ServiceProvider
                 Limit::perMinute(300)->by('api-ip:'.$request->ip()),
             ];
         });
+        RateLimiter::for('mcp', function (Request $request): array {
+            $bearerToken = (string) $request->bearerToken();
+            $credentialKey = $bearerToken !== ''
+                ? hash('sha256', $bearerToken)
+                : 'missing:'.$request->ip();
+
+            return [
+                Limit::perMinute((int) config('geoflow.mcp_rate_limit_per_minute', 600))
+                    ->by('mcp-token:'.$credentialKey),
+                Limit::perMinute((int) config('geoflow.mcp_ip_rate_limit_per_minute', 3000))
+                    ->by('mcp-ip:'.$request->ip()),
+            ];
+        });
         RateLimiter::for('admin-sensitive', function (Request $request): array {
             $adminId = (int) ($request->user('admin')?->getAuthIdentifier() ?? 0);
 
