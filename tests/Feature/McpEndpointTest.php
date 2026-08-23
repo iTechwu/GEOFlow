@@ -9,6 +9,7 @@ use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpAnalyticsService;
+use App\Services\Mcp\McpDistributionService;
 use App\Services\Mcp\McpEnterpriseKnowledgeService;
 use App\Services\Mcp\McpSiteService;
 use App\Services\Mcp\McpUrlImportService;
@@ -221,6 +222,26 @@ class McpEndpointTest extends TestCase
             ->assertOk()
             ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
             ->assertJsonPath('result.structuredContent.items.0.slug', 'hello-world');
+    }
+
+    public function test_distribution_health_is_exposed_as_a_redacted_tenant_scoped_read_tool(): void
+    {
+        $this->enableMcp('ci-secret', 'ci-read');
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+        $distribution = Mockery::mock(McpDistributionService::class);
+        app()->instance(McpDistributionService::class, $distribution);
+        $distribution->shouldReceive('health')->once()->with(7, Mockery::type(McpAuthContext::class))->andReturn([
+            'tenant_id' => 'team-a',
+            'channel' => ['id' => 7, 'name' => 'Target', 'last_health_status' => 'ok'],
+            'checked' => true,
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-read')
+            ->postJson('/mcp', $this->toolCall('geoflow.distribution.health', ['channel_id' => 7]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
+            ->assertJsonPath('result.structuredContent.channel.last_health_status', 'ok');
     }
 
     public function test_system_token_uses_configured_default_tenant_scope(): void

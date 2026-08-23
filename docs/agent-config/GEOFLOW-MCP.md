@@ -41,6 +41,7 @@ claude -p '只使用 geoflow MCP 查询当前任务和素材摘要。'
 | Analytics | `geoflow.analytics.overview` (tenant-scoped aggregate metrics) |
 | Enterprise knowledge | `geoflow.enterprise_knowledge.create`, `.status`, `.validate`, `.autosave`, `.publish` |
 | Published site read | `geoflow.site.search`, `.article`, `.archive` (tenant-scoped, no view counter side effect) |
+| Distribution read | `geoflow.distribution.channels`, `.jobs`, `.health` (tenant-scoped, redacted, no remote call) |
 
 All tool arguments are validated against the advertised JSON Schema. Write tools support `idempotency_key`; retries with the same key are tenant-isolated and audited.
 
@@ -75,6 +76,12 @@ The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX
 2. Poll `.status`, then call `.validate` or `.autosave` while reviewing the bounded draft preview.
 3. Publish only after explicit approval with `confirmation: "PUBLISH"`. The resulting knowledge base and chunks inherit the same tenant; binary file upload, editor images, restore and deletion remain Admin operations.
 
+### Distribution Read Workflow
+
+1. Call `geoflow.distribution.channels` to list channels explicitly owned by the authenticated SSO team.
+2. Call `geoflow.distribution.jobs` to inspect article delivery status and retry timing. Jobs are visible only when both the article task and channel belong to the same team.
+3. Call `geoflow.distribution.health` to read the last cached health result. It does not make a remote request.
+
 ## Deliberate Boundaries
 
-The existing REST/Admin surfaces remain authoritative for binary image uploads, public site/channel management, distribution packages, theme replication, lead capture, system updates, and direct model/prompt administration. URL import, tenant-scoped analytics, text-based enterprise knowledge, and published site reads are exposed through the dedicated MCP contracts above; Admin HTML routes and arbitrary worker shell execution are not. Add another dedicated tool only after defining its tenant, permission, idempotency, and error contract.
+The existing REST/Admin surfaces remain authoritative for binary image uploads, public site/channel management, distribution writes/packages, theme replication, lead capture, system updates, and direct model/prompt administration. URL import, tenant-scoped analytics, text-based enterprise knowledge, published site reads, and redacted distribution reads are exposed through the dedicated MCP contracts above; Admin HTML routes and arbitrary worker shell execution are not. Add another dedicated tool only after defining its tenant, permission, idempotency, and error contract.

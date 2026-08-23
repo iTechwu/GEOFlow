@@ -10,6 +10,7 @@ use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpAnalyticsService;
 use App\Services\Mcp\McpCapabilityService;
+use App\Services\Mcp\McpDistributionService;
 use App\Services\Mcp\McpEnterpriseKnowledgeService;
 use App\Services\Mcp\McpIdempotencyService;
 use App\Services\Mcp\McpSiteService;
@@ -29,7 +30,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpToolInputValidator $inputValidator): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -53,7 +54,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $site, $inputValidator),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $site, $distribution, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -136,10 +137,13 @@ final class McpController extends Controller
             ['name' => 'geoflow.site.search', 'description' => 'Search published tenant site articles without incrementing view counters.', 'inputSchema' => ['type' => 'object', 'properties' => ['search' => ['type' => 'string'], 'category_id' => ['type' => 'integer', 'minimum' => 1], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50]], 'additionalProperties' => false]],
             ['name' => 'geoflow.site.article', 'description' => 'Read one published tenant site article by slug without incrementing view counters.', 'inputSchema' => ['type' => 'object', 'properties' => ['slug' => ['type' => 'string']], 'required' => ['slug'], 'additionalProperties' => false]],
             ['name' => 'geoflow.site.archive', 'description' => 'List published tenant site articles by archive year and month without incrementing view counters.', 'inputSchema' => ['type' => 'object', 'properties' => ['year' => ['type' => 'integer', 'minimum' => 2000, 'maximum' => 2200], 'month' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 12], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 50]], 'additionalProperties' => false]],
+            ['name' => 'geoflow.distribution.channels', 'description' => 'List tenant-owned distribution channels with cached health status. Secrets and channel configuration are excluded.', 'inputSchema' => $empty],
+            ['name' => 'geoflow.distribution.jobs', 'description' => 'List tenant-owned article distribution jobs and bounded delivery metadata. Error details and secrets are excluded.', 'inputSchema' => ['type' => 'object', 'properties' => ['status' => ['type' => 'string'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
+            ['name' => 'geoflow.distribution.health', 'description' => 'Read cached health status for one tenant-owned distribution channel without making a remote request.', 'inputSchema' => ['type' => 'object', 'properties' => ['channel_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['channel_id'], 'additionalProperties' => false]],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpToolInputValidator $inputValidator): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpSiteService $site, McpDistributionService $distribution, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
@@ -243,6 +247,9 @@ final class McpController extends Controller
             'geoflow.site.search' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $site->search($args, $auth)),
             'geoflow.site.article' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $site->article($args, $auth)),
             'geoflow.site.archive' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $site->archive($args, $auth)),
+            'geoflow.distribution.channels' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $distribution->channels($auth)),
+            'geoflow.distribution.jobs' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $distribution->jobs($args, $auth)),
+            'geoflow.distribution.health' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $distribution->health((int) $args['channel_id'], $auth)),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -466,6 +473,7 @@ final class McpController extends Controller
             $tool === 'geoflow.analytics.overview' => 'analytics:read',
             str_starts_with($tool, 'geoflow.enterprise_knowledge.') => $tool === 'geoflow.enterprise_knowledge.status' ? 'materials:read' : 'materials:write',
             str_starts_with($tool, 'geoflow.site.') => 'articles:read',
+            str_starts_with($tool, 'geoflow.distribution.') => 'distribution:read',
             default => null,
         };
 

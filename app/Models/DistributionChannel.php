@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\StampsSsoTeam;
 use App\Support\Site\ArticleTextAdPicker;
 use App\Support\Site\HomepageModuleBuilder;
 use App\Support\Site\SiteSettingsBag;
@@ -13,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class DistributionChannel extends Model
 {
+    use StampsSsoTeam;
+
     public const STATUS_ACTIVE = 'active';
 
     public const STATUS_PAUSED = 'paused';
@@ -59,6 +62,7 @@ class DistributionChannel extends Model
         'last_health_checked_at',
         'last_error_message',
         'created_by_admin_id',
+        'sso_team_id',
     ];
 
     protected function casts(): array

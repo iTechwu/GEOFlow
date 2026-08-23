@@ -85,13 +85,24 @@ final class McpCapabilityService
                     'permission' => 'articles:read',
                     'notes' => '仅返回已发布且属于当前 SSO team 的站点内容；详情读取不增加 view_count，正文有长度上限。',
                 ],
+                [
+                    'domain' => 'distribution_read',
+                    'status' => 'available',
+                    'tools' => [
+                        'geoflow.distribution.channels',
+                        'geoflow.distribution.jobs',
+                        'geoflow.distribution.health',
+                    ],
+                    'permission' => 'distribution:read',
+                    'notes' => '只读取已补充 sso_team_id 的渠道及其文章分发作业；不会触发远端健康检查，不返回密钥、配置或错误原文。',
+                ],
             ],
             'admin_only' => [
                 [
                     'domain' => 'distribution',
-                    'status' => 'tenant_scope_required',
+                    'status' => 'explicit_admin_operation',
                     'route' => 'admin.distribution.*',
-                    'reason' => '渠道和密钥是实例级资源；分发写操作还会产生远程站点副作用。',
+                    'reason' => '渠道创建、重试、暂停、激活、远端设置同步、密钥轮换/显示、站点包下载和删除仍会产生远程副作用或涉及敏感凭据。',
                 ],
                 [
                     'domain' => 'leads',
