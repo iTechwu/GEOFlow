@@ -8,7 +8,6 @@ use App\Models\AiModel;
 use App\Models\Article;
 use App\Models\ArticleImage;
 use App\Models\Author;
-use App\Models\Admin;
 use App\Models\Category;
 use App\Models\Image;
 use App\Models\KnowledgeBase;
@@ -16,11 +15,12 @@ use App\Models\KnowledgeChunk;
 use App\Models\Prompt;
 use App\Models\Task;
 use App\Models\Title;
+use App\Services\Ixicai\IxicaiRuntimeCredentials;
 use App\Support\GeoFlow\ApiKeyCrypto;
 use App\Support\GeoFlow\ArticleWorkflow;
 use App\Support\GeoFlow\ImageUrlNormalizer;
 use App\Support\GeoFlow\OpenAiRuntimeProvider;
-use App\Services\Ixicai\IxicaiRuntimeCredentials;
+use App\Support\KnowledgeChunkAnnContract;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Schema;
@@ -1182,16 +1182,18 @@ class WorkerExecutionService
             return [];
         }
 
+        $distanceExpression = KnowledgeChunkAnnContract::distanceExpression();
+
         $rows = DB::select(
-            '
+            "
                 SELECT chunk_index, content,
-                       (embedding_vector <=> CAST(? AS vector)) AS vector_distance
+                       ({$distanceExpression}) AS vector_distance
                 FROM knowledge_chunks
                 WHERE knowledge_base_id = ?
                   AND embedding_vector IS NOT NULL
-                ORDER BY embedding_vector <=> CAST(? AS vector), chunk_index ASC
+                ORDER BY {$distanceExpression}, chunk_index ASC
                 LIMIT ?
-            ',
+            ",
             [$vectorLiteral, $knowledgeBaseId, $vectorLiteral, max(1, $candidateLimit)]
         );
 

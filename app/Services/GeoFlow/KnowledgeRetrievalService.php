@@ -4,6 +4,7 @@ namespace App\Services\GeoFlow;
 
 use App\Models\KnowledgeBase;
 use App\Models\KnowledgeChunk;
+use App\Support\KnowledgeChunkAnnContract;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -482,6 +483,7 @@ class KnowledgeRetrievalService
                 $candidate = $group[0];
                 $candidate['conflict_merged_count'] = 0;
                 $resolved[] = $candidate;
+
                 continue;
             }
 
@@ -490,6 +492,7 @@ class KnowledgeRetrievalService
                     $candidate['conflict_merged_count'] = 0;
                     $resolved[] = $candidate;
                 }
+
                 continue;
             }
 
@@ -700,17 +703,19 @@ class KnowledgeRetrievalService
             return [];
         }
 
+        $distanceExpression = KnowledgeChunkAnnContract::distanceExpression();
+
         try {
             $rows = DB::select(
-                '
+                "
                     SELECT chunk_index,
-                           (embedding_vector <=> CAST(? AS vector)) AS vector_distance
+                           ({$distanceExpression}) AS vector_distance
                     FROM knowledge_chunks
                     WHERE knowledge_base_id = ?
                       AND embedding_vector IS NOT NULL
-                    ORDER BY embedding_vector <=> CAST(? AS vector), chunk_index ASC
+                    ORDER BY {$distanceExpression}, chunk_index ASC
                     LIMIT ?
-                ',
+                ",
                 [$vectorLiteral, $knowledgeBaseId, $vectorLiteral, max(1, $candidateLimit)]
             );
         } catch (Throwable) {
@@ -779,6 +784,7 @@ class KnowledgeRetrievalService
                 foreach ($this->cjkTokens($token) as $cjkToken) {
                     $frequencies[$cjkToken] = (int) ($frequencies[$cjkToken] ?? 0) + 1;
                 }
+
                 continue;
             }
 
