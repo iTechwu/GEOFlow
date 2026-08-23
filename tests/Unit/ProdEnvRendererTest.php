@@ -34,6 +34,33 @@ class ProdEnvRendererTest extends TestCase
         $this->assertStringNotContainsString($values['DB_PASSWORD'], $process->getErrorOutput());
     }
 
+    public function test_renderer_allows_read_only_mcp_deployment_without_system_token(): void
+    {
+        $values = $this->requiredEnvironment();
+        $values['GEOFLOW_MCP_ENABLED'] = 'true';
+        $values['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN'] = 'false';
+        $values['GEOFLOW_MCP_READ_TOKEN'] = 'read-only-token';
+
+        [$process, $directory] = $this->render($values);
+
+        $this->assertTrue($process->isSuccessful(), $process->getErrorOutput());
+        $parsed = Dotenv::createArrayBacked($directory, '.env.prod')->load();
+        $this->assertSame('false', $parsed['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN']);
+        $this->assertSame('read-only-token', $parsed['GEOFLOW_MCP_READ_TOKEN']);
+    }
+
+    public function test_renderer_rejects_enabled_mcp_without_any_usable_token(): void
+    {
+        $values = $this->requiredEnvironment();
+        $values['GEOFLOW_MCP_ENABLED'] = 'true';
+        $values['GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN'] = 'false';
+
+        [$process] = $this->render($values);
+
+        $this->assertFalse($process->isSuccessful());
+        $this->assertStringContainsString('GEOFLOW_MCP_READ_TOKEN', $process->getErrorOutput());
+    }
+
     /** @param array<string, string> $environment */
     private function render(array $environment): array
     {

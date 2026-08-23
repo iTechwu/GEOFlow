@@ -299,6 +299,7 @@ prepare_env() {
   mcp_read_token="${GEOFLOW_MCP_READ_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_READ_TOKEN)}"
   mcp_default_tenant="${GEOFLOW_MCP_DEFAULT_TENANT:-$(get_env_value .env.prod GEOFLOW_MCP_DEFAULT_TENANT)}"
   mcp_allow_cross_tenant="${GEOFLOW_MCP_ALLOW_CROSS_TENANT:-$(get_env_value .env.prod GEOFLOW_MCP_ALLOW_CROSS_TENANT)}"
+  mcp_allow_system_token="${GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN)}"
   mcp_url_import_max_active="${GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE:-$(get_env_value .env.prod GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE)}"
   mcp_enabled="${GEOFLOW_MCP_ENABLED:-$(get_env_value .env.prod GEOFLOW_MCP_ENABLED)}"
   [ -n "$db_password" ] || fail "Set GEOFLOW_DB_PASSWORD for the externally managed PostgreSQL service."
@@ -309,7 +310,13 @@ prepare_env() {
   [ -n "$models_embedding_smoke_model" ] || fail "Set MODELS_EMBEDDING_SMOKE_MODEL to an enabled models Embedding route."
   [ -n "$models_internal_base" ] || fail "Set MODELS_INTERNAL_BASE_URL for the models management endpoint."
   [ -n "$models_internal_secret" ] || fail "Set MODELS_INTERNAL_API_SECRET in CI secrets."
-  [ "$mcp_enabled" != "true" ] || [ -n "$mcp_token" ] || fail "Set GEOFLOW_MCP_TOKEN or disable GEOFLOW_MCP_ENABLED."
+  mcp_allow_system_token="${mcp_allow_system_token:-true}"
+  if [ "$mcp_enabled" = "true" ] && [ "$mcp_allow_system_token" != "false" ] && [ -z "$mcp_token" ]; then
+    fail "Set GEOFLOW_MCP_TOKEN or set GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN=false."
+  fi
+  if [ "$mcp_enabled" = "true" ] && [ "$mcp_allow_system_token" = "false" ] && [ -z "$mcp_read_token" ]; then
+    fail "Set GEOFLOW_MCP_READ_TOKEN when GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN=false."
+  fi
   mcp_token="${mcp_token:-}"
   mcp_read_token="${mcp_read_token:-}"
   mcp_url_import_max_active="${mcp_url_import_max_active:-3}"
@@ -354,6 +361,7 @@ prepare_env() {
   set_env_value .env.prod GEOFLOW_MCP_READ_TOKEN "$mcp_read_token"
   set_env_value .env.prod GEOFLOW_MCP_DEFAULT_TENANT "$mcp_default_tenant"
   set_env_value .env.prod GEOFLOW_MCP_ALLOW_CROSS_TENANT "${mcp_allow_cross_tenant:-false}"
+  set_env_value .env.prod GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN "$mcp_allow_system_token"
   set_env_value .env.prod GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE "$mcp_url_import_max_active"
   set_env_value .env.prod WEB_PORT "$web_port"
   set_env_value .env.prod REVERB_EXPOSE_PORT "$reverb_port"

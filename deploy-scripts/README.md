@@ -96,10 +96,11 @@ bash geoflow-docker-deploy.sh
 | `GEOFLOW_OUTBOUND_PRIVATE_TARGETS` | 空 | 私网出站精确 `host:port` 列表；本地 Models HTTP 验收时必须同步配置 |
 | `MODELS_INTERNAL_BASE_URL` | `https://models.dofe.ai` | models 管理面地址 |
 | `MODELS_INTERNAL_API_SECRET` | 必填 | models 管理面服务间 HMAC 密钥 |
-| `GEOFLOW_MCP_ENABLED` | `.env.prod` 默认值 | 是否开放 `/mcp`；开启时必须同时提供 Token |
-| `GEOFLOW_MCP_TOKEN` | MCP 开启时必填 | MCP 全量（读+写）Bearer Token |
-| `GEOFLOW_MCP_READ_TOKEN` | 可选 | MCP 只读 Bearer Token（仅 catalog / tasks.list / tasks.get） |
+| `GEOFLOW_MCP_ENABLED` | `.env.prod` 默认值 | 是否开放 `/mcp`；开启时至少提供一个 Token |
+| `GEOFLOW_MCP_TOKEN` | 系统令牌开启时必填 | MCP 全量（读+写）Bearer Token |
+| `GEOFLOW_MCP_READ_TOKEN` | MCP 开启时至少提供一个令牌 | MCP 只读 Bearer Token；系统令牌关闭时可作为唯一令牌 |
 | `GEOFLOW_MCP_DEFAULT_TENANT` | 可选 | 系统 MCP Token 默认绑定的 SSO team ID；留空时允许跨租户 |
+| `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | 是否允许部署级系统令牌；设为 `false` 时必须配置只读令牌 |
 | `GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE` | `3` | 单个 MCP 租户同时处于 queued/running 的 URL 导入任务上限 |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | 反向代理、CDN、二级目录部署时的可信代理设置 |
 | `GEOFLOW_SELF_DELETE` | `0` | 设置为 `1` 时，部署成功后删除当前执行的部署脚本 |
@@ -280,10 +281,11 @@ Optional variables:
 | `GEOFLOW_OUTBOUND_PRIVATE_TARGETS` | empty | Exact private `host:port` targets; required together with local Models HTTP smoke access |
 | `MODELS_INTERNAL_BASE_URL` | `https://models.dofe.ai` | models management-plane base URL |
 | `MODELS_INTERNAL_API_SECRET` | required | models management-plane service-to-service HMAC secret |
-| `GEOFLOW_MCP_ENABLED` | `.env.prod` default | Whether to open `/mcp`; a Token is required when enabled |
-| `GEOFLOW_MCP_TOKEN` | required when MCP enabled | MCP full (read+write) Bearer Token |
-| `GEOFLOW_MCP_READ_TOKEN` | optional | MCP read-only Bearer Token (catalog / tasks.list / tasks.get only) |
+| `GEOFLOW_MCP_ENABLED` | `.env.prod` default | Whether to open `/mcp`; at least one token is required when enabled |
+| `GEOFLOW_MCP_TOKEN` | required when system-token access is enabled | MCP full (read+write) Bearer Token |
+| `GEOFLOW_MCP_READ_TOKEN` | at least one token is required when MCP is enabled | MCP read-only Bearer Token; it can be the only token when system access is disabled |
 | `GEOFLOW_MCP_DEFAULT_TENANT` | optional | SSO team ID used as the default scope for system MCP tokens; empty allows cross-tenant access |
+| `GEOFLOW_MCP_ALLOW_SYSTEM_TOKEN` | `true` | Allow deployment-level system tokens; set `false` to require read-only or SSO credentials |
 | `GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE` | `3` | Maximum queued/running URL import jobs per MCP tenant |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | Trusted proxy setting for reverse proxy/CDN/subdirectory deployments |
 | `GEOFLOW_SELF_DELETE` | `0` | Set to `1` to remove the deployment script after a successful deployment |
