@@ -145,7 +145,7 @@ final class AuthenticateMcpToken
     }
 
     /** @param array<string,mixed> $claims
-     *  @return list<string>
+     * @return list<string>
      */
     private function scopesFromClaims(array $claims): array
     {
