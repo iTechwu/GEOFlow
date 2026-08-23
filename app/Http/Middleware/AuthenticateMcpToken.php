@@ -98,6 +98,10 @@ final class AuthenticateMcpToken
 
     private function resolveSsoToken(string $provided): ?McpAuthContext
     {
+        if (! $this->isSsoAccessTokenCandidate($provided)) {
+            return null;
+        }
+
         try {
             $claims = $this->oidc->userInfoClaimsForMcp($provided);
         } catch (Throwable) {
@@ -123,6 +127,46 @@ final class AuthenticateMcpToken
             (int) $admin->getKey(),
             $this->scopesFromClaims($claims),
         );
+    }
+
+    private function isSsoAccessTokenCandidate(string $token): bool
+    {
+        if (strlen($token) > 8192) {
+            return false;
+        }
+
+        $parts = explode('.', $token);
+        if (count($parts) !== 3 || in_array('', $parts, true)) {
+            return false;
+        }
+        foreach ($parts as $part) {
+            if (preg_match('/^[A-Za-z0-9_-]+$/', $part) !== 1) {
+                return false;
+            }
+        }
+
+        $payload = json_decode($this->base64UrlDecode($parts[1]), true);
+        if (! is_array($payload)) {
+            return false;
+        }
+
+        $issuer = rtrim((string) ($payload['iss'] ?? ''), '/');
+        $expectedIssuer = rtrim((string) config('sso.issuer', ''), '/');
+        $audiences = is_array($payload['aud'] ?? null) ? $payload['aud'] : [$payload['aud'] ?? null];
+        $expectedAudience = (string) config('sso.client_id', '');
+
+        return $issuer !== ''
+            && $expectedIssuer !== ''
+            && hash_equals($expectedIssuer, $issuer)
+            && $expectedAudience !== ''
+            && in_array($expectedAudience, $audiences, true);
+    }
+
+    private function base64UrlDecode(string $value): string
+    {
+        $decoded = base64_decode(strtr($value, '-_', '+/').str_repeat('=', (4 - strlen($value) % 4) % 4), true);
+
+        return $decoded === false ? '' : $decoded;
     }
 
     private function unauthorized(): Response

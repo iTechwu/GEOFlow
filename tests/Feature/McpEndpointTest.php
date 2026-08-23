@@ -735,7 +735,7 @@ class McpEndpointTest extends TestCase
         $tasks->shouldReceive('ensureTaskInScope')->once()->with(5, 'team-a');
         $tasks->shouldReceive('getTask')->once()->with(5)->andReturn(['id' => 5, 'name' => 'T']);
 
-        $this->withHeader('Authorization', 'Bearer sso-token')
+        $this->withHeader('Authorization', 'Bearer '.$this->fakeSsoAccessToken())
             ->postJson('/mcp', $this->toolCall('geoflow.tasks.get', ['task_id' => 5]))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.id', 5);
@@ -751,7 +751,7 @@ class McpEndpointTest extends TestCase
 
         $this->mockServices();
 
-        $this->withHeader('Authorization', 'Bearer sso-token-without-team')
+        $this->withHeader('Authorization', 'Bearer '.$this->fakeSsoAccessToken())
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
             ->assertUnauthorized()
             ->assertJsonPath('error.code', -32001);
@@ -772,6 +772,20 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
             ->assertUnauthorized()
             ->assertJsonPath('error.code', -32001);
+    }
+
+    public function test_opaque_invalid_token_is_rejected_without_calling_sso(): void
+    {
+        $this->enableMcp('ci-secret');
+        Http::fake();
+        $this->mockServices();
+
+        $this->withHeader('Authorization', 'Bearer invalid-opaque-token')
+            ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
+            ->assertUnauthorized()
+            ->assertJsonPath('error.code', -32001);
+
+        Http::assertNothingSent();
     }
 
     public function test_system_token_requires_tenant_or_explicit_cross_tenant_mode(): void
@@ -796,10 +810,20 @@ class McpEndpointTest extends TestCase
         ]);
         $this->mockServices();
 
-        $this->withHeader('Authorization', 'Bearer sso-token-without-catalog-scope')
+        $this->withHeader('Authorization', 'Bearer '.$this->fakeSsoAccessToken())
             ->postJson('/mcp', $this->toolCall('geoflow.catalog', []))
             ->assertOk()
             ->assertJsonPath('result.isError', true)
             ->assertJsonPath('result.structuredContent.error.code', 'tool_error');
+    }
+
+    private function fakeSsoAccessToken(): string
+    {
+        $encode = static fn (array $value): string => rtrim(strtr(base64_encode((string) json_encode($value)), '+/', '-_'), '=');
+
+        return $encode(['alg' => 'RS256', 'typ' => 'JWT']).'.'.$encode([
+            'iss' => (string) config('sso.issuer'),
+            'aud' => (string) config('sso.client_id'),
+        ]).'.signature';
     }
 }
