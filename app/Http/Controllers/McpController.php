@@ -237,7 +237,7 @@ final class McpController extends Controller
             }),
             'geoflow.tasks.delete' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->deleteTask($this->scopedTaskId($tasks, $auth, $this->taskId($args)))),
             'geoflow.tasks.jobs' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTaskJobs($this->scopedTaskId($tasks, $auth, $this->taskId($args)), isset($args['status']) ? (string) $args['status'] : null, (int) ($args['limit'] ?? 20))),
-            'geoflow.jobs.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getJob($this->scopedJobId($tasks, $auth, (int) $args['job_id']))),
+            'geoflow.jobs.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getJobForMcp($this->scopedJobId($tasks, $auth, (int) $args['job_id']))),
             'geoflow.jobs.cancel' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->cancelJob($this->scopedJobId($tasks, $auth, (int) $args['job_id']), $auth->tenantId, (string) ($args['reason'] ?? ''))),
             'geoflow.url_import.create' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $urlImports->create($args, $auth)),
             'geoflow.url_import.run' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $urlImports->run((int) $args['job_id'], $auth)),

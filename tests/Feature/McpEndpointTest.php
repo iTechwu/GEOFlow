@@ -473,7 +473,7 @@ class McpEndpointTest extends TestCase
         config(['geoflow.mcp_default_tenant' => 'team-a']);
         [$catalog, $tasks] = $this->mockServices();
         $tasks->shouldReceive('ensureJobInScope')->once()->with(9, 'team-a');
-        $tasks->shouldReceive('getJob')->once()->with(9)->andReturn(['id' => 9, 'status' => 'failed']);
+        $tasks->shouldReceive('getJobForMcp')->once()->with(9)->andReturn(['id' => 9, 'status' => 'failed']);
 
         $this->withHeader('Authorization', 'Bearer ci-secret')
             ->postJson('/mcp', $this->toolCall('geoflow.jobs.get', ['job_id' => 9]))

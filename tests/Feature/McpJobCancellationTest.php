@@ -57,4 +57,29 @@ class McpJobCancellationTest extends TestCase
 
         $this->assertSame('cancelled', $run->fresh()->status);
     }
+
+    public function test_mcp_job_summary_does_not_expose_payload_or_internal_error_details(): void
+    {
+        $task = Task::query()->create(['name' => 'Team A', 'sso_team_id' => 'team-a', 'status' => 'active']);
+        $run = TaskRun::query()->create([
+            'task_id' => $task->id,
+            'status' => 'failed',
+            'error_message' => 'provider https://internal.example.test secret-token',
+            'meta' => [
+                'job_type' => 'generate_article',
+                'payload' => ['prompt' => 'sensitive prompt'],
+                'worker_id' => 'worker-host:123',
+                'attempt_count' => 2,
+                'max_attempts' => 3,
+            ],
+        ]);
+
+        $result = app(TaskLifecycleService::class)->getJobForMcp((int) $run->id);
+
+        $this->assertSame('任务执行失败', $result['error_message']);
+        $this->assertArrayNotHasKey('payload', $result);
+        $this->assertArrayNotHasKey('worker_id', $result);
+        $this->assertArrayNotHasKey('meta', $result['task_run_summary']);
+        $this->assertStringNotContainsString('internal.example.test', json_encode($result, JSON_UNESCAPED_UNICODE));
+    }
 }

@@ -481,6 +481,40 @@ class TaskLifecycleService
     }
 
     /**
+     * MCP 专用的执行记录摘要，避免暴露队列 payload、worker 标识和内部错误详情。
+     *
+     * @return array<string,mixed>
+     */
+    public function getJobForMcp(int $jobId): array
+    {
+        $job = $this->getJob($jobId);
+        $status = (string) $job['status'];
+        $summary = is_array($job['task_run_summary'] ?? null) ? $job['task_run_summary'] : [];
+
+        return [
+            'id' => (int) $job['id'],
+            'task_id' => (int) $job['task_id'],
+            'job_type' => (string) $job['job_type'],
+            'status' => $status,
+            'attempt_count' => (int) $job['attempt_count'],
+            'max_attempts' => (int) $job['max_attempts'],
+            'claimed_at' => $job['claimed_at'],
+            'finished_at' => $job['finished_at'],
+            'error_message' => match ($status) {
+                'failed' => '任务执行失败',
+                'cancelled' => '任务已取消',
+                default => '',
+            },
+            'task_run_summary' => [
+                'article_id' => isset($summary['article_id']) ? (int) $summary['article_id'] : null,
+                'duration_ms' => isset($summary['duration_ms']) ? (int) $summary['duration_ms'] : 0,
+                'status' => $status,
+                'has_error' => in_array($status, ['failed', 'cancelled'], true),
+            ],
+        ];
+    }
+
+    /**
      * 取消一个仍在 pending/running 状态的执行记录。
      *
      * @return array<string,mixed>
