@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Admin;
+use App\Services\Ixicai\IxicaiApiKeyProvisioner;
 use App\Services\Sso\SsoIdentityService;
 use App\Services\Sso\SsoOidcClient;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -81,6 +82,27 @@ class SsoOidcHardeningTest extends TestCase
         Http::assertSentCount(1);
     }
 
+    public function test_slow_userinfo_response_does_not_expire_cache_before_it_is_stored(): void
+    {
+        Http::fake([
+            'http://sso-internal.example/api/oauth/userinfo' => function () {
+                usleep(1_100_000);
+
+                return Http::response(['sub' => 'slow-sso-user']);
+            },
+        ]);
+        config()->set([
+            'sso.internal_api_url' => 'http://sso-internal.example/api',
+            'sso.token_cache_seconds' => 1,
+        ]);
+
+        $client = app(SsoOidcClient::class);
+        $this->assertSame('slow-sso-user', $client->userInfoClaims('slow-access-token')['sub']);
+        $this->assertSame('slow-sso-user', $client->userInfoClaims('slow-access-token')['sub']);
+
+        Http::assertSentCount(1);
+    }
+
     public function test_sso_identity_uses_selected_team_id_for_ixicai_context(): void
     {
         $admin = app(SsoIdentityService::class)->synchronize([
@@ -93,5 +115,23 @@ class SsoOidcHardeningTest extends TestCase
         $this->assertInstanceOf(Admin::class, $admin);
         $this->assertSame('sso-team-id', $admin->sso_claims['selected_team_id']);
         $this->assertSame(['catalog:read'], $admin->sso_claims['scopes']);
+    }
+
+    public function test_missing_selected_team_skips_ixicai_key_provisioning_without_external_request(): void
+    {
+        Http::fake();
+        $admin = Admin::query()->create([
+            'sso_sub' => 'user-without-team',
+            'email' => 'user-without-team@example.com',
+            'display_name' => 'User Without Team',
+            'role' => 'sso_user',
+            'status' => 'active',
+            'sso_claims' => ['roles' => ['sso_user']],
+        ]);
+
+        $key = app(IxicaiApiKeyProvisioner::class)->ensure($admin, 'access-token');
+
+        $this->assertNull($key);
+        Http::assertNothingSent();
     }
 }

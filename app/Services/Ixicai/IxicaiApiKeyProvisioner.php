@@ -18,11 +18,16 @@ final class IxicaiApiKeyProvisioner
         private readonly ApiKeyCrypto $crypto,
     ) {}
 
-    public function ensure(Admin $admin, string $accessToken): IxicaiApiKey
+    public function ensure(Admin $admin, string $accessToken): ?IxicaiApiKey
     {
         $existing = IxicaiApiKey::query()->where('admin_id', $admin->id)->first();
         if ($existing instanceof IxicaiApiKey && $existing->status === 'active' && $this->crypto->decrypt((string) $existing->encrypted_key) !== '') {
             return $existing;
+        }
+
+        $teamId = trim((string) (($admin->sso_claims ?? [])['selected_team_id'] ?? ''));
+        if ($teamId === '') {
+            return null;
         }
 
         try {

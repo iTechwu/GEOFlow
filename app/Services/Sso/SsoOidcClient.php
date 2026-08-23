@@ -82,7 +82,10 @@ final class SsoOidcClient
         }
 
         $claims = $this->verifyJwt($idToken, (string) ($stored['nonce'] ?? ''));
-        $profile = $this->userInfo($accessToken, $this->internalizeUrl((string) $metadata['userinfo_endpoint']));
+        $profile = $this->userInfoClaims(
+            $accessToken,
+            $this->internalizeUrl((string) $metadata['userinfo_endpoint']),
+        );
         if (($profile['sub'] ?? null) !== ($claims['sub'] ?? null)) {
             throw new RuntimeException('SSO identity response did not match the signed token.');
         }
@@ -101,14 +104,16 @@ final class SsoOidcClient
      *
      * @return array<string,mixed>
      */
-    public function userInfoClaims(string $accessToken): array
+    public function userInfoClaims(string $accessToken, ?string $endpoint = null): array
     {
         $cacheKey = 'sso:token:userinfo:'.hash('sha256', $accessToken);
         $ttl = max(1, (int) config('sso.token_cache_seconds'));
 
-        return Cache::remember($cacheKey, now()->addSeconds($ttl), fn (): array => $this->userInfo(
+        // Use a relative TTL so a slow upstream call does not consume the
+        // entire cache lifetime before Cache::remember stores the response.
+        return Cache::remember($cacheKey, $ttl, fn (): array => $this->userInfo(
             $accessToken,
-            $this->internalApiUrl('/oauth/userinfo'),
+            $endpoint ?? $this->internalApiUrl('/oauth/userinfo'),
         ));
     }
 

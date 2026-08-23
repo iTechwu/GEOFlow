@@ -6,9 +6,11 @@
     "scripts": {
         "build": "vite build",
         "dev": "vite",
+        "test:browser": "playwright test",
         "test:mcp-smoke": "node --test deploy-scripts/mcp-local-smoke.test.mjs"
     },
     "devDependencies": {
+        "@playwright/test": "^1.59.1",
         "@tailwindcss/vite": "^4.0.0",
         "axios": "^1.11.0",
         "concurrently": "^9.0.1",
