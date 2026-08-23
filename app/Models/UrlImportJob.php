@@ -21,6 +21,7 @@ class UrlImportJob extends Model
         'result_json',
         'error_message',
         'created_by',
+        'sso_team_id',
         'started_at',
         'finished_at',
     ];

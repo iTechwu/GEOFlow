@@ -11,6 +11,7 @@ use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpIdempotencyService;
 use App\Services\Mcp\McpToolException;
 use App\Services\Mcp\McpToolInputValidator;
+use App\Services\Mcp\McpUrlImportService;
 use App\Support\McpAuditLogger;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpToolInputValidator $inputValidator): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -48,7 +49,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $inputValidator),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -117,10 +118,14 @@ final class McpController extends Controller
             ['name' => 'geoflow.tasks.delete', 'description' => 'Delete a tenant-scoped task and its pending work.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['task_id' => ['type' => 'integer', 'minimum' => 1]], $idempotency), 'required' => ['task_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.tasks.jobs', 'description' => 'List recent execution records for a tenant-scoped task.', 'inputSchema' => ['type' => 'object', 'properties' => ['task_id' => ['type' => 'integer', 'minimum' => 1], 'status' => ['type' => 'string'], 'limit' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'required' => ['task_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.jobs.get', 'description' => 'Read one tenant-scoped task execution record and failure details.', 'inputSchema' => ['type' => 'object', 'properties' => ['job_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['job_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.url_import.create', 'description' => 'Create a tenant-scoped URL import preview job. This does not write material libraries.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['url' => ['type' => 'string'], 'project_name' => ['type' => 'string'], 'source_label' => ['type' => 'string'], 'content_language' => ['type' => 'string'], 'notes' => ['type' => 'string'], 'outputs' => ['type' => 'array', 'items' => ['type' => 'string', 'enum' => ['knowledge', 'keywords', 'titles']]]], $idempotency), 'required' => ['url'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.url_import.run', 'description' => 'Run a tenant-scoped URL import preview and return structured analysis.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['job_id' => ['type' => 'integer', 'minimum' => 1]], $idempotency), 'required' => ['job_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.url_import.status', 'description' => 'Read a tenant-scoped URL import status and redacted preview.', 'inputSchema' => ['type' => 'object', 'properties' => ['job_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['job_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.url_import.commit', 'description' => 'Commit a completed URL import preview into tenant-scoped knowledge, keyword, and title libraries. Requires confirmation=IMPORT.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['job_id' => ['type' => 'integer', 'minimum' => 1], 'confirmation' => ['type' => 'string', 'enum' => ['IMPORT']]], $idempotency), 'required' => ['job_id', 'confirmation'], 'additionalProperties' => false]],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpToolInputValidator $inputValidator): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
@@ -204,6 +209,16 @@ final class McpController extends Controller
             'geoflow.tasks.delete' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->deleteTask($this->scopedTaskId($tasks, $auth, $this->taskId($args)))),
             'geoflow.tasks.jobs' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTaskJobs($this->scopedTaskId($tasks, $auth, $this->taskId($args)), isset($args['status']) ? (string) $args['status'] : null, (int) ($args['limit'] ?? 20))),
             'geoflow.jobs.get' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->getJob($this->scopedJobId($tasks, $auth, (int) $args['job_id']))),
+            'geoflow.url_import.create' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $urlImports->create($args, $auth)),
+            'geoflow.url_import.run' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $urlImports->run((int) $args['job_id'], $auth)),
+            'geoflow.url_import.status' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $urlImports->status((int) $args['job_id'], $auth)),
+            'geoflow.url_import.commit' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($urlImports, $auth): array {
+                if (($args['confirmation'] ?? '') !== 'IMPORT') {
+                    throw new McpToolException('提交 URL 导入必须提供 confirmation=IMPORT');
+                }
+
+                return $urlImports->commit((int) $args['job_id'], $auth);
+            }),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -420,6 +435,7 @@ final class McpController extends Controller
             str_starts_with($tool, 'geoflow.articles.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') ? 'articles:read' : 'articles:write',
             str_starts_with($tool, 'geoflow.tasks.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') || str_ends_with($tool, '.jobs') ? 'tasks:read' : 'tasks:write',
             str_starts_with($tool, 'geoflow.jobs.') => 'jobs:read',
+            str_starts_with($tool, 'geoflow.url_import.') => $tool === 'geoflow.url_import.status' ? 'materials:read' : 'materials:write',
             str_starts_with($tool, 'geoflow.materials.') => in_array($tool, ['geoflow.materials.summary', 'geoflow.materials.list', 'geoflow.materials.get', 'geoflow.materials.items.list'], true) ? 'materials:read' : 'materials:write',
             $tool === 'geoflow.catalog' => 'catalog:read',
             default => null,

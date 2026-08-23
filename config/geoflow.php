@@ -124,6 +124,7 @@ return [
     // 系统令牌的默认 SSO team；留空时保持跨租户系统令牌语义。
     'mcp_default_tenant' => trim((string) env('GEOFLOW_MCP_DEFAULT_TENANT', '')),
     'mcp_allow_cross_tenant' => filter_var(env('GEOFLOW_MCP_ALLOW_CROSS_TENANT', false), FILTER_VALIDATE_BOOLEAN),
+    'mcp_url_import_max_active' => max(1, (int) env('GEOFLOW_MCP_URL_IMPORT_MAX_ACTIVE', 3)),
     'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
     // 系统令牌执行文章风险/审核/发布时使用的审计管理员；不配置则禁止这些需要管理员身份的操作。
     'mcp_audit_admin_id' => max(0, (int) env('GEOFLOW_MCP_AUDIT_ADMIN_ID', 0)),

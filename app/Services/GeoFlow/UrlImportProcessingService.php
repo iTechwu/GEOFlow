@@ -221,7 +221,8 @@ final class UrlImportProcessingService
             throw new \RuntimeException(__('admin.url_import.error.ai_titles_missing'));
         }
 
-        $summary = DB::transaction(function () use ($baseName, $knowledgeContent, $analysis, $keywords, $titles): array {
+        $teamId = trim((string) ($job->sso_team_id ?? ''));
+        $summary = DB::transaction(function () use ($baseName, $knowledgeContent, $analysis, $keywords, $titles, $teamId): array {
             $knowledgeBase = KnowledgeBase::query()->create([
                 'name' => $baseName.' 知识库',
                 'description' => (string) ($analysis['summary'] ?? ''),
@@ -232,12 +233,14 @@ final class UrlImportProcessingService
                 'file_path' => '',
                 'word_count' => mb_strlen($knowledgeContent, 'UTF-8'),
                 'usage_count' => 0,
+                'sso_team_id' => $teamId !== '' ? $teamId : null,
             ]);
 
             $keywordLibrary = KeywordLibrary::query()->create([
                 'name' => $baseName.' 关键词库',
                 'description' => 'URL智能采集自动生成',
                 'keyword_count' => 0,
+                'sso_team_id' => $teamId !== '' ? $teamId : null,
             ]);
             foreach ($keywords as $keyword) {
                 Keyword::query()->firstOrCreate(
@@ -254,6 +257,7 @@ final class UrlImportProcessingService
                 'generation_type' => 'url_import',
                 'generation_rounds' => 1,
                 'is_ai_generated' => 1,
+                'sso_team_id' => $teamId !== '' ? $teamId : null,
             ]);
             foreach ($titles as $index => $title) {
                 Title::query()->firstOrCreate(
@@ -284,6 +288,7 @@ final class UrlImportProcessingService
         ];
         $job->update([
             'result_json' => json_encode($result, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_INVALID_UTF8_SUBSTITUTE),
+            'status' => 'imported',
             'current_step' => 'imported',
             'progress_percent' => 100,
         ]);

@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Http\McpAuthContext;
 use App\Models\McpAuditLog;
 use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
+use App\Services\Mcp\McpUrlImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Mockery;
@@ -276,6 +278,42 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', $this->toolCall('geoflow.jobs.get', ['job_id' => 9]))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.id', 9);
+    }
+
+    public function test_url_import_preview_and_commit_require_tenant_and_confirmation(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog, $tasks, $materials] = $this->mockServices();
+        $urlImports = Mockery::mock(McpUrlImportService::class);
+        app()->instance(McpUrlImportService::class, $urlImports);
+        $urlImports->shouldReceive('create')->once()->andReturn(['id' => 41, 'status' => 'queued']);
+        $urlImports->shouldReceive('commit')->once()->with(41, Mockery::type(McpAuthContext::class))->andReturn(['job_id' => 41, 'status' => 'imported', 'summary' => ['titles' => 3]]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.url_import.create', ['url' => 'https://example.com', 'project_name' => 'Example']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.id', 41);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.url_import.commit', ['job_id' => 41, 'confirmation' => 'IMPORT']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.summary.titles', 3);
+    }
+
+    public function test_url_import_commit_schema_rejects_missing_confirmation(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog, $tasks, $materials] = $this->mockServices();
+        $urlImports = Mockery::mock(McpUrlImportService::class);
+        app()->instance(McpUrlImportService::class, $urlImports);
+        $urlImports->shouldNotReceive('commit');
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.url_import.commit', ['job_id' => 41]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.error.code', 'validation_failed');
     }
 
     public function test_article_create_checks_all_associated_records_against_the_tenant(): void
