@@ -10,6 +10,26 @@ use ReflectionClass;
 
 class McpContractConsistencyTest extends TestCase
 {
+    public function test_task_tools_advertise_the_complete_lifecycle_configuration(): void
+    {
+        $reflection = new ReflectionClass(McpController::class);
+        $controller = $reflection->newInstanceWithoutConstructor();
+        $tools = $reflection->getMethod('tools')->invoke($controller);
+        $schemas = [];
+        foreach ($tools as $tool) {
+            $schemas[(string) $tool['name']] = $tool['inputSchema'];
+        }
+
+        foreach (['auto_keywords', 'auto_description', 'is_loop', 'image_count', 'publish_interval', 'category_mode', 'fixed_category_id', 'model_selection_mode', 'publish_scope', 'distribution_strategy'] as $field) {
+            $this->assertArrayHasKey($field, $schemas['geoflow.tasks.create']['properties']);
+            $this->assertArrayHasKey($field, $schemas['geoflow.tasks.update']['properties']);
+        }
+
+        foreach (['status', 'review_status', 'risk_override_reason'] as $field) {
+            $this->assertArrayHasKey($field, $schemas['geoflow.articles.create']['properties']);
+        }
+    }
+
     public function test_enterprise_knowledge_publish_uses_materials_write_scope(): void
     {
         $reflection = new ReflectionClass(McpController::class);
