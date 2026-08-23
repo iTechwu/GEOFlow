@@ -9,6 +9,7 @@ use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpIdempotencyService;
 use App\Services\Mcp\McpToolException;
+use App\Services\Mcp\McpToolInputValidator;
 use App\Support\McpAuditLogger;
 use Closure;
 use Illuminate\Http\JsonResponse;
@@ -22,7 +23,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -46,7 +47,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -89,11 +90,15 @@ final class McpController extends Controller
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
-        $arguments = is_array($params['arguments'] ?? null) ? $params['arguments'] : [];
+        $arguments = $params['arguments'] ?? [];
+        if ($name === '' || ! is_array($arguments) || ($arguments !== [] && array_is_list($arguments))) {
+            throw new \InvalidArgumentException('tools/call requires a tool name and object arguments');
+        }
+        $inputValidator->validate($this->toolSchema($name), $arguments);
         $scoped = fn (int $taskId): int => $this->scopedTaskId($tasks, $auth, $taskId);
         $scopedArticle = fn (int $articleId): int => $this->scopedArticleId($articles, $auth, $articleId);
 
@@ -114,17 +119,20 @@ final class McpController extends Controller
                 if (isset($args['task_id']) && $args['task_id'] !== null) {
                     $this->scopedTaskId($tasks, $auth, (int) $args['task_id']);
                 }
+
                 return $articles->createArticle($args, $auth->auditAdminId);
             }),
             'geoflow.articles.update' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $auth): array {
                 $articleId = $this->articleId($args);
                 $this->scopedArticleId($articles, $auth, $articleId);
                 unset($args['article_id']);
+
                 return $articles->updateArticle($articleId, $args, $auth->auditAdminId);
             }),
             'geoflow.articles.review' => $this->runWriteTool($request, $name, $arguments, function (array $args) use ($articles, $auth): array {
                 $articleId = $this->articleId($args);
                 $this->scopedArticleId($articles, $auth, $articleId);
+
                 return $articles->reviewArticle($articleId, (string) ($args['review_status'] ?? ''), (string) ($args['review_note'] ?? ''), (string) ($args['risk_override_reason'] ?? ''), $this->requiredAuditAdminId($auth));
             }),
             'geoflow.articles.publish' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $articles->publishArticle($scopedArticle($this->articleId($args)), $this->requiredAuditAdminId($auth))),
@@ -133,6 +141,18 @@ final class McpController extends Controller
         };
 
         return $this->result($id, ['content' => [['type' => 'text', 'text' => json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)]], 'structuredContent' => $data]);
+    }
+
+    /** @return array<string,mixed> */
+    private function toolSchema(string $name): array
+    {
+        foreach ($this->tools() as $tool) {
+            if (($tool['name'] ?? null) === $name && is_array($tool['inputSchema'] ?? null)) {
+                return $tool['inputSchema'];
+            }
+        }
+
+        throw new \InvalidArgumentException('Unknown tool');
     }
 
     /**

@@ -3,8 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\McpAuditLog;
-use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\ArticleGeoFlowService;
+use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -160,12 +160,41 @@ class McpEndpointTest extends TestCase
         $this->enableMcp();
         [$catalog, $tasks] = $this->mockServices();
         app()->instance(ArticleGeoFlowService::class, Mockery::mock(ArticleGeoFlowService::class));
-        $tasks->shouldReceive('createTask')->once()->with(Mockery::on(static fn (array $input): bool => $input['name'] === 'GEO smoke task' && ! array_key_exists('idempotency_key', $input)))->andReturn(['id' => 11, 'name' => 'GEO smoke task']);
+        $tasks->shouldReceive('createTask')->once()->with(Mockery::on(static fn (array $input): bool => $input['name'] === 'GEO smoke task' && $input['title_library_id'] === 1 && $input['prompt_id'] === 2 && $input['ai_model_id'] === 3 && ! array_key_exists('idempotency_key', $input)))->andReturn(['id' => 11, 'name' => 'GEO smoke task']);
 
         $this->withHeader('Authorization', 'Bearer ci-secret')
-            ->postJson('/mcp', $this->toolCall('geoflow.tasks.create', ['name' => 'GEO smoke task', 'idempotency_key' => 'task-create-11']))
+            ->postJson('/mcp', $this->toolCall('geoflow.tasks.create', [
+                'name' => 'GEO smoke task',
+                'title_library_id' => 1,
+                'prompt_id' => 2,
+                'ai_model_id' => 3,
+                'idempotency_key' => 'task-create-11',
+            ]))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.id', 11);
+    }
+
+    public function test_tool_arguments_must_match_the_advertised_schema(): void
+    {
+        $this->enableMcp();
+        [$catalog, $tasks] = $this->mockServices();
+        $tasks->shouldNotReceive('createTask');
+
+        $response = $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.tasks.create', [
+                'name' => 'Invalid task',
+                'title_library_id' => '1',
+                'unexpected' => true,
+            ]))
+            ->assertOk()
+            ->assertJsonPath('result.isError', true)
+            ->assertJsonPath('result.structuredContent.error.code', 'validation_failed');
+
+        $fieldErrors = $response->json('result.structuredContent.error.details.field_errors');
+        $this->assertSame('缺少必填参数', $fieldErrors['arguments.prompt_id']);
+        $this->assertSame('缺少必填参数', $fieldErrors['arguments.ai_model_id']);
+        $this->assertSame('参数类型必须为 integer', $fieldErrors['arguments.title_library_id']);
+        $this->assertSame('不支持该参数', $fieldErrors['arguments.unexpected']);
     }
 
     public function test_write_tool_with_idempotency_key_replays_cached_result(): void
