@@ -129,6 +129,24 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.structuredContent.models', []);
     }
 
+    public function test_read_token_allows_tenant_scoped_analytics_read(): void
+    {
+        $this->enableMcp('ci-secret', 'ci-read');
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+        $analytics = Mockery::mock(McpAnalyticsService::class);
+        app()->instance(McpAnalyticsService::class, $analytics);
+        $analytics->shouldReceive('overview')->once()->with([], Mockery::type(McpAuthContext::class))->andReturn([
+            'tenant_id' => 'team-a',
+            'kpis' => ['articles' => 1],
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-read')
+            ->postJson('/mcp', $this->toolCall('geoflow.analytics.overview', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.tenant_id', 'team-a');
+    }
+
     public function test_capabilities_describe_tenant_scope_and_protected_domains(): void
     {
         $this->enableMcp();
