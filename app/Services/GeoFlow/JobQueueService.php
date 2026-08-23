@@ -232,7 +232,7 @@ class JobQueueService
      */
     public function completeJob(int $jobId, int $taskId, ?int $articleId, int $durationMs, array $meta = []): void
     {
-        TaskRun::query()->whereKey($jobId)->update([
+        $updated = TaskRun::query()->whereKey($jobId)->where('status', 'running')->update([
             'status' => 'completed',
             'finished_at' => now(),
             'article_id' => $articleId,
@@ -240,6 +240,9 @@ class JobQueueService
             'meta' => $meta,
             'error_message' => '',
         ]);
+        if ($updated === 0) {
+            return;
+        }
 
         Task::query()->whereKey($taskId)->update([
             'last_run_at' => now(),
@@ -280,13 +283,16 @@ class JobQueueService
             'available_at' => $shouldRetry ? $nextAvailableAt->toDateTimeString() : ($runMeta['available_at'] ?? ''),
         ]);
 
-        TaskRun::query()->whereKey($jobId)->update([
+        $updated = TaskRun::query()->whereKey($jobId)->where('status', 'running')->update([
             'status' => $shouldRetry ? 'pending' : 'failed',
             'error_message' => $errorMessage,
             'duration_ms' => $durationMs,
             'finished_at' => $shouldRetry ? null : now(),
             'meta' => $newMeta,
         ]);
+        if ($updated === 0) {
+            return;
+        }
 
         Task::query()->whereKey($taskId)->update([
             'last_run_at' => now(),
@@ -307,12 +313,15 @@ class JobQueueService
      */
     public function cancelJob(int $jobId, int $taskId, string $reason = '管理员手动停止'): void
     {
-        TaskRun::query()->whereKey($jobId)->update([
+        $updated = TaskRun::query()->whereKey($jobId)->whereIn('status', ['pending', 'running'])->update([
             'status' => 'cancelled',
             'finished_at' => now(),
             'error_message' => $reason,
             'duration_ms' => 0,
         ]);
+        if ($updated === 0) {
+            return;
+        }
 
         Task::query()->whereKey($taskId)->update([
             'last_run_at' => now(),
