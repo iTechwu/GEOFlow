@@ -56,7 +56,7 @@ final class McpController extends Controller
                 ]),
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
-                'tools/list' => $this->result($id, ['tools' => $this->tools()]),
+                'tools/list' => $this->result($id, ['tools' => $this->visibleTools($request)]),
                 'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $site, $distribution, $leads, $frontend, $system, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
@@ -308,6 +308,25 @@ final class McpController extends Controller
         }
 
         throw new \InvalidArgumentException('Unknown tool');
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function visibleTools(Request $request): array
+    {
+        $auth = $this->mcpAuth($request);
+
+        return array_values(array_filter(
+            $this->tools(),
+            function (array $tool) use ($auth): bool {
+                try {
+                    $this->authorizeTool($auth, (string) ($tool['name'] ?? ''));
+
+                    return true;
+                } catch (McpToolException) {
+                    return false;
+                }
+            },
+        ));
     }
 
     /**

@@ -155,6 +155,22 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.structuredContent.models', []);
     }
 
+    public function test_read_token_tool_discovery_hides_write_tools(): void
+    {
+        $this->enableMcp('ci-secret', 'ci-read');
+
+        $response = $this->withHeader('Authorization', 'Bearer ci-read')
+            ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list'])
+            ->assertOk();
+
+        $names = collect($response->json('result.tools'))->pluck('name')->all();
+        $this->assertContains('geoflow.catalog', $names);
+        $this->assertContains('geoflow.tasks.list', $names);
+        $this->assertNotContains('geoflow.tasks.create', $names);
+        $this->assertNotContains('geoflow.articles.publish', $names);
+        $this->assertNotContains('geoflow.jobs.cancel', $names);
+    }
+
     public function test_read_token_allows_tenant_scoped_analytics_read(): void
     {
         $this->enableMcp('ci-secret', 'ci-read');
