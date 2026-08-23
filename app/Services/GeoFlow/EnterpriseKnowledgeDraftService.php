@@ -242,6 +242,9 @@ final class EnterpriseKnowledgeDraftService
             'word_count' => mb_strlen(strip_tags($content), 'UTF-8'),
             'usage_count' => 0,
         ] + $metadata;
+        if (Schema::hasColumn('knowledge_bases', 'sso_team_id') && trim((string) ($project->sso_team_id ?? '')) !== '') {
+            $payload['sso_team_id'] = trim((string) $project->sso_team_id);
+        }
 
         $project->loadMissing('publishedKnowledgeBase');
         $knowledgeBase = $project->publishedKnowledgeBase;

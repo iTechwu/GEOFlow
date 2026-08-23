@@ -10,6 +10,7 @@ use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpAnalyticsService;
 use App\Services\Mcp\McpCapabilityService;
+use App\Services\Mcp\McpEnterpriseKnowledgeService;
 use App\Services\Mcp\McpIdempotencyService;
 use App\Services\Mcp\McpToolException;
 use App\Services\Mcp\McpToolInputValidator;
@@ -27,7 +28,7 @@ use Throwable;
  */
 final class McpController extends Controller
 {
-    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpToolInputValidator $inputValidator): JsonResponse|Response
+    public function __invoke(Request $request, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpToolInputValidator $inputValidator): JsonResponse|Response
     {
         $payload = $request->json()->all();
         if (! is_array($payload) || (string) ($payload['jsonrpc'] ?? '') !== '2.0') {
@@ -51,7 +52,7 @@ final class McpController extends Controller
                 'notifications/initialized' => $this->notification($id),
                 'ping' => $this->result($id, (object) []),
                 'tools/list' => $this->result($id, ['tools' => $this->tools()]),
-                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $inputValidator),
+                'tools/call' => $this->callTool($request, $id, $params, $catalog, $tasks, $articles, $materials, $urlImports, $capabilities, $analytics, $enterpriseKnowledge, $inputValidator),
                 default => $this->error($id, -32601, 'Method not found'),
             };
         } catch (McpToolException $exception) {
@@ -126,10 +127,15 @@ final class McpController extends Controller
             ['name' => 'geoflow.url_import.status', 'description' => 'Read a tenant-scoped URL import status and redacted preview.', 'inputSchema' => ['type' => 'object', 'properties' => ['job_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['job_id'], 'additionalProperties' => false]],
             ['name' => 'geoflow.url_import.commit', 'description' => 'Commit a completed URL import preview into tenant-scoped knowledge, keyword, and title libraries. Requires confirmation=IMPORT.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['job_id' => ['type' => 'integer', 'minimum' => 1], 'confirmation' => ['type' => 'string', 'enum' => ['IMPORT']]], $idempotency), 'required' => ['job_id', 'confirmation'], 'additionalProperties' => false]],
             ['name' => 'geoflow.analytics.overview', 'description' => 'Read tenant-scoped aggregate production, task, article, distribution, URL import, and traffic metrics. Raw IP, UA, prompts, content, and shared model usage are excluded.', 'inputSchema' => ['type' => 'object', 'properties' => ['preset' => ['type' => 'string', 'enum' => ['today', 'yesterday', '7d', '30d', '90d', 'custom']], 'date_from' => ['type' => 'string'], 'date_to' => ['type' => 'string'], 'task_id' => ['type' => 'integer', 'minimum' => 1], 'category_id' => ['type' => 'integer', 'minimum' => 1], 'article_id' => ['type' => 'integer', 'minimum' => 1], 'traffic_type' => ['type' => 'string', 'enum' => ['all', 'human', 'search_bot', 'ai_bot', 'other_bot', 'unknown']], 'log_source' => ['type' => 'string', 'enum' => ['all', 'local', 'server', 'channel']]], 'additionalProperties' => false]],
+            ['name' => 'geoflow.enterprise_knowledge.create', 'description' => 'Create a tenant-scoped enterprise knowledge draft from text and queue AI generation.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['name' => ['type' => 'string'], 'description' => ['type' => 'string'], 'content' => ['type' => 'string']], $idempotency), 'required' => ['name', 'content'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.enterprise_knowledge.status', 'description' => 'Read a tenant-scoped enterprise knowledge generation status and bounded draft preview.', 'inputSchema' => ['type' => 'object', 'properties' => ['project_id' => ['type' => 'integer', 'minimum' => 1]], 'required' => ['project_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.enterprise_knowledge.validate', 'description' => 'Validate a tenant-scoped enterprise knowledge draft against GEO safety and completeness rules.', 'inputSchema' => ['type' => 'object', 'properties' => ['project_id' => ['type' => 'integer', 'minimum' => 1], 'content' => ['type' => 'string']], 'required' => ['project_id'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.enterprise_knowledge.autosave', 'description' => 'Save a tenant-scoped enterprise knowledge draft and validation result.', 'inputSchema' => ['type' => 'object', 'properties' => ['project_id' => ['type' => 'integer', 'minimum' => 1], 'content' => ['type' => 'string']], 'required' => ['project_id', 'content'], 'additionalProperties' => false]],
+            ['name' => 'geoflow.enterprise_knowledge.publish', 'description' => 'Publish a reviewed tenant-scoped enterprise knowledge draft into a tenant knowledge base. Requires confirmation=PUBLISH.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['project_id' => ['type' => 'integer', 'minimum' => 1], 'confirmation' => ['type' => 'string', 'enum' => ['PUBLISH']]], $idempotency), 'required' => ['project_id', 'confirmation'], 'additionalProperties' => false]],
         ];
     }
 
-    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpToolInputValidator $inputValidator): JsonResponse
+    private function callTool(Request $request, mixed $id, array $params, CatalogGeoFlowService $catalog, TaskLifecycleService $tasks, ArticleGeoFlowService $articles, MaterialLibraryService $materials, McpUrlImportService $urlImports, McpCapabilityService $capabilities, McpAnalyticsService $analytics, McpEnterpriseKnowledgeService $enterpriseKnowledge, McpToolInputValidator $inputValidator): JsonResponse
     {
         $auth = $this->mcpAuth($request);
         $name = (string) ($params['name'] ?? '');
@@ -225,6 +231,11 @@ final class McpController extends Controller
                 return $urlImports->commit((int) $args['job_id'], $auth);
             }),
             'geoflow.analytics.overview' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $analytics->overview($args, $auth)),
+            'geoflow.enterprise_knowledge.create' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $enterpriseKnowledge->create($args, $auth)),
+            'geoflow.enterprise_knowledge.status' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $enterpriseKnowledge->status((int) $args['project_id'], $auth)),
+            'geoflow.enterprise_knowledge.validate' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $enterpriseKnowledge->validate($args, $auth)),
+            'geoflow.enterprise_knowledge.autosave' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $enterpriseKnowledge->autosave($args, $auth)),
+            'geoflow.enterprise_knowledge.publish' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $enterpriseKnowledge->publish((int) $args['project_id'], (string) $args['confirmation'], $auth)),
             default => throw new \InvalidArgumentException('Unknown tool'),
         };
 
@@ -446,6 +457,7 @@ final class McpController extends Controller
             $tool === 'geoflow.catalog' => 'catalog:read',
             $tool === 'geoflow.capabilities' => 'catalog:read',
             $tool === 'geoflow.analytics.overview' => 'analytics:read',
+            str_starts_with($tool, 'geoflow.enterprise_knowledge.') => $tool === 'geoflow.enterprise_knowledge.status' ? 'materials:read' : 'materials:write',
             default => null,
         };
 

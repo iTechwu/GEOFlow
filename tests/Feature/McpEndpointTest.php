@@ -9,6 +9,7 @@ use App\Services\GeoFlow\CatalogGeoFlowService;
 use App\Services\GeoFlow\MaterialLibraryService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use App\Services\Mcp\McpAnalyticsService;
+use App\Services\Mcp\McpEnterpriseKnowledgeService;
 use App\Services\Mcp\McpUrlImportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -160,6 +161,27 @@ class McpEndpointTest extends TestCase
             ->assertOk()
             ->assertJsonPath('result.structuredContent.tenant_id', 'team-a')
             ->assertJsonPath('result.structuredContent.kpis.articles', 2);
+    }
+
+    public function test_enterprise_knowledge_workflow_requires_explicit_publish_confirmation(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        $this->mockServices();
+        $knowledge = Mockery::mock(McpEnterpriseKnowledgeService::class);
+        app()->instance(McpEnterpriseKnowledgeService::class, $knowledge);
+        $knowledge->shouldReceive('create')->once()->andReturn(['id' => 12, 'status' => 'queued']);
+        $knowledge->shouldReceive('publish')->once()->with(12, 'PUBLISH', Mockery::type(McpAuthContext::class))->andReturn(['project_id' => 12, 'status' => 'published', 'knowledge_base_id' => 8]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.create', ['name' => 'Company', 'content' => 'Source text']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.id', 12);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.publish', ['project_id' => 12, 'confirmation' => 'PUBLISH']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.status', 'published');
     }
 
     public function test_system_token_uses_configured_default_tenant_scope(): void

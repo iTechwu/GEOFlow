@@ -19,6 +19,7 @@ class EnterpriseKnowledgeProject extends Model
         'ai_model_id',
         'error_message',
         'created_by_admin_id',
+        'sso_team_id',
     ];
 
     protected function casts(): array

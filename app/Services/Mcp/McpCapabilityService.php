@@ -61,6 +61,19 @@ final class McpCapabilityService
                     'permission' => 'analytics:read',
                     'notes' => '仅返回按租户过滤的聚合指标；不返回原始访问日志、IP/UA、AI prompt、正文、线索或共享模型用量。',
                 ],
+                [
+                    'domain' => 'enterprise_knowledge',
+                    'status' => 'available',
+                    'tools' => [
+                        'geoflow.enterprise_knowledge.create',
+                        'geoflow.enterprise_knowledge.status',
+                        'geoflow.enterprise_knowledge.validate',
+                        'geoflow.enterprise_knowledge.autosave',
+                        'geoflow.enterprise_knowledge.publish',
+                    ],
+                    'permission' => 'materials:read/materials:write',
+                    'notes' => '文本创建 → 异步生成 → status/validate/autosave → confirmation=PUBLISH 发布；文件上传、图片编辑和删除仍走 Admin。',
+                ],
             ],
             'admin_only' => [
                 [
@@ -68,12 +81,6 @@ final class McpCapabilityService
                     'status' => 'tenant_scope_required',
                     'route' => 'admin.distribution.*',
                     'reason' => '渠道和密钥是实例级资源；分发写操作还会产生远程站点副作用。',
-                ],
-                [
-                    'domain' => 'enterprise_knowledge',
-                    'status' => 'tenant_scope_required',
-                    'route' => 'admin.enterprise-knowledge.*',
-                    'reason' => '项目、修订和来源模型尚无租户归属，发布会创建知识库和分块。',
                 ],
                 [
                     'domain' => 'leads',
