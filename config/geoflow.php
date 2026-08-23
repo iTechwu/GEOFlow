@@ -121,6 +121,8 @@ return [
     'mcp_token' => trim((string) env('GEOFLOW_MCP_TOKEN', '')),
     // 可选只读令牌：仅允许 catalog / tasks.list / tasks.get，拒绝所有写工具。
     'mcp_read_token' => trim((string) env('GEOFLOW_MCP_READ_TOKEN', '')),
+    // 系统令牌的默认 SSO team；留空时保持跨租户系统令牌语义。
+    'mcp_default_tenant' => trim((string) env('GEOFLOW_MCP_DEFAULT_TENANT', '')),
     'mcp_server_name' => trim((string) env('GEOFLOW_MCP_SERVER_NAME', 'geoflow')),
     // 系统令牌执行文章风险/审核/发布时使用的审计管理员；不配置则禁止这些需要管理员身份的操作。
     'mcp_audit_admin_id' => max(0, (int) env('GEOFLOW_MCP_AUDIT_ADMIN_ID', 0)),

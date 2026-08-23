@@ -112,6 +112,19 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.structuredContent.models', []);
     }
 
+    public function test_system_token_uses_configured_default_tenant_scope(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'sso-team-default']);
+        [$catalog] = $this->mockServices();
+        $catalog->shouldReceive('getCatalog')->once()->with('sso-team-default')->andReturn(['models' => []]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.catalog', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.models', []);
+    }
+
     public function test_read_token_rejects_write_tools(): void
     {
         $this->enableMcp('ci-secret', 'ci-read');

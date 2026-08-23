@@ -16,7 +16,7 @@ use Throwable;
  * 1. Deployment bearer tokens (system / cross-tenant):
  *    - GEOFLOW_MCP_TOKEN      -> write scope.
  *    - GEOFLOW_MCP_READ_TOKEN -> read scope (optional).
- *    tenantId 为 null，用于运维/CI 引导，不受租户隔离限制。
+ *    tenantId 默认为空（跨租户），也可通过 GEOFLOW_MCP_DEFAULT_TENANT 固定到单一 team。
  *
  * 2. SSO access token (tenant-scoped, "以 SSO 为准"):
  *    - Resolved through {@see SsoOidcClient::userInfoClaims()} and synced via
@@ -65,10 +65,23 @@ final class AuthenticateMcpToken
 
         if ($writeToken !== '' && hash_equals($writeToken, $provided)) {
             $auditAdminId = (int) config('geoflow.mcp_audit_admin_id', 0);
-            return new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $writeToken), null, $auditAdminId > 0 ? $auditAdminId : null);
+            $defaultTenant = trim((string) config('geoflow.mcp_default_tenant', ''));
+
+            return new McpAuthContext(
+                McpAuthContext::SCOPE_WRITE,
+                hash('sha256', $writeToken),
+                $defaultTenant !== '' ? $defaultTenant : null,
+                $auditAdminId > 0 ? $auditAdminId : null,
+            );
         }
         if ($readToken !== '' && hash_equals($readToken, $provided)) {
-            return new McpAuthContext(McpAuthContext::SCOPE_READ, hash('sha256', $readToken), null);
+            $defaultTenant = trim((string) config('geoflow.mcp_default_tenant', ''));
+
+            return new McpAuthContext(
+                McpAuthContext::SCOPE_READ,
+                hash('sha256', $readToken),
+                $defaultTenant !== '' ? $defaultTenant : null,
+            );
         }
 
         return null;

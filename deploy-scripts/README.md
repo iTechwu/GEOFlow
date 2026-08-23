@@ -99,6 +99,7 @@ bash geoflow-docker-deploy.sh
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` 默认值 | 是否开放 `/mcp`；开启时必须同时提供 Token |
 | `GEOFLOW_MCP_TOKEN` | MCP 开启时必填 | MCP 全量（读+写）Bearer Token |
 | `GEOFLOW_MCP_READ_TOKEN` | 可选 | MCP 只读 Bearer Token（仅 catalog / tasks.list / tasks.get） |
+| `GEOFLOW_MCP_DEFAULT_TENANT` | 可选 | 系统 MCP Token 默认绑定的 SSO team ID；留空时允许跨租户 |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | 反向代理、CDN、二级目录部署时的可信代理设置 |
 | `GEOFLOW_SELF_DELETE` | `0` | 设置为 `1` 时，部署成功后删除当前执行的部署脚本 |
 
@@ -281,6 +282,7 @@ Optional variables:
 | `GEOFLOW_MCP_ENABLED` | `.env.prod` default | Whether to open `/mcp`; a Token is required when enabled |
 | `GEOFLOW_MCP_TOKEN` | required when MCP enabled | MCP full (read+write) Bearer Token |
 | `GEOFLOW_MCP_READ_TOKEN` | optional | MCP read-only Bearer Token (catalog / tasks.list / tasks.get only) |
+| `GEOFLOW_MCP_DEFAULT_TENANT` | optional | SSO team ID used as the default scope for system MCP tokens; empty allows cross-tenant access |
 | `GEOFLOW_TRUSTED_PROXIES` | `*` | Trusted proxy setting for reverse proxy/CDN/subdirectory deployments |
 | `GEOFLOW_SELF_DELETE` | `0` | Set to `1` to remove the deployment script after a successful deployment |
 
