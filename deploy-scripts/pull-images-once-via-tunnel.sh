@@ -79,9 +79,9 @@ read_images_from_env() {
   fi
   if [[ ${#images[@]} -eq 0 ]]; then
     images=(
-      composer:2.10.2
+      uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm
       uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
-      nginx:1.31.1-alpine
+      uhub.service.ucloud.cn/techwu/nginx:1.31.1-alpine
     )
   fi
   printf '%s\n' "${images[@]}" | awk '!seen[$0]++'

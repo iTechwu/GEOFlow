@@ -389,13 +389,58 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('ARG COMPOSER_VERSION=2.10.2', $dockerfile);
         $this->assertStringContainsString('ARG COMPOSER_SHA256=5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027', $dockerfile);
         $this->assertStringContainsString('getcomposer.org/download/${COMPOSER_VERSION}/composer.phar', $dockerfile);
+        $this->assertStringContainsString('curl --http1.1 -fsSL --retry 5 --retry-all-errors --connect-timeout 20 --max-time 90', $dockerfile);
+        $this->assertStringContainsString('apt-get -o Acquire::Retries=5 update', $dockerfile);
         $this->assertStringContainsString('sha256sum -c -', $dockerfile);
         $this->assertStringContainsString('COMPOSER_VERSION: ${COMPOSER_VERSION:-2.10.2}', $compose);
         $this->assertStringContainsString('COMPOSER_SHA256: ${COMPOSER_SHA256:-5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027}', $compose);
         $this->assertStringContainsString('--build-arg COMPOSER_VERSION="${COMPOSER_VERSION}"', $buildScript);
         $this->assertStringContainsString('--build-arg COMPOSER_SHA256="${COMPOSER_SHA256}"', $buildScript);
+        $this->assertStringContainsString('--build-arg COMPOSER_PACKAGIST_MIRROR="${COMPOSER_PACKAGIST_MIRROR}"', $buildScript);
         $this->assertStringContainsString('RUN composer --version', $dockerfile);
+        $this->assertStringNotContainsString('ADD https://getcomposer.org', $dockerfile);
         $this->assertStringNotContainsString('getcomposer.org/download/latest-stable', $dockerfile);
+    }
+
+    public function test_production_build_sources_use_consistent_enterprise_registry_defaults(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $composerBase = 'uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm';
+        $nginxBase = 'uhub.service.ucloud.cn/techwu/nginx:1.31.1-alpine';
+        $files = [
+            'docker/Dockerfile.prod',
+            'docker/nginx/Dockerfile.prod',
+            'docker-compose.prod.yml',
+            '.env.prod.example',
+            'deploy-scripts/build-and-push-amd64-images.sh',
+            'deploy-scripts/pull-images-once-via-tunnel.sh',
+            'deploy-scripts/sync-images-from-local.sh',
+        ];
+
+        foreach ($files as $file) {
+            $contents = file_get_contents($root.'/'.$file);
+            $this->assertIsString($contents);
+            $this->assertStringNotContainsString('composer:2.10.2', $contents, $file);
+            $this->assertStringNotContainsString('nginx:1.27-alpine', $contents, $file);
+        }
+
+        foreach (['docker/Dockerfile.prod', 'docker-compose.prod.yml', '.env.prod.example', 'deploy-scripts/build-and-push-amd64-images.sh', 'deploy-scripts/pull-images-once-via-tunnel.sh', 'deploy-scripts/sync-images-from-local.sh'] as $file) {
+            $contents = file_get_contents($root.'/'.$file);
+            $this->assertIsString($contents);
+            $this->assertStringContainsString($composerBase, $contents, $file);
+        }
+
+        foreach (['docker/nginx/Dockerfile.prod', 'docker-compose.prod.yml', '.env.prod.example', 'deploy-scripts/build-and-push-amd64-images.sh', 'deploy-scripts/pull-images-once-via-tunnel.sh', 'deploy-scripts/sync-images-from-local.sh'] as $file) {
+            $contents = file_get_contents($root.'/'.$file);
+            $this->assertIsString($contents);
+            $this->assertStringContainsString($nginxBase, $contents, $file);
+        }
+
+        foreach (['docker/Dockerfile.prod', 'docker-compose.prod.yml', '.env.prod.example', 'deploy-scripts/build-and-push-amd64-images.sh'] as $file) {
+            $contents = file_get_contents($root.'/'.$file);
+            $this->assertIsString($contents);
+            $this->assertStringContainsString('https://mirrors.aliyun.com/composer', $contents, $file);
+        }
     }
 
     public function test_production_image_verifies_the_pinned_pecl_redis_archive(): void
@@ -412,6 +457,7 @@ class DistributionQueueConfigurationTest extends TestCase
             $this->assertStringContainsString($sha256, $contents);
         }
         $this->assertStringContainsString('ARG PECL_REDIS_SHA256=', $dockerfile);
+        $this->assertStringContainsString('curl --http1.1 -fsSL --retry 5 --retry-all-errors --connect-timeout 20 --max-time 120', $dockerfile);
         $this->assertStringContainsString('echo "${PECL_REDIS_SHA256}  /tmp/redis.tgz" | sha256sum -c -', $dockerfile);
         $this->assertStringContainsString('--build-arg PECL_REDIS_SHA256="${PECL_REDIS_SHA256}"', $buildScript);
     }

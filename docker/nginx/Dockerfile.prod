@@ -1,4 +1,4 @@
-ARG NGINX_IMAGE=nginx:1.27-alpine
+ARG NGINX_IMAGE=uhub.service.ucloud.cn/techwu/nginx:1.31.1-alpine
 ARG NODE_IMAGE=uhub.service.ucloud.cn/techwu/node:24-bookworm-slim
 
 FROM ${NODE_IMAGE} AS assets

@@ -1,4 +1,4 @@
-ARG COMPOSER_IMAGE=composer:2.10.2
+ARG COMPOSER_IMAGE=uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm
 ARG NODE_IMAGE=uhub.service.ucloud.cn/techwu/node:24-bookworm-slim
 ARG COMPOSER_VERSION=2.10.2
 ARG COMPOSER_SHA256=5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027
@@ -22,31 +22,41 @@ ENV HTTP_PROXY=${HTTP_PROXY} \
 
 WORKDIR /app
 
-# 不信任基础镜像内可能漂移或损坏的 PHAR；固定官方发布版本并在使用前校验内容。
-ADD https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar /tmp/composer.phar
-RUN echo "${COMPOSER_SHA256}  /tmp/composer.phar" | sha256sum -c - \
- && install -m 0755 /tmp/composer.phar /usr/local/bin/composer \
- && rm -f /tmp/composer.phar
-
-RUN composer --version
-
-# Composer 基础镜像可能使用 Alpine 或 Debian，按实际包管理器安装解压工具。
+# 允许部署方覆盖构建基础镜像，并按其包管理器安装 Composer 解压依赖。
 RUN set -eux; \
     if command -v apk >/dev/null 2>&1; then \
         if [ -f /etc/apk/repositories ]; then \
             sed -i 's|dl-cdn.alpinelinux.org|mirrors.aliyun.com|g' /etc/apk/repositories; \
         fi; \
-        apk add --no-cache unzip; \
+        apk add --no-cache ca-certificates curl unzip; \
     elif command -v apt-get >/dev/null 2>&1; then \
-        apt-get update; \
-        apt-get install -y --no-install-recommends unzip; \
+        if [ -f /etc/apt/sources.list.d/debian.sources ]; then \
+            sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources; \
+            sed -i 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list.d/debian.sources; \
+        elif [ -f /etc/apt/sources.list ]; then \
+            sed -i 's|deb.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list; \
+            sed -i 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list; \
+        fi; \
+        apt-get -o Acquire::Retries=5 update; \
+        apt-get install -y --no-install-recommends ca-certificates curl unzip; \
         rm -rf /var/lib/apt/lists/*; \
     else \
         echo 'No supported package manager found for Composer dependencies' >&2; \
         exit 1; \
     fi
 
-ARG COMPOSER_PACKAGIST_MIRROR=
+# BuildKit 远程 ADD 没有应用级重试；容器内下载可复用代理并对瞬时 TLS 错误重试。
+# 不信任基础镜像内可能漂移或损坏的 PHAR，固定官方发布版本并在使用前校验内容。
+RUN curl --http1.1 -fsSL --retry 5 --retry-all-errors --connect-timeout 20 --max-time 90 \
+        "https://getcomposer.org/download/${COMPOSER_VERSION}/composer.phar" \
+        -o /tmp/composer.phar \
+ && echo "${COMPOSER_SHA256}  /tmp/composer.phar" | sha256sum -c - \
+ && install -m 0755 /tmp/composer.phar /usr/local/bin/composer \
+ && rm -f /tmp/composer.phar
+
+RUN composer --version
+
+ARG COMPOSER_PACKAGIST_MIRROR=https://mirrors.aliyun.com/composer
 ENV COMPOSER_ALLOW_SUPERUSER=1 \
     COMPOSER_MEMORY_LIMIT=-1 \
     COMPOSER_PROCESS_TIMEOUT=2000
@@ -118,7 +128,7 @@ RUN set -eux; \
         sed -i 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list; \
     fi
 
-RUN apt-get update \
+RUN apt-get -o Acquire::Retries=5 update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
         curl \
@@ -142,7 +152,8 @@ RUN apt-get update \
         pdo_pgsql \
         pdo_sqlite \
         zip \
-    && curl -fsSL "https://pecl.php.net/get/redis-${PECL_REDIS_VERSION}.tgz" -o /tmp/redis.tgz \
+    && curl --http1.1 -fsSL --retry 5 --retry-all-errors --connect-timeout 20 --max-time 120 \
+        "https://pecl.php.net/get/redis-${PECL_REDIS_VERSION}.tgz" -o /tmp/redis.tgz \
     && echo "${PECL_REDIS_SHA256}  /tmp/redis.tgz" | sha256sum -c - \
     && pecl install /tmp/redis.tgz \
     && docker-php-ext-enable redis \

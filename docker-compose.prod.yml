@@ -2,13 +2,13 @@
 name: geoflow-laravel-prod
 
 x-prod-app-build-args: &prod_app_build_args
-  COMPOSER_IMAGE: ${COMPOSER_IMAGE:-composer:2.10.2}
+  COMPOSER_IMAGE: ${COMPOSER_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
   COMPOSER_VERSION: ${COMPOSER_VERSION:-2.10.2}
   COMPOSER_SHA256: ${COMPOSER_SHA256:-5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027}
   PHP_FPM_IMAGE: ${PHP_FPM_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm}
   PECL_REDIS_VERSION: ${PECL_REDIS_VERSION:-6.3.0}
   PECL_REDIS_SHA256: ${PECL_REDIS_SHA256:-0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5}
-  COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
+  COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-https://mirrors.aliyun.com/composer}
   HTTP_PROXY: ${DOCKER_BUILD_HTTP_PROXY:-}
   HTTPS_PROXY: ${DOCKER_BUILD_HTTPS_PROXY:-${DOCKER_BUILD_HTTP_PROXY:-}}
   NO_PROXY: ${DOCKER_BUILD_NO_PROXY:-localhost,127.0.0.1,::1,dofe-postgres,dofe-redis}
@@ -54,7 +54,7 @@ services:
       dockerfile: docker/nginx/Dockerfile.prod
       network: ${DOCKER_BUILD_NETWORK:-default}
       args:
-        NGINX_IMAGE: ${NGINX_IMAGE:-nginx:1.27-alpine}
+        NGINX_IMAGE: ${NGINX_IMAGE:-uhub.service.ucloud.cn/techwu/nginx:1.31.1-alpine}
     container_name: geoflow-web-prod
     ports:
       - "127.0.0.1:${WEB_PORT:-18080}:80"

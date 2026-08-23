@@ -20,9 +20,9 @@ if [[ -z "${ECS_HOST}" ]]; then
 fi
 
 default_images=(
-  composer:2.10.2
+  uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm
   uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
-  nginx:1.31.1-alpine
+  uhub.service.ucloud.cn/techwu/nginx:1.31.1-alpine
 )
 
 read_images() {
