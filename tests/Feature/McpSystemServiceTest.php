@@ -19,6 +19,7 @@ class McpSystemServiceTest extends TestCase
         $this->assertTrue($result['database']['reachable']);
         $this->assertArrayHasKey('pending_count', $result['migrations']);
         $this->assertArrayHasKey('gd', $result['extensions']);
+        $this->assertFalse($result['mcp']['audit_admin_configured']);
         $this->assertArrayNotHasKey('host', $result['database']);
     }
 

@@ -23,6 +23,7 @@ class McpSystemService
                 'enabled' => (bool) config('geoflow.mcp_enabled', false),
                 'scope' => $auth->scope,
                 'tenant_mode' => $auth->tenantId !== null && $auth->tenantId !== '' ? 'tenant_scoped' : 'system_scoped',
+                'audit_admin_configured' => $auth->auditAdminId !== null && $auth->auditAdminId > 0,
             ],
             'application' => [
                 'environment' => (string) app()->environment(),

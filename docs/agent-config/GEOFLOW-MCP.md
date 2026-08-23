@@ -100,8 +100,9 @@ The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX
 ### System Diagnostics Workflow
 
 1. Call `geoflow.system.status` after deployment or when a queue/task operation behaves unexpectedly.
-2. Check `database.reachable`, `queue.driver`, `migrations.pending_count`, and required PHP extension flags.
-3. The tool intentionally excludes hosts, credentials, filesystem paths, raw exceptions, update plans, and shell execution.
+2. Check `database.reachable`, `queue.driver`, `migrations.pending_count`, required PHP extension flags, and `mcp.audit_admin_configured`.
+3. For a deployment-level write token, set `GEOFLOW_MCP_AUDIT_ADMIN_ID` so enterprise knowledge, lead status changes, URL imports, and other writes retain a concrete admin attribution. Article review/publish already reject a system token without it.
+4. The tool intentionally excludes hosts, credentials, filesystem paths, raw exceptions, update plans, and shell execution.
 
 ## Deliberate Boundaries
 
