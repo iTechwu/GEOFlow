@@ -71,6 +71,7 @@ final class McpCapabilityService
                         'geoflow.enterprise_knowledge.validate',
                         'geoflow.enterprise_knowledge.autosave',
                         'geoflow.enterprise_knowledge.publish',
+                        'geoflow.enterprise_knowledge.delete',
                     ],
                     'permission' => 'materials:read/materials:write',
                     'notes' => '文本创建 → 异步生成 → status/validate/autosave → confirmation=PUBLISH 发布；文件上传、图片编辑和删除仍走 Admin。',

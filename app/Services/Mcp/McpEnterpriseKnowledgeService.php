@@ -7,8 +7,10 @@ use App\Http\McpAuthContext;
 use App\Jobs\GenerateEnterpriseKnowledgeDraftJob;
 use App\Models\EnterpriseKnowledgeProject;
 use App\Models\EnterpriseKnowledgeRevision;
+use App\Models\KnowledgeBase;
 use App\Services\GeoFlow\EnterpriseKnowledgeDraftService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class McpEnterpriseKnowledgeService
@@ -156,6 +158,48 @@ class McpEnterpriseKnowledgeService
                 'chunk_error' => $result['chunk_error'] !== null ? '知识库已发布，但分块同步失败' : null,
             ];
         });
+    }
+
+    public function delete(int $projectId, string $confirmation, McpAuthContext $auth): array
+    {
+        if ($confirmation !== 'DELETE') {
+            throw new McpToolException('删除企业知识必须提供 confirmation=DELETE');
+        }
+        $teamId = $this->requiredTenant($auth);
+
+        $result = DB::transaction(function () use ($projectId, $teamId): array {
+            $project = EnterpriseKnowledgeProject::query()
+                ->whereKey($projectId)
+                ->where('sso_team_id', $teamId)
+                ->lockForUpdate()
+                ->first();
+            if (! $project) {
+                throw new ApiException('enterprise_knowledge_not_found', '企业知识项目不存在', 404);
+            }
+
+            $knowledgeBaseId = $project->published_knowledge_base_id !== null
+                ? (int) $project->published_knowledge_base_id
+                : null;
+            $knowledgeBase = $knowledgeBaseId !== null
+                ? KnowledgeBase::query()->whereKey($knowledgeBaseId)->where('sso_team_id', $teamId)->lockForUpdate()->first()
+                : null;
+            if ($knowledgeBase && ($knowledgeBase->tasks()->exists() || $knowledgeBase->linkedTasks()->exists())) {
+                throw new ApiException('enterprise_knowledge_in_use', '企业知识已被任务引用，不能删除', 409);
+            }
+
+            $project->delete();
+            $knowledgeBase?->delete();
+
+            return [
+                'project_id' => $projectId,
+                'knowledge_base_id' => $knowledgeBaseId,
+                'deleted' => true,
+            ];
+        });
+
+        Storage::disk('public')->deleteDirectory('uploads/enterprise-knowledge/'.$projectId);
+
+        return $result;
     }
 
     private function find(int $projectId, string $teamId): EnterpriseKnowledgeProject

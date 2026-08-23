@@ -90,6 +90,50 @@ class McpEnterpriseKnowledgeServiceTest extends TestCase
         $service->publish((int) $project->id, 'YES', $this->auth('team-a'));
     }
 
+    public function test_delete_requires_confirmation_and_removes_tenant_project_with_published_knowledge(): void
+    {
+        $knowledgeBase = KnowledgeBase::query()->create([
+            'name' => 'Disposable knowledge',
+            'content' => '# Content',
+            'sso_team_id' => 'team-a',
+        ]);
+        $knowledgeBase->chunks()->create(['chunk_index' => 0, 'content' => 'Chunk']);
+        $project = EnterpriseKnowledgeProject::query()->create([
+            'name' => 'Disposable project',
+            'status' => 'published',
+            'published_knowledge_base_id' => (int) $knowledgeBase->id,
+            'sso_team_id' => 'team-a',
+        ]);
+        $service = new McpEnterpriseKnowledgeService(app(EnterpriseKnowledgeDraftService::class));
+
+        try {
+            $service->delete((int) $project->id, 'YES', $this->auth('team-a'));
+            $this->fail('Delete should require explicit confirmation.');
+        } catch (McpToolException) {
+            $this->addToAssertionCount(1);
+        }
+
+        $result = $service->delete((int) $project->id, 'DELETE', $this->auth('team-a'));
+
+        $this->assertSame(['project_id' => (int) $project->id, 'knowledge_base_id' => (int) $knowledgeBase->id, 'deleted' => true], $result);
+        $this->assertDatabaseMissing('enterprise_knowledge_projects', ['id' => (int) $project->id]);
+        $this->assertDatabaseMissing('knowledge_bases', ['id' => (int) $knowledgeBase->id]);
+        $this->assertDatabaseMissing('knowledge_chunks', ['knowledge_base_id' => (int) $knowledgeBase->id]);
+    }
+
+    public function test_delete_cannot_remove_another_tenant_project(): void
+    {
+        $project = EnterpriseKnowledgeProject::query()->create([
+            'name' => 'Team B project',
+            'status' => 'reviewing',
+            'sso_team_id' => 'team-b',
+        ]);
+        $service = new McpEnterpriseKnowledgeService(app(EnterpriseKnowledgeDraftService::class));
+
+        $this->expectException(ApiException::class);
+        $service->delete((int) $project->id, 'DELETE', $this->auth('team-a'));
+    }
+
     public function test_generation_in_progress_rejects_review_and_publish_operations(): void
     {
         $project = EnterpriseKnowledgeProject::query()->create([

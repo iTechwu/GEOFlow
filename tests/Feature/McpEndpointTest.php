@@ -233,6 +233,7 @@ class McpEndpointTest extends TestCase
         app()->instance(McpEnterpriseKnowledgeService::class, $knowledge);
         $knowledge->shouldReceive('create')->once()->andReturn(['id' => 12, 'status' => 'queued']);
         $knowledge->shouldReceive('publish')->once()->with(12, 'PUBLISH', Mockery::type(McpAuthContext::class))->andReturn(['project_id' => 12, 'status' => 'published', 'knowledge_base_id' => 8]);
+        $knowledge->shouldReceive('delete')->once()->with(12, 'DELETE', Mockery::type(McpAuthContext::class))->andReturn(['project_id' => 12, 'knowledge_base_id' => 8, 'deleted' => true]);
 
         $this->withHeader('Authorization', 'Bearer ci-secret')
             ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.create', ['name' => 'Company', 'content' => 'Source text']))
@@ -243,6 +244,11 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.publish', ['project_id' => 12, 'confirmation' => 'PUBLISH']))
             ->assertOk()
             ->assertJsonPath('result.structuredContent.status', 'published');
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.enterprise_knowledge.delete', ['project_id' => 12, 'confirmation' => 'DELETE']))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.deleted', true);
     }
 
     public function test_published_site_search_is_exposed_as_a_tenant_scoped_read_tool(): void
