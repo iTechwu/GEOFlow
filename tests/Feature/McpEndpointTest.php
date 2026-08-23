@@ -96,8 +96,11 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list'])
             ->assertOk()
             ->assertJsonPath('result.tools.0.name', 'geoflow.catalog')
+            ->assertJsonPath('result.tools.2.inputSchema.properties.image_library_id.anyOf.0.type', 'integer')
+            ->assertJsonPath('result.tools.2.inputSchema.properties.image_library_id.anyOf.1.type', 'null')
             ->assertJsonPath('result.tools.6.name', 'geoflow.tasks.enqueue')
-            ->assertJsonPath('result.tools.7.name', 'geoflow.articles.list');
+            ->assertJsonPath('result.tools.7.name', 'geoflow.articles.list')
+            ->assertJsonPath('result.tools.9.inputSchema.properties.task_id.anyOf.1.type', 'null');
     }
 
     public function test_read_token_allows_read_tools(): void
