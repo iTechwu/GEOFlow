@@ -7,6 +7,8 @@ use App\Http\McpAuthContext;
 use App\Jobs\ProcessMcpUrlImportJob;
 use App\Models\UrlImportJob;
 use App\Services\GeoFlow\UrlImportProcessingService;
+use Illuminate\Contracts\Cache\LockTimeoutException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -19,15 +21,6 @@ class McpUrlImportService
     {
         $teamId = $this->requiredTenant($auth);
         $normalized = $this->processor->normalizeInputUrl((string) ($input['url'] ?? ''));
-        $activeJobs = UrlImportJob::query()
-            ->where('sso_team_id', $teamId)
-            ->whereIn('status', ['queued', 'running'])
-            ->count();
-        if ($activeJobs >= (int) config('geoflow.mcp_url_import_max_active', 3)) {
-            throw new ApiException('url_import_rate_limited', '当前租户 URL 导入任务已达到并发上限', 429, [
-                'max_active' => (int) config('geoflow.mcp_url_import_max_active', 3),
-            ]);
-        }
         $outputs = array_values(array_unique(array_filter(
             is_array($input['outputs'] ?? null) ? $input['outputs'] : ['knowledge', 'keywords', 'titles'],
             static fn ($output): bool => is_string($output) && in_array($output, ['knowledge', 'keywords', 'titles'], true),
@@ -36,28 +29,54 @@ class McpUrlImportService
             $outputs = ['knowledge', 'keywords', 'titles'];
         }
 
-        $job = UrlImportJob::query()->create([
-            'url' => (string) ($input['url'] ?? ''),
-            'normalized_url' => $normalized['url'],
-            'source_domain' => $normalized['host'],
-            'page_title' => (string) ($input['project_name'] ?? ''),
-            'status' => 'queued',
-            'current_step' => 'queued',
-            'progress_percent' => 0,
-            'options_json' => json_encode([
-                'project_name' => (string) ($input['project_name'] ?? ''),
-                'source_label' => (string) ($input['source_label'] ?? ''),
-                'content_language' => (string) ($input['content_language'] ?? ''),
-                'notes' => (string) ($input['notes'] ?? ''),
-                'outputs' => $outputs,
-            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'result_json' => '',
-            'error_message' => '',
-            'created_by' => $auth->auditAdminId !== null ? (string) $auth->auditAdminId : 'mcp',
-            'sso_team_id' => $teamId,
-        ]);
+        try {
+            $job = Cache::lock($this->activeLimitLockName($teamId), 15)->block(5, function () use ($input, $normalized, $outputs, $auth, $teamId): UrlImportJob {
+                return DB::transaction(function () use ($input, $normalized, $outputs, $auth, $teamId): UrlImportJob {
+                    $maxActive = (int) config('geoflow.mcp_url_import_max_active', 3);
+                    $activeJobs = UrlImportJob::query()
+                        ->where('sso_team_id', $teamId)
+                        ->whereIn('status', ['queued', 'running'])
+                        ->count();
+                    if ($activeJobs >= $maxActive) {
+                        throw new ApiException('url_import_rate_limited', '当前租户 URL 导入任务已达到并发上限', 429, [
+                            'max_active' => $maxActive,
+                        ]);
+                    }
+
+                    return UrlImportJob::query()->create([
+                        'url' => (string) ($input['url'] ?? ''),
+                        'normalized_url' => $normalized['url'],
+                        'source_domain' => $normalized['host'],
+                        'page_title' => (string) ($input['project_name'] ?? ''),
+                        'status' => 'queued',
+                        'current_step' => 'queued',
+                        'progress_percent' => 0,
+                        'options_json' => json_encode([
+                            'project_name' => (string) ($input['project_name'] ?? ''),
+                            'source_label' => (string) ($input['source_label'] ?? ''),
+                            'content_language' => (string) ($input['content_language'] ?? ''),
+                            'notes' => (string) ($input['notes'] ?? ''),
+                            'outputs' => $outputs,
+                        ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                        'result_json' => '',
+                        'error_message' => '',
+                        'created_by' => $auth->auditAdminId !== null ? (string) $auth->auditAdminId : 'mcp',
+                        'sso_team_id' => $teamId,
+                    ]);
+                });
+            });
+        } catch (LockTimeoutException) {
+            throw new ApiException('url_import_rate_limited', '当前租户 URL 导入任务正在并发创建，请稍后重试', 429, [
+                'max_active' => (int) config('geoflow.mcp_url_import_max_active', 3),
+            ]);
+        }
 
         return $this->serialize($job);
+    }
+
+    private function activeLimitLockName(string $teamId): string
+    {
+        return 'geoflow:mcp:url-import:active:'.hash('sha256', $teamId);
     }
 
     public function run(int $jobId, McpAuthContext $auth): array
