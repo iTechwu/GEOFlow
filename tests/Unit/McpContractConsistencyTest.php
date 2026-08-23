@@ -10,6 +10,18 @@ use ReflectionClass;
 
 class McpContractConsistencyTest extends TestCase
 {
+    public function test_enterprise_knowledge_publish_uses_materials_write_scope(): void
+    {
+        $reflection = new ReflectionClass(McpController::class);
+        $controller = $reflection->newInstanceWithoutConstructor();
+        $authorizeMethod = $reflection->getMethod('authorizeTool');
+
+        $authorizeMethod->invoke($controller, new McpAuthContext(McpAuthContext::SCOPE_WRITE, 'test', 'team-a', null, ['materials:write']), 'geoflow.enterprise_knowledge.publish');
+
+        $this->expectException(McpToolException::class);
+        $authorizeMethod->invoke($controller, new McpAuthContext(McpAuthContext::SCOPE_WRITE, 'test', 'team-a', null, ['articles:publish']), 'geoflow.enterprise_knowledge.publish');
+    }
+
     public function test_every_advertised_tool_has_a_unique_object_schema_and_authorization_mapping(): void
     {
         $reflection = new ReflectionClass(McpController::class);

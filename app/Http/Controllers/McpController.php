@@ -479,7 +479,9 @@ final class McpController extends Controller
     private function authorizeTool(McpAuthContext $auth, string $tool): void
     {
         $required = match (true) {
-            str_ends_with($tool, '.review'), str_ends_with($tool, '.publish') => 'articles:publish',
+            $tool === 'geoflow.enterprise_knowledge.status' => 'materials:read',
+            str_starts_with($tool, 'geoflow.enterprise_knowledge.') => 'materials:write',
+            $tool === 'geoflow.articles.review', $tool === 'geoflow.articles.publish' => 'articles:publish',
             str_starts_with($tool, 'geoflow.articles.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') ? 'articles:read' : 'articles:write',
             str_starts_with($tool, 'geoflow.tasks.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') || str_ends_with($tool, '.jobs') ? 'tasks:read' : 'tasks:write',
             str_starts_with($tool, 'geoflow.jobs.') => $tool === 'geoflow.jobs.cancel' ? 'jobs:write' : 'jobs:read',
@@ -488,7 +490,6 @@ final class McpController extends Controller
             $tool === 'geoflow.catalog' => 'catalog:read',
             $tool === 'geoflow.capabilities' => 'catalog:read',
             $tool === 'geoflow.analytics.overview' => 'analytics:read',
-            str_starts_with($tool, 'geoflow.enterprise_knowledge.') => $tool === 'geoflow.enterprise_knowledge.status' ? 'materials:read' : 'materials:write',
             $tool === 'geoflow.site.capabilities' => 'catalog:read',
             str_starts_with($tool, 'geoflow.site.') => 'articles:read',
             $tool === 'geoflow.system.status' => 'catalog:read',
