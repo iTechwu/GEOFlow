@@ -186,7 +186,7 @@ docker compose up -d
 
 Acesse `http://localhost:18080` (frontend) e `http://localhost:18080/geo_admin` (admin).
 
-Para a primeira instalação em um banco vazio, configure `.env.prod` e use `docker compose --env-file .env.prod -f docker-compose.prod.yml up -d`. O serviço `init` executa as migrações e depois `php artisan geoflow:install`. Instâncias com dados ou histórico de migrações devem seguir o protocolo de parada e drenagem da seção 3.1 em `../deployment/DEPLOYMENT.md`.
+Para a primeira instalação em um banco vazio, configure `.env.prod`, execute explicitamente `docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction` e depois o mesmo comando com `php artisan geoflow:install --no-interaction`. Em seguida, inicie os serviços permanentes. Instâncias com dados ou histórico de migrações devem seguir o protocolo de parada e drenagem da seção 3.1 em `../deployment/DEPLOYMENT.md`.
 
 ### portas
 
@@ -226,7 +226,8 @@ Se precisar de categorias e artigos demo do frontend, defina `GEOFLOW_SEED_FRONT
 |---------|-------|
 | PostgreSQL | Serviço externo gerenciado por `../docker-helm.dofe.ai` |
 | Redis | Serviço externo gerenciado por `../docker-helm.dofe.ai` |
-| `init` | Bootstrap único (`restart: "no"`) |
+| `assets` | Build único dos assets frontend |
+| `vite` | Servidor frontend de desenvolvimento |
 | `app` | `php artisan serve`, mapeia **`${APP_PORT:-18080}:8080`** |
 | `queue` | `queue:work redis` |
 | `scheduler` | `schedule:work` |

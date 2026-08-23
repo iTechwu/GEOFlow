@@ -87,11 +87,10 @@ REVERB_EXPOSE_PORT=18081
 - `APP_KEY` 必须在启动前写入 `.env.prod`，CI 部署通过 `GEOFLOW_APP_KEY` Secret 注入。手工首次部署可执行 `printf 'base64:%s\n' "$(openssl rand -base64 32)"` 生成；生产容器只读挂载 `.env.prod`，不会生成或轮换密钥。
 - `TRUSTED_PROXIES` 用于反向代理、CDN、负载均衡或一级目录部署。若外层代理会传 `X-Forwarded-Proto` / `X-Forwarded-Host` / `X-Forwarded-Prefix`，生产环境通常可设为 `*` 或具体代理 IP。
 - 如果部署在任意一级目录下，例如外部访问路径是 `/wiki`、`/docs`、`/site`，不要把目录写进 `ADMIN_BASE_PATH`；应由反向代理透传 `X-Forwarded-Prefix`，后台路径仍保持 `ADMIN_BASE_PATH=geo_admin`。
-- `AUTO_MIGRATE=true` 由生产 `init` 服务执行迁移；常驻服务不接收 `.env.prod` 作为容器环境变量，重启时不会重复初始化。
-- `AUTO_INSTALL_ONCE=true` 由生产 `init` 服务在迁移后运行 `php artisan geoflow:install`；该命令只在空库首次安装时执行安装填充，旧库只补初始化标记。
+- `AUTO_MIGRATE=false`、`AUTO_INSTALL_ONCE=false` 固定用于常驻服务；迁移和首次安装由外部发布流程显式执行，重启不会修改数据库。
 - 生产镜像不会在启动时执行 `composer install`
 - **外部依赖凭据**：Compose 不创建 PostgreSQL/Redis，也不映射 `POSTGRES_*` 或持久卷；`DB_HOST`、`REDIS_HOST` 和密码必须由集中基础设施/CI Secret 提供。
-- **建议仍使用 `--env-file .env.prod`**：便于插值端口、镜像和应用配置，并确保 models/MCP 变量进入 init、app、queue 等容器。
+- **建议仍使用 `--env-file .env.prod`**：便于插值端口、镜像和应用配置，并确保 models/MCP 变量进入 app、queue 等容器。
 
 ## 3. 启动步骤
 
@@ -105,15 +104,16 @@ export COMPOSE_PROD='docker compose --env-file .env.prod -f docker-compose.prod.
 
 ```bash
 $COMPOSE_PROD build
-$COMPOSE_PROD up -d init
+$COMPOSE_PROD run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+$COMPOSE_PROD run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 $COMPOSE_PROD up -d app web queue scheduler reverb
 ```
 
-`init` 服务会把 `GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true` 仅注入该一次性容器。迁移只在单一 fresh migration batch 且业务表为空时接受此标志；已有部署仍需下一节的 drain confirmation。
+fresh-install 确认只注入上述两条外部命令。迁移仅在单一 fresh migration batch 且业务表为空时接受此标志；已有部署仍需下一节的 drain confirmation。
 
 ### 3.1 受管图片删除升级门禁
 
-升级到包含 `images.managed_path_hash` 的版本时，先保持 `GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false`。已有数据或既有迁移历史的数据库必须使用 down → stop/drain → one-time confirmation → migrate → start-new → readiness → up → enable 的顺序。迁移会在任何 schema 变更前检查 `GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true`；未确认时会安全终止。全新空库使用 init 服务限定作用域的 `GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true`。
+升级到包含 `images.managed_path_hash` 的版本时，先保持 `GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false`。已有数据或既有迁移历史的数据库必须使用 down → stop/drain → one-time confirmation → migrate → start-new → readiness → up → enable 的顺序。迁移会在任何 schema 变更前检查 `GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true`；未确认时会安全终止。全新空库仅在外部迁移命令上设置 `GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true`。
 
 滚动升级、migration-first、一键升级均无法覆盖已经通过旧版空 replay 检查的在途请求，因此明确禁止用于已有数据的实例。一次性确认仅表示运维人员已经完成排空，不会自动停止进程。
 
@@ -126,16 +126,16 @@ $COMPOSE_PROD stop web queue scheduler reverb
 # 请使用平台连接数、进程列表和队列监控完成确认。
 $COMPOSE_PROD stop app
 
-# 3. 仅在确认全部旧进程和在途请求已排空后，临时修改 .env.prod：
-# GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true
-# GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false
-
-# 4. 构建新镜像，并由一次性 init 服务执行新版本迁移。
+# 3. 仅在确认全部旧进程和在途请求已排空后构建新镜像。
 $COMPOSE_PROD build
-$COMPOSE_PROD up init
 
-# 5. 迁移成功后立即将一次性确认恢复为 false，再启动全部新版本进程：
-# GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false
+# 4. 仅向本次外部迁移命令注入排空确认，不修改常驻服务环境。
+$COMPOSE_PROD run --rm --no-deps \
+  -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true \
+  -e GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false \
+  app php artisan migrate --force --no-interaction
+
+# 5. 迁移成功后启动全部新版本进程。
 $COMPOSE_PROD up -d app web queue scheduler reverb
 
 # 6. 回填并检查受管图片身份；remaining、terminal、registry_failed 必须都为 0。
@@ -168,13 +168,7 @@ $COMPOSE_PROD up -d --force-recreate app queue scheduler
 
 门禁关闭或回填未完成时，数据库记录仍可删除，物理图片文件会安全保留并记录清理失败日志。
 
-以下单条命令仅适用于全新空库安装。已有数据的升级执行它会触发安全迁移门禁；不要通过预设一次性确认绕过停机排空流程：
-
-```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
-```
-
-但第一次部署仍建议先观察 `init` 是否完成迁移。
+不要使用单条 `up -d --build` 代替迁移流程；常驻服务不会自动迁移，健康检查也会拒绝仍有 pending migration 的发布。
 
 ## 4. 访问方式
 
@@ -185,10 +179,10 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d --build
 
 ### 默认管理员（首次安装）
 
-生产 `docker-compose.prod.yml` 的 **`init`** 服务会在迁移完成后执行 `php artisan geoflow:install`。该命令不会创建本地账号；它只写入安装状态，并且仅在显式开启演示数据时导入内容。常驻的 `app`、`queue`、`scheduler`、`reverb` 服务不会自动 seed。
+外部首次安装流程在迁移完成后显式执行 `php artisan geoflow:install`。该命令不会创建本地账号；它只写入安装状态，并且仅在显式开启演示数据时导入内容。常驻的 `app`、`queue`、`scheduler`、`reverb` 服务不会自动 seed。
 
 ```bash
-# 如果你没有使用 compose 的 init 服务，可在迁移成功后执行首次安装命令：
+# 全新空库迁移成功后执行首次安装命令：
 docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm app php artisan geoflow:install
 ```
 
@@ -205,14 +199,14 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm app php 
 - `uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm`
 - `php artisan serve`
 - 允许运行时 `composer install`
-- 默认 `AUTO_MIGRATE=true`
+- 默认 `AUTO_MIGRATE=false`
 
 ### 当前生产 Docker
 
 - `uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm`
 - `nginx` 直接服务静态文件，PHP 交给 `php-fpm`
 - 依赖在构建期安装完成
-- 通过 `docker/entrypoint.prod.sh` 执行可选的等待数据库、迁移、`php artisan optimize`
+- 通过 `docker/entrypoint.prod.sh` 执行进程启动与可选缓存优化；数据库迁移默认关闭
 
 ## 6. 运维建议
 
@@ -227,17 +221,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d
 
 该命令仅用于没有代码、镜像或数据库迁移变化的配置重建。已有部署的代码更新统一执行 3.1 节的停机排空协议。
 
-- 全新空库需要手动跑迁移时，可把 fresh-install intent 限定在该一次性容器：
-
-```bash
-docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm \
-  -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
-  -e AUTO_MIGRATE=true \
-  -e AUTO_OPTIMIZE=false \
-  app php artisan about
-```
-
-或直接执行：
+- 全新空库需要手动跑迁移时，把 fresh-install intent 限定在该外部命令：
 
 ```bash
 docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm \

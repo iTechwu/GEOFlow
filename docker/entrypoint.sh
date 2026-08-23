@@ -119,7 +119,7 @@ if [ "${AUTO_INSTALL_ONCE:-false}" = "true" ]; then
 fi
 
 # 每次容器启动执行迁移（拉代码/换新镜像后默认需要；设为 false 可关闭）
-if [ "${AUTO_MIGRATE:-true}" = "true" ] && [ "${INIT_RAN_MIGRATE}" != "true" ]; then
+if [ "${AUTO_MIGRATE:-false}" = "true" ] && [ "${INIT_RAN_MIGRATE}" != "true" ]; then
   echo "[entrypoint] php artisan migrate --force"
   php artisan migrate --force --no-interaction
 fi

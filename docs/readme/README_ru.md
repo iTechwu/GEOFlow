@@ -175,13 +175,15 @@ cp .env.example .env
 vi .env
 
 docker compose build
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose up -d
 ```
 
 - Сайт: `http://localhost:18080` (порт **`APP_PORT`**, по умолчанию `18080`)  
 - Админка: `http://localhost:18080/geo_admin/login` (**`ADMIN_BASE_PATH`**, по умолчанию `geo_admin`)  
 
-При **`docker-compose.yml`** сервис **`init`** после готовности БД выполняет миграцию и `php artisan geoflow:install`; начальные данные записываются только для пустой базы (учётная запись по умолчанию — см. таблицу ниже).
+Compose запускает только процессы GEOFlow. Миграция и первичная установка выполняются указанными выше явными внешними командами; постоянные контейнеры не изменяют базу данных при запуске.
 
 ### Дополнение: Docker (продакшен)
 
@@ -193,12 +195,13 @@ vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
 # PostgreSQL и Redis являются внешними сервисами, управляемыми ../docker-helm.dofe.ai.
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
 
 - Фронт и админка идут через `web` (Nginx), PHP — контейнер `app` (php-fpm).
-- **Первая установка:** production-сервис `init` запускает миграции, а затем `php artisan geoflow:install`. Эта последовательность предназначена для пустой базы. Для экземпляров с данными или историей миграций обязателен протокол остановки и дренирования из раздела 3.1 `../../docs/deployment/DEPLOYMENT.md`.
+- **Первая установка:** внешние команды запускают миграции, а затем `php artisan geoflow:install`. Эта последовательность предназначена для пустой базы. Для экземпляров с данными или историей миграций обязателен протокол остановки и дренирования из раздела 3.1 `../../docs/deployment/DEPLOYMENT.md`.
 - Подробности — в **`../../docs/deployment/DEPLOYMENT.md`**.
 
 ### Вариант 2: локальный PHP
@@ -243,7 +246,7 @@ php artisan reverb:start
 
 ## Docker (кратко)
 
-**Разработка** (`docker-compose.yml`): PostgreSQL и Redis являются внешними сервисами, управляемыми `../docker-helm.dofe.ai`; Compose запускает только `init`, `app`, `queue`, `scheduler` и `reverb`. Переменные `docker/entrypoint.sh` — как в [README_en.md](README_en.md).
+**Разработка** (`docker-compose.yml`): PostgreSQL и Redis являются внешними сервисами, управляемыми `../docker-helm.dofe.ai`; Compose запускает только `assets`, `vite`, `app`, `queue`, `scheduler` и `reverb`. Переменные `docker/entrypoint.sh` — как в [README_en.md](README_en.md).
 
 **Продакшен** (`docker-compose.prod.yml`): запуск через `docker compose --env-file .env.prod -f docker-compose.prod.yml …` (см. дополнение выше и **`../../docs/deployment/DEPLOYMENT.md`**).
 

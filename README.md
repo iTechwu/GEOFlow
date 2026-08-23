@@ -208,16 +208,17 @@ GEOFlow 适合这些真实且可落地的场景：
 ### 方式一：Docker（开发 / 演示）
 
 ```bash
-# 前台开发：首次运行自动创建被忽略的 .env.local，再启动完整本地栈。
+# 全新空库先显式执行迁移与首次安装，再启动本地应用栈。
+make dev-init
 make dev
 ```
 
 - 前台默认访问：`http://localhost:18080`（端口由环境变量 **`APP_PORT`** 控制，默认 `18080`）
 - 后台登录：`http://localhost:18080/geo_admin/login`（前缀由 **`ADMIN_BASE_PATH`** 控制，默认 `geo_admin`）
-- 数据库与 Redis 会一同启动，并仅绑定到宿主机 `127.0.0.1:15432` 和 `127.0.0.1:16379`；容器内分别使用 `postgres:5432`、`redis:6379`。
+- PostgreSQL 与 Redis 由 `../docker-helm.dofe.ai` 统一管理，本仓库 Compose 只通过 `.env.local` 连接外部服务。
 - Vite 热更新端口为 `127.0.0.1:5173`；Blade/PHP 修改刷新页面即可生效，JS/CSS 修改会热更新。
 
-首次启动会运行 **`init`** 容器：在数据库与 Redis 就绪后执行迁移与 `geoflow:install`。项目后台使用 SSO，需为 `SSO_CLIENT_ID`、`SSO_CLIENT_SECRET`、`INTERNAL_API_SECRET` 和回调地址配置可用的身份提供方；未配置时前台仍可访问，但不能完成后台登录。
+`make dev-init` 是全新空库的一次性外部操作；日常应用容器启动不会自动迁移数据库。项目后台使用 SSO，需为 `SSO_CLIENT_ID`、`SSO_CLIENT_SECRET`、`INTERNAL_API_SECRET` 和回调地址配置可用的身份提供方；未配置时前台仍可访问，但不能完成后台登录。
 
 常用开发命令：
 
@@ -248,14 +249,14 @@ cp .env.prod.example .env.prod
 vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d postgres redis
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
 
 - 前台 / 后台统一经 `web`（Nginx）访问
 - PHP 由 `app`（php-fpm）解析
-- **首次安装**：生产 `init` 服务会先执行迁移，再运行 `php artisan geoflow:install`。该流程仅用于全新空库；已有数据或迁移历史的实例必须执行 `docs/deployment/DEPLOYMENT.md` 3.1 节的停机排空升级协议。
+- **首次安装**：迁移和 `geoflow:install` 由上述外部命令显式执行，仅用于全新空库；已有数据或迁移历史的实例必须执行 `docs/deployment/DEPLOYMENT.md` 3.1 节的停机排空升级协议。
 - 详细说明见 `docs/deployment/DEPLOYMENT.md`
 
 ### 方式二：本地 PHP 服务器
@@ -333,23 +334,22 @@ chmod -R ug+rwx storage bootstrap/cache
 
 | 服务 | 作用 |
 |------|------|
-| `postgres` | PostgreSQL 18 + pgvector（仅暴露 `127.0.0.1:${DB_EXPOSE_PORT:-15432}`） |
-| `redis` | Redis 8（仅暴露 `127.0.0.1:${REDIS_EXPOSE_PORT:-16379}`） |
-| `init` | 一次性初始化（`restart: "no"`） |
+| `assets` | 一次性构建前端资产 |
+| `vite` | 前端开发服务器与热更新 |
 | `app` | `php artisan serve`，映射 **`${APP_PORT:-18080}:8080`** |
 | `queue` | `queue:work redis` |
 | `scheduler` | `schedule:work` |
 | `reverb` | WebSocket，映射 **`${REVERB_EXPOSE_PORT:-18081}:8080`** |
 
-宿主机仅绑定 **127.0.0.1** 暴露数据库 / Redis 端口时，见 `docker-compose.yml` 中的 `DB_EXPOSE_PORT`、`REDIS_EXPOSE_PORT`。
+PostgreSQL 与 Redis 的地址、端口和凭据由外部基础设施配置提供。
 
 ### 入口脚本（`docker/entrypoint.sh`）常用变量
 
 | 变量 | 默认 | 含义 |
 |------|------|------|
 | `COMPOSER_ON_START` | `true` | 容器启动时执行 `composer install` |
-| `AUTO_MIGRATE` | `true` | 启动时执行 `php artisan migrate --force`；已有部署遇到安全迁移时仍须先完成停机排空协议 |
-| `AUTO_INIT_ONCE` | 仅 `init` 为 `true` | 执行 `migrate` + `geoflow:install`，由安装命令判断是否空库 |
+| `AUTO_MIGRATE` | `false` | 兼容开关；默认关闭，迁移由外部流程显式执行 |
+| `AUTO_INIT_ONCE` | `false` | 兼容开关；运行服务不得开启 |
 | `AUTO_INSTALL_ONCE` | `false` | 已完成迁移后单独执行一次 `geoflow:install`，常驻服务不建议开启 |
 
 入口脚本会在 `.env` 中没有有效 `APP_KEY` 时自动执行 `key:generate --force`，无需额外开关。

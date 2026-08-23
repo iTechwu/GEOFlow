@@ -1,5 +1,10 @@
 name: geoflow-laravel
 
+x-runtime-db-guard: &runtime_db_guard
+  AUTO_MIGRATE: "false"
+  AUTO_INIT_ONCE: "false"
+  AUTO_INSTALL_ONCE: "false"
+
 services:
   assets:
     image: ${NODE_IMAGE:-uhub.service.ucloud.cn/techwu/node:24-bookworm-slim}
@@ -26,28 +31,6 @@ services:
         condition: service_completed_successfully
     restart: unless-stopped
 
-  init:
-    image: geoflow-app:latest
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
-      args:
-        PHP_CLI_IMAGE: ${PHP_CLI_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
-        COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
-    container_name: geoflow-init
-    working_dir: /var/www/html
-    env_file:
-      - ${GEOFLOW_ENV_FILE:-./.env}
-    environment:
-      GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED: "true"
-    # 交给 entrypoint 执行自动初始化（生成 APP_KEY / migrate / geoflow:install）
-    command: ["php", "artisan", "about"]
-    volumes:
-      - ./:/var/www/html
-      - ${GEOFLOW_ENV_FILE:-./.env}:/var/www/html/.env
-    # Database and Redis are external services managed by docker-helm.dofe.ai.
-    restart: "no"
-
   app:
     image: geoflow-app:latest
     build:
@@ -58,6 +41,7 @@ services:
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-app
     working_dir: /var/www/html
+    environment: *runtime_db_guard
     command: ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8080"]
     ports:
       - "127.0.0.1:${APP_PORT:-18080}:8080"
@@ -68,8 +52,6 @@ services:
       - "host.docker.internal:host-gateway"
     depends_on:
       assets:
-        condition: service_completed_successfully
-      init:
         condition: service_completed_successfully
     restart: unless-stopped
 
@@ -83,15 +65,13 @@ services:
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-queue
     working_dir: /var/www/html
+    environment: *runtime_db_guard
     command: ["php", "artisan", "queue:work", "redis", "--queue=geoflow,distribution,theme-replication,system-updates,default", "--sleep=1", "--tries=1", "--timeout=300"]
     volumes:
       - ./:/var/www/html
       - ${GEOFLOW_ENV_FILE:-./.env}:/var/www/html/.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      init:
-        condition: service_completed_successfully
     restart: unless-stopped
 
   scheduler:
@@ -104,15 +84,13 @@ services:
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-scheduler
     working_dir: /var/www/html
+    environment: *runtime_db_guard
     command: ["php", "artisan", "schedule:work"]
     volumes:
       - ./:/var/www/html
       - ${GEOFLOW_ENV_FILE:-./.env}:/var/www/html/.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      init:
-        condition: service_completed_successfully
     restart: unless-stopped
 
   reverb:
@@ -125,6 +103,7 @@ services:
         COMPOSER_PACKAGIST_MIRROR: ${COMPOSER_PACKAGIST_MIRROR:-}
     container_name: geoflow-reverb
     working_dir: /var/www/html
+    environment: *runtime_db_guard
     command: ["php", "artisan", "reverb:start", "--host=0.0.0.0", "--port=8080"]
     ports:
       - "${REVERB_EXPOSE_PORT:-18081}:8080"
@@ -133,9 +112,6 @@ services:
       - ${GEOFLOW_ENV_FILE:-./.env}:/var/www/html/.env
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    depends_on:
-      init:
-        condition: service_completed_successfully
     restart: unless-stopped
 
 volumes:

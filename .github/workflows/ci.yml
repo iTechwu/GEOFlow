@@ -54,7 +54,9 @@ jobs:
 
       # 边界检查：阻止 PostgreSQL/Redis/RabbitMQ 服务重新进入应用编排（AGENTS.md）。
       - name: Compose boundary check
-        run: bash deploy-scripts/check-compose-boundaries.sh
+        run: |
+          bash deploy-scripts/check-compose-boundaries.sh
+          bash deploy-scripts/check-compose-boundaries.test.sh
 
       - name: Deployment script syntax check
         run: bash -n deploy-scripts/*.sh

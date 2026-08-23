@@ -160,6 +160,20 @@ service_is_running() {
   "${COMPOSE[@]}" ps --status running --services | grep -qx "$service"
 }
 
+remove_legacy_init_container() {
+  local container="geoflow-init-prod"
+  local running
+
+  if ! docker inspect "$container" >/dev/null 2>&1; then
+    return
+  fi
+
+  running="$(docker inspect --format '{{.State.Running}}' "$container")"
+  [ "$running" != "true" ] || fail "Legacy init container is still running: ${container}"
+  log "Removing stopped legacy init container: ${container}"
+  docker rm "$container" >/dev/null
+}
+
 enter_maintenance_and_drain() {
   local service
 
@@ -187,7 +201,7 @@ run_upgrade() {
     -e GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=false \
     -e AUTO_MIGRATE=false \
     -e AUTO_INSTALL_ONCE=false \
-    init php artisan migrate --force --no-interaction
+    app php artisan migrate --force --no-interaction
 }
 
 run_fresh_install() {
@@ -205,7 +219,7 @@ run_fresh_install() {
     -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
     -e AUTO_MIGRATE=false \
     -e AUTO_INSTALL_ONCE=false \
-    init php artisan migrate --force --no-interaction
+    app php artisan migrate --force --no-interaction
 
   log "Initializing GEOFlow application data once."
   "${COMPOSE[@]}" run --rm --no-deps \
@@ -213,7 +227,7 @@ run_fresh_install() {
     -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
     -e AUTO_MIGRATE=false \
     -e AUTO_INSTALL_ONCE=false \
-    init php artisan geoflow:install --no-interaction
+    app php artisan geoflow:install --no-interaction
 }
 
 run_readiness_gates() {
@@ -238,6 +252,7 @@ main() {
   validate_release
   cd "$APP_DIR"
   COMPOSE=(docker compose --env-file .env.prod -f docker-compose.prebuilt.yml)
+  remove_legacy_init_container
 
   log "Pulling immutable production images."
   "${COMPOSE[@]}" pull

@@ -353,22 +353,45 @@ prepare_env() {
   set_env_value .env.prod REVERB_APP_SECRET "$reverb_secret"
   set_env_value .env.prod SESSION_LIFETIME 43200
   set_env_value .env.prod GEOFLOW_SESSION_TIMEOUT 2592000
-  set_env_value .env.prod AUTO_MIGRATE true
-  set_env_value .env.prod AUTO_INSTALL_ONCE true
+  set_env_value .env.prod AUTO_MIGRATE false
+  set_env_value .env.prod AUTO_INSTALL_ONCE false
   set_env_value .env.prod AUTO_OPTIMIZE true
 
   log "Production environment prepared."
 }
 
 deploy_stack() {
+  local legacy_init="geoflow-init-prod"
+  local legacy_running
+
   cd "$APP_DIR"
   COMPOSE=("${DOCKER_CMD[@]}" compose --env-file .env.prod -f docker-compose.prod.yml)
+
+  if "${DOCKER_CMD[@]}" inspect "$legacy_init" >/dev/null 2>&1; then
+    legacy_running="$("${DOCKER_CMD[@]}" inspect --format '{{.State.Running}}' "$legacy_init")"
+    [ "$legacy_running" != "true" ] || fail "Legacy init container is still running: ${legacy_init}"
+    log "Removing stopped legacy init container: ${legacy_init}"
+    "${DOCKER_CMD[@]}" rm "$legacy_init" >/dev/null
+  fi
 
   log "Building production images."
   "${COMPOSE[@]}" build
 
-  log "Running initialization and database migrations."
-  "${COMPOSE[@]}" up init
+  log "Running database migrations through the external deployment workflow."
+  "${COMPOSE[@]}" run --rm --no-deps \
+    -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
+    -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
+    -e AUTO_MIGRATE=false \
+    -e AUTO_INSTALL_ONCE=false \
+    app php artisan migrate --force --no-interaction
+
+  log "Initializing GEOFlow application data once."
+  "${COMPOSE[@]}" run --rm --no-deps \
+    -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
+    -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
+    -e AUTO_MIGRATE=false \
+    -e AUTO_INSTALL_ONCE=false \
+    app php artisan geoflow:install --no-interaction
 
   log "Starting GEOFlow services."
   "${COMPOSE[@]}" up -d app web queue scheduler reverb

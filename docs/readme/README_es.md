@@ -175,13 +175,15 @@ cp .env.example .env
 vi .env
 
 docker compose build
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose up -d
 ```
 
 - Sitio: `http://localhost:18080` (puerto **`APP_PORT`**, por defecto `18080`)  
 - Admin: `http://localhost:18080/geo_admin/login` (**`ADMIN_BASE_PATH`**, por defecto `geo_admin`)  
 
-Con **`docker-compose.yml`**, el servicio **`init`** ejecuta la migración y `php artisan geoflow:install`; los datos iniciales solo se escriben cuando la base de datos está vacía (admin por defecto: véase más abajo).
+Compose inicia únicamente los procesos de GEOFlow. La migración y la primera instalación se ejecutan mediante los comandos externos explícitos anteriores; los contenedores permanentes no modifican la base de datos al arrancar.
 
 ### Suplemento: Docker (producción)
 
@@ -193,12 +195,13 @@ vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
 # PostgreSQL y Redis son servicios externos administrados por ../docker-helm.dofe.ai.
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
 
 - Frontend y admin entran por `web` (Nginx); PHP en `app` (php-fpm).
-- **Primera instalación:** el servicio `init` de producción ejecuta migraciones y luego `php artisan geoflow:install`. Esta secuencia se limita a una base vacía. Las instalaciones con datos o historial de migraciones deben seguir el protocolo de parada y drenaje de la sección 3.1 de `../../docs/deployment/DEPLOYMENT.md`.
+- **Primera instalación:** los comandos externos ejecutan las migraciones y luego `php artisan geoflow:install`. Esta secuencia se limita a una base vacía. Las instalaciones con datos o historial de migraciones deben seguir el protocolo de parada y drenaje de la sección 3.1 de `../../docs/deployment/DEPLOYMENT.md`.
 - Más detalle: **`../../docs/deployment/DEPLOYMENT.md`**.
 
 ### Opción 2: PHP local
@@ -243,7 +246,7 @@ Si necesitas categorías y artículos demo del frontend, configura `GEOFLOW_SEED
 
 ## Docker (resumen)
 
-**Desarrollo** (`docker-compose.yml`): PostgreSQL y Redis son servicios externos administrados por `../docker-helm.dofe.ai`; Compose solo inicia `init`, `app`, `queue`, `scheduler` y `reverb`. Variables de `docker/entrypoint.sh`: como en [README_en.md](README_en.md).
+**Desarrollo** (`docker-compose.yml`): PostgreSQL y Redis son servicios externos administrados por `../docker-helm.dofe.ai`; Compose solo inicia `assets`, `vite`, `app`, `queue`, `scheduler` y `reverb`. Variables de `docker/entrypoint.sh`: como en [README_en.md](README_en.md).
 
 **Producción** (`docker-compose.prod.yml`): use `docker compose --env-file .env.prod -f docker-compose.prod.yml …` (véase el suplemento arriba y `../../docs/deployment/DEPLOYMENT.md`).
 

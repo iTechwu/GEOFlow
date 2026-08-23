@@ -124,9 +124,9 @@ GEOFLOW_APP_DIR=/opt/geoflow \
 bash /opt/geoflow/deploy-scripts/deploy-prebuilt-release.sh
 ```
 
-该脚本只管理 GEOFlow 的 `app/web/queue/scheduler/reverb/init` 容器。它不会创建、停止或删除集中管理的 PostgreSQL、Redis、RabbitMQ 服务与卷。发布失败后应用保持维护模式，需处理失败原因后重跑；数据库迁移不能通过简单切回旧镜像自动回滚。
+该脚本只管理 GEOFlow 的 `app/web/queue/scheduler/reverb` 容器，并通过 `app` 镜像执行外部显式迁移命令。它不会创建、停止或删除集中管理的 PostgreSQL、Redis、RabbitMQ 服务与卷。发布失败后应用保持维护模式，需处理失败原因后重跑；数据库迁移不能通过简单切回旧镜像自动回滚。
 
-默认 `GEOFLOW_RELEASE_MODE=upgrade`，用于已有数据库的停机排空升级。仅在首次空库上线时显式设置 `GEOFLOW_RELEASE_MODE=fresh`；该模式要求全部 GEOFlow 常驻服务尚未运行，并将 fresh-install 确认严格限定到一次性 init 容器。
+默认 `GEOFLOW_RELEASE_MODE=upgrade`，用于已有数据库的停机排空升级。仅在首次空库上线时显式设置 `GEOFLOW_RELEASE_MODE=fresh`；该模式要求全部 GEOFlow 常驻服务尚未运行，并将 fresh-install 确认严格限定到外部迁移和安装命令。
 
 CI 可先将生产 Secret 映射为同名环境变量，再生成配置：
 

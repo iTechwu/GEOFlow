@@ -4,20 +4,6 @@
 name: geoflow-laravel-prod
 
 services:
-  init:
-    image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
-    container_name: geoflow-init-prod
-    working_dir: /var/www/html
-    env_file:
-      - ./.env.prod
-    environment:
-      GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED: "true"
-    command: ["php", "artisan", "about"]
-    volumes:
-      - ./.env.prod:/var/www/html/.env:ro
-      - ./storage:/var/www/html/storage
-    restart: "no"
-
   app:
     image: ${GEOFLOW_APP_IMAGE:?GEOFLOW_APP_IMAGE is required for prebuilt deployment}
     container_name: geoflow-app-prod
@@ -31,9 +17,6 @@ services:
     volumes:
       - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
-    depends_on:
-      init:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "tr '\\000' ' ' </proc/1/cmdline | grep -q 'php-fpm' && php-fpm -t"]
       interval: 30s
@@ -78,9 +61,6 @@ services:
     volumes:
       - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
-    depends_on:
-      init:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "tr '\\000' ' ' </proc/1/cmdline | grep -q 'artisan queue:work' && php artisan queue:monitor redis:geoflow,redis:distribution,redis:theme-replication,redis:system-updates,redis:default --max=1000000 >/dev/null"]
       interval: 30s
@@ -107,9 +87,6 @@ services:
     volumes:
       - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
-    depends_on:
-      init:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "tr '\\000' ' ' </proc/1/cmdline | grep -q 'artisan schedule:work' && php artisan schedule:list >/dev/null"]
       interval: 30s
@@ -139,9 +116,6 @@ services:
     volumes:
       - ./.env.prod:/var/www/html/.env:ro
       - ./storage:/var/www/html/storage
-    depends_on:
-      init:
-        condition: service_completed_successfully
     healthcheck:
       test: ["CMD-SHELL", "tr '\\000' ' ' </proc/1/cmdline | grep -q 'artisan reverb:start' && curl -sS --max-time 2 -o /dev/null http://127.0.0.1:$${REVERB_SERVER_PORT:-8080}"]
       interval: 30s

@@ -175,13 +175,15 @@ cp .env.example .env
 vi .env
 
 docker compose build
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose up -d
 ```
 
 - サイト: `http://localhost:18080`（**`APP_PORT`**、既定 `18080`）  
 - 管理ログイン: `http://localhost:18080/geo_admin/login`（**`ADMIN_BASE_PATH`**、既定 `geo_admin`）  
 
-**`docker-compose.yml`** では **`init`** が DB 準備後にマイグレーションと `php artisan geoflow:install` を実行します。初期データは空の DB の場合だけ書き込まれます（既定管理者は下表参照）。
+Compose は GEOFlow のアプリケーションプロセスのみを起動します。マイグレーションと初回インストールは外部管理 DB に対して上記の明示的な一回限りのコマンドで実行し、常駐コンテナの起動時には実行しません。
 
 ### 補足：Docker（本番）
 
@@ -193,12 +195,13 @@ vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
 # PostgreSQL と Redis は ../docker-helm.dofe.ai が管理する外部サービスです。
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
 
 - フロント／管理は `web`（Nginx）経由、PHP は `app`（php-fpm）。
-- **初回インストール:** 本番の `init` サービスはマイグレーション後に `php artisan geoflow:install` を実行します。この手順は空のデータベース専用です。データまたはマイグレーション履歴がある環境では、`../../docs/deployment/DEPLOYMENT.md` 3.1 節の停止・ドレイン手順を実行してください。
+- **初回インストール:** 外部コマンドでマイグレーション後に `php artisan geoflow:install` を実行します。この手順は空のデータベース専用です。データまたはマイグレーション履歴がある環境では、`../../docs/deployment/DEPLOYMENT.md` 3.1 節の停止・ドレイン手順を実行してください。
 - 手順の詳細は **`../../docs/deployment/DEPLOYMENT.md`** を参照してください。
 
 ### 方法 2：ローカル PHP
@@ -253,7 +256,7 @@ php artisan reverb:start
 
 ## Docker 補足
 
-**開発**（`docker-compose.yml`）: PostgreSQL と Redis は `../docker-helm.dofe.ai` 管理の外部サービスです。Compose は `init` / `app` / `queue` / `scheduler` / `reverb` のみ起動します。`docker/entrypoint.sh` の変数は [README_en.md](README_en.md) と同趣旨です。
+**開発**（`docker-compose.yml`）: PostgreSQL と Redis は `../docker-helm.dofe.ai` 管理の外部サービスです。Compose は `assets` / `vite` / `app` / `queue` / `scheduler` / `reverb` のみ起動します。`docker/entrypoint.sh` の変数は [README_en.md](README_en.md) と同趣旨です。
 
 **本番**（`docker-compose.prod.yml`）: `docker compose --env-file .env.prod -f docker-compose.prod.yml …` で起動（上記「補足：Docker（本番）」および **`../../docs/deployment/DEPLOYMENT.md`**）。
 

@@ -61,6 +61,23 @@ class PrebuiltReleaseScriptTest extends TestCase
         $this->assertSame(2, substr_count($script, '--label "org.opencontainers.image.revision=${VERSION}"'));
     }
 
+    public function test_stopped_legacy_init_container_is_removed(): void
+    {
+        $result = $this->removeLegacyInitContainer('false');
+
+        $this->assertTrue($result->isSuccessful(), $result->getErrorOutput());
+        $this->assertStringContainsString('removed:geoflow-init-prod', $result->getErrorOutput());
+    }
+
+    public function test_running_legacy_init_container_blocks_release_without_removal(): void
+    {
+        $result = $this->removeLegacyInitContainer('true');
+
+        $this->assertFalse($result->isSuccessful());
+        $this->assertStringContainsString('Legacy init container is still running', $result->getErrorOutput());
+        $this->assertStringNotContainsString('removed:', $result->getErrorOutput());
+    }
+
     private function validateImages(string $images): Process
     {
         $script = dirname(__DIR__, 2).'/deploy-scripts/deploy-prebuilt-release.sh';
@@ -102,6 +119,38 @@ BASH,
             $appRevision,
             $webRevision,
         ]);
+        $process->run();
+
+        return $process;
+    }
+
+    private function removeLegacyInitContainer(string $running): Process
+    {
+        $script = dirname(__DIR__, 2).'/deploy-scripts/deploy-prebuilt-release.sh';
+        $process = new Process([
+            'bash',
+            '-c',
+            <<<'BASH'
+source "$1"
+docker() {
+  if [ "$1" = "inspect" ] && [ "${2:-}" = "--format" ]; then
+    printf '%s\n' "$LEGACY_RUNNING"
+    return 0
+  fi
+  if [ "$1" = "inspect" ]; then
+    return 0
+  fi
+  if [ "$1" = "rm" ]; then
+    printf 'removed:%s\n' "$2" >&2
+    return 0
+  fi
+  return 1
+}
+remove_legacy_init_container
+BASH,
+            'prebuilt-release-test',
+            $script,
+        ], null, ['LEGACY_RUNNING' => $running]);
         $process->run();
 
         return $process;

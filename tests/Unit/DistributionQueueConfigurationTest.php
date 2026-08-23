@@ -68,18 +68,19 @@ class DistributionQueueConfigurationTest extends TestCase
         }
     }
 
-    public function test_compose_init_services_scope_the_fresh_install_confirmation(): void
+    public function test_compose_files_do_not_define_initialization_services(): void
     {
         $root = dirname(__DIR__, 2);
 
         foreach (['docker-compose.yml', 'docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
             $contents = file_get_contents($root.'/'.$composeFile);
             $this->assertIsString($contents);
-            $this->assertStringContainsString(
-                'GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED: "true"',
+            $this->assertDoesNotMatchRegularExpression(
+                '/^  (?:init|db[-_]?init|migrat(?:e|ion)):/mi',
                 $contents,
-                $composeFile.' must scope fresh-install intent to its one-shot init service.'
+                $composeFile.' must leave database initialization to the external release workflow.'
             );
+            $this->assertStringNotContainsString('geoflow-init', $contents, $composeFile);
         }
     }
 
@@ -109,44 +110,47 @@ class DistributionQueueConfigurationTest extends TestCase
         }
     }
 
-    public function test_production_init_uses_first_install_command_instead_of_auto_seed(): void
+    public function test_external_release_uses_first_install_command_instead_of_auto_seed(): void
     {
         $root = dirname(__DIR__, 2);
         $compose = file_get_contents($root.'/docker-compose.prod.yml');
         $entrypoint = file_get_contents($root.'/docker/entrypoint.prod.sh');
+        $releaseScript = file_get_contents($root.'/deploy-scripts/deploy-prebuilt-release.sh');
 
         $this->assertIsString($compose);
         $this->assertIsString($entrypoint);
+        $this->assertIsString($releaseScript);
         $this->assertStringContainsString('- ./.env.prod', $compose);
         $this->assertStringNotContainsString('AUTO_SEED', $compose);
         $this->assertStringNotContainsString('AUTO_SEED_CLASS:', $compose);
         $this->assertStringNotContainsString('php artisan db:seed', $entrypoint);
-        $this->assertStringContainsString('php artisan geoflow:install', $entrypoint);
+        $this->assertStringContainsString('app php artisan geoflow:install', $releaseScript);
     }
 
-    public function test_production_init_services_preserve_the_operator_migration_gate(): void
+    public function test_external_release_preserves_the_operator_migration_gate(): void
     {
         $root = dirname(__DIR__, 2);
 
         foreach (['docker-compose.prod.yml', 'docker-compose.prebuilt.yml'] as $composeFile) {
             $contents = file_get_contents($root.'/'.$composeFile);
             $this->assertIsString($contents);
-            $initStart = strpos($contents, "\n  init:\n");
-            $appStart = strpos($contents, "\n  app:\n", $initStart === false ? 0 : $initStart);
-            $this->assertNotFalse($initStart, $composeFile.' must define an init service.');
-            $this->assertNotFalse($appStart, $composeFile.' must define an app service after init.');
-            $initBlock = substr($contents, (int) $initStart, (int) $appStart - (int) $initStart);
-
-            $this->assertStringNotContainsString(
-                'AUTO_MIGRATE: "true"',
-                $initBlock,
-                $composeFile.' must not override the operator-controlled migration gate.'
-            );
+            $this->assertStringNotContainsString("\n  init:\n", $contents, $composeFile);
         }
 
         $entrypoint = file_get_contents($root.'/docker/entrypoint.prod.sh');
+        $developmentEntrypoint = file_get_contents($root.'/docker/entrypoint.sh');
+        $developmentCompose = file_get_contents($root.'/docker-compose.yml');
+        $releaseScript = file_get_contents($root.'/deploy-scripts/deploy-prebuilt-release.sh');
         $this->assertIsString($entrypoint);
+        $this->assertIsString($developmentEntrypoint);
+        $this->assertIsString($developmentCompose);
+        $this->assertIsString($releaseScript);
         $this->assertStringContainsString('${AUTO_MIGRATE:-false}', $entrypoint);
+        $this->assertStringContainsString('${AUTO_MIGRATE:-false}', $developmentEntrypoint);
+        $this->assertStringContainsString('x-runtime-db-guard: &runtime_db_guard', $developmentCompose);
+        $this->assertSame(4, substr_count($developmentCompose, 'environment: *runtime_db_guard'));
+        $this->assertStringContainsString('GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=true', $releaseScript);
+        $this->assertStringContainsString('app php artisan migrate --force --no-interaction', $releaseScript);
     }
 
     public function test_production_runtime_services_never_run_install_or_migrations_on_startup(): void
@@ -174,7 +178,7 @@ class DistributionQueueConfigurationTest extends TestCase
             $compose = file_get_contents($root.'/'.$composeFile);
             $this->assertIsString($compose);
             $this->assertSame(
-                5,
+                4,
                 substr_count($compose, './.env.prod:/var/www/html/.env:ro'),
                 $composeFile.' must mount the rendered environment read-only in every PHP service.'
             );
@@ -280,7 +284,7 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertIsString($prebuilt);
         $this->assertIsString($healthcheck);
         $this->assertIsString($release);
-        $this->assertSame(5, substr_count($prebuilt, 'env_file:'), 'All PHP runtime services must receive the rendered environment.');
+        $this->assertSame(4, substr_count($prebuilt, 'env_file:'), 'All PHP runtime services must receive the rendered environment.');
         $this->assertStringContainsString('GEOFLOW_COMPOSE_FILE', $healthcheck);
         $this->assertStringContainsString('GEOFLOW_COMPOSE_FILE=docker-compose.prebuilt.yml', $release);
     }
@@ -351,9 +355,9 @@ class DistributionQueueConfigurationTest extends TestCase
         $compose = file_get_contents(dirname(__DIR__, 2).'/docker-compose.prod.yml');
 
         $this->assertIsString($compose);
-        $this->assertSame(5, substr_count($compose, 'volumes: !override'), 'Every production PHP service must replace development bind mounts.');
+        $this->assertSame(4, substr_count($compose, 'volumes: !override'), 'Every production PHP service must replace development bind mounts.');
         $this->assertStringContainsString('ports: !reset []', $compose);
-        $this->assertStringContainsString('depends_on: !override', $compose);
+        $this->assertSame(4, substr_count($compose, 'depends_on: !reset []'));
     }
 
     public function test_production_image_build_uses_ci_credentials_and_immutable_tags(): void
@@ -426,8 +430,12 @@ class DistributionQueueConfigurationTest extends TestCase
         $this->assertStringContainsString('fresh|upgrade', $script);
         $this->assertStringContainsString('GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true', $script);
         $this->assertStringContainsString('run --rm --no-deps', $script);
-        $this->assertStringContainsString('init php artisan migrate --force --no-interaction', $script);
-        $this->assertStringContainsString('init php artisan geoflow:install --no-interaction', $script);
+        $this->assertStringContainsString('app php artisan migrate --force --no-interaction', $script);
+        $this->assertStringContainsString('app php artisan geoflow:install --no-interaction', $script);
+        $this->assertStringContainsString('remove_legacy_init_container', $script);
+        $this->assertStringContainsString('Legacy init container is still running', $script);
+        $this->assertStringContainsString('docker rm "$container"', $script);
+        $this->assertStringNotContainsString('docker rm -f "$container"', $script);
         $this->assertStringContainsString('up -d --no-deps app queue scheduler reverb web', $script);
         $this->assertStringContainsString('geoflow:managed-images:readiness', $script);
         $this->assertStringContainsString('geoflow:security-audit', $script);

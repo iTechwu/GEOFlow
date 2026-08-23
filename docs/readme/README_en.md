@@ -186,13 +186,15 @@ cp .env.example .env
 vi .env   # DB, Redis, APP_URL, ADMIN_BASE_PATH, REVERB_*, etc.
 
 docker compose build
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose up -d
 ```
 
 - Site (default): `http://localhost:18080` (host port from **`APP_PORT`**, default `18080`)
 - Admin login: `http://localhost:18080/geo_admin/login` (path prefix from **`ADMIN_BASE_PATH`**, default `geo_admin`)
 
-Under **`docker-compose.yml`**, the **`init`** service runs first-time migration and optional demo-content seeding after the database is ready. Authentication is provided exclusively by SSO.
+Compose starts only GEOFlow application processes. Migration and first-install commands are explicit one-time operations against the externally managed database; long-running containers never migrate on startup. Authentication is provided exclusively by SSO.
 
 ### Option 1 add-on: Docker (production)
 
@@ -213,13 +215,14 @@ vi .env.prod
 
 docker compose --env-file .env.prod -f docker-compose.prod.yml build
 # PostgreSQL and Redis are external services managed by ../docker-helm.dofe.ai.
-docker compose --env-file .env.prod -f docker-compose.prod.yml up -d init
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web queue scheduler reverb
 ```
 
 - Frontend and admin both enter through `web` (Nginx)
 - PHP is executed by `app` (php-fpm)
-- **First install:** the production `init` service runs migrations and then `php artisan geoflow:install`. This sequence is limited to a fresh empty database. Deployments with data or migration history must follow the stopped-and-drained upgrade protocol in section 3.1 of `../../docs/deployment/DEPLOYMENT.md`.
+- **First install:** the external commands run migrations and then `php artisan geoflow:install`. This sequence is limited to a fresh empty database. Deployments with data or migration history must follow the stopped-and-drained upgrade protocol in section 3.1 of `../../docs/deployment/DEPLOYMENT.md`.
 - See `../../docs/deployment/DEPLOYMENT.md` for details
 
 ### Option 2: Local PHP stack
@@ -291,7 +294,8 @@ PostgreSQL and Redis are external services managed by `../docker-helm.dofe.ai`; 
 
 | Service | Role |
 |---------|------|
-| `init` | One-off bootstrap (`restart: "no"`) |
+| `assets` | One-off frontend asset build |
+| `vite` | Frontend development server and hot reload |
 | `app` | `php artisan serve`, maps **`${APP_PORT:-18080}:8080`** |
 | `queue` | `queue:work redis` |
 | `scheduler` | `schedule:work` |
@@ -304,8 +308,8 @@ Configure external DB/Redis hosts and credentials through `.env`; this repositor
 | Variable | Default | Meaning |
 |----------|---------|---------|
 | `COMPOSER_ON_START` | `true` | Run `composer install` on container start |
-| `AUTO_MIGRATE` | `true` | Run `php artisan migrate --force` on start; existing deployments still require the stopped-and-drained protocol for security migrations |
-| `AUTO_INIT_ONCE` | `true` on `init` only | Run `migrate` + `geoflow:install`; the installer decides whether the DB is empty |
+| `AUTO_MIGRATE` | `false` | Compatibility switch; migrations are explicit external operations |
+| `AUTO_INIT_ONCE` | `false` | Compatibility switch; do not enable on long-running services |
 | `AUTO_INSTALL_ONCE` | `false` | Run `geoflow:install` after migrations; do not enable on long-running services |
 
 The entrypoint automatically runs `key:generate --force` when `.env` does not contain a valid `APP_KEY`; no extra toggle is required.

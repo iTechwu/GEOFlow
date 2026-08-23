@@ -125,14 +125,13 @@ $COMPOSE_PROD exec app sh
 tail -n 200 storage/logs/laravel.log
 ```
 
-也可以检查初始化容器是否成功执行：
+也可以直接检查迁移状态：
 
 ```bash
-$COMPOSE_PROD ps -a | grep init
-$COMPOSE_PROD logs --tail=200 init
+$COMPOSE_PROD run --rm --no-deps app php artisan migrate:status --pending=1 --no-interaction
 ```
 
-如果 `init` 容器已经成功执行，数据库迁移和首次安装通常已经完成，不需要重复执行安装填充。如果 `init` 没有运行或运行失败，再用 `docker compose ... run --rm app php artisan geoflow:install` 手动补执行。
+退出码 `0` 表示没有待执行迁移。全新空库在迁移成功后，再用 `docker compose ... run --rm app php artisan geoflow:install` 显式执行首次安装。
 
 ## 三、常见原因速查
 
@@ -171,18 +170,12 @@ sudo ufw status
 ```bash
 $COMPOSE_PROD build
 # PostgreSQL/Redis 由 ../docker-helm.dofe.ai 提供；先确认 DB_HOST/REDIS_HOST 与凭据可达。
-$COMPOSE_PROD up -d init
-$COMPOSE_PROD logs --tail=200 init
+$COMPOSE_PROD run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan migrate --force --no-interaction
+$COMPOSE_PROD run --rm --no-deps -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true app php artisan geoflow:install --no-interaction
 $COMPOSE_PROD up -d app web queue scheduler reverb
 ```
 
-仅在全新空库首次安装时，可以一次性启动：
-
-```bash
-$COMPOSE_PROD up -d --build
-```
-
-已有数据或迁移历史的实例禁止使用该命令升级。请执行 [`DEPLOYMENT.md` 3.1 节](DEPLOYMENT.md#31-受管图片删除升级门禁)的 down、停止排空、一次性确认、迁移、全量新版本启动和 readiness 流程。
+已有数据或迁移历史的实例禁止使用 fresh-install 确认。请执行 [`DEPLOYMENT.md` 3.1 节](DEPLOYMENT.md#31-受管图片删除升级门禁)的 down、停止排空、一次性确认、迁移、全量新版本启动和 readiness 流程。
 
 首次部署后，如果修改了 `.env.prod`，建议至少重建应用相关容器：
 
