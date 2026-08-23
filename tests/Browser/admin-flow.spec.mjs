@@ -13,6 +13,7 @@ function observeRuntime(page) {
         pageErrors: [],
         failedRequests: [],
         serverErrors: [],
+        forbiddenResponses: [],
     };
 
     page.on('console', (message) => {
@@ -34,6 +35,9 @@ function observeRuntime(page) {
                 url: response.url(),
             });
         }
+        if (response.status() === 403) {
+            diagnostics.forbiddenResponses.push(response.url());
+        }
     });
 
     return diagnostics;
@@ -44,6 +48,7 @@ function resetDiagnostics(diagnostics) {
     diagnostics.pageErrors.length = 0;
     diagnostics.failedRequests.length = 0;
     diagnostics.serverErrors.length = 0;
+    diagnostics.forbiddenResponses.length = 0;
 }
 
 async function attachDiagnostics(testInfo, diagnostics) {
@@ -53,10 +58,12 @@ async function attachDiagnostics(testInfo, diagnostics) {
     });
 }
 
-async function expectCleanRuntime(diagnostics) {
+async function expectCleanRuntime(diagnostics, expectedForbiddenUrl = null) {
     expect(diagnostics.pageErrors).toEqual([]);
     expect(diagnostics.serverErrors).toEqual([]);
     expect(diagnostics.failedRequests).toEqual([]);
+    const unexpectedForbiddenResponses = diagnostics.forbiddenResponses.filter((url) => expectedForbiddenUrl === null || !url.includes(expectedForbiddenUrl));
+    expect(unexpectedForbiddenResponses).toEqual([]);
     expect(diagnostics.consoleErrors.filter((message) => !message.includes('server responded with a status of 403')).length).toBe(0);
 }
 
@@ -144,5 +151,5 @@ test('管理员经 SSO 登录后访问 GEO 核心工作台', async ({ page }, te
     }
 
     await attachDiagnostics(testInfo, diagnostics);
-    await expectCleanRuntime(diagnostics);
+    await expectCleanRuntime(diagnostics, expectSuperAdmin ? null : '/geo_admin/distribution');
 });
