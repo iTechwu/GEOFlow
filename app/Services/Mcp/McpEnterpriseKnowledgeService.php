@@ -62,6 +62,7 @@ class McpEnterpriseKnowledgeService
     public function validate(array $input, McpAuthContext $auth): array
     {
         $project = $this->find((int) ($input['project_id'] ?? 0), $this->requiredTenant($auth));
+        $this->assertGenerationComplete($project);
         $content = trim((string) ($input['content'] ?? $project->draft_content ?? ''));
         if ($content === '') {
             throw new ApiException('enterprise_knowledge_content_required', '企业知识草稿内容不能为空', 422);
@@ -79,6 +80,7 @@ class McpEnterpriseKnowledgeService
     public function autosave(array $input, McpAuthContext $auth): array
     {
         $project = $this->find((int) ($input['project_id'] ?? 0), $this->requiredTenant($auth));
+        $this->assertGenerationComplete($project);
         $content = trim((string) ($input['content'] ?? ''));
         if ($content === '' || mb_strlen($content, 'UTF-8') > 200000) {
             throw new ApiException('enterprise_knowledge_content_invalid', '企业知识草稿不能为空且不能超过 200000 个字符', 422);
@@ -109,6 +111,7 @@ class McpEnterpriseKnowledgeService
             if (! $project) {
                 throw new ApiException('enterprise_knowledge_not_found', '企业知识项目不存在', 404);
             }
+            $this->assertGenerationComplete($project);
 
             if ((string) $project->status === 'published' && $project->published_knowledge_base_id !== null) {
                 $knowledgeBase = $project->publishedKnowledgeBase()->first();
@@ -176,6 +179,17 @@ class McpEnterpriseKnowledgeService
         }
 
         return $teamId;
+    }
+
+    private function assertGenerationComplete(EnterpriseKnowledgeProject $project): void
+    {
+        if (in_array((string) $project->status, ['queued', 'processing'], true)) {
+            throw new ApiException(
+                'enterprise_knowledge_generation_in_progress',
+                '企业知识草稿仍在生成，请等待状态变为 reviewing 后再操作',
+                409,
+            );
+        }
     }
 
     /** @return array<string,mixed> */

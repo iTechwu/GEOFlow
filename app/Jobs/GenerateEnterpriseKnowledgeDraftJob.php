@@ -39,26 +39,39 @@ class GenerateEnterpriseKnowledgeDraftJob implements ShouldQueue
         }
 
         try {
-            $this->updateProgress($project, 'collecting', 20, __('admin.enterprise_knowledge.progress_message.collecting'));
-            $this->updateProgress($project, 'cleaning', 35, __('admin.enterprise_knowledge.progress_message.cleaning'));
-            $this->updateProgress($project, 'structuring', 58, __('admin.enterprise_knowledge.progress_message.structuring'));
+            if (! $this->updateProgress($project, 'collecting', 20, __('admin.enterprise_knowledge.progress_message.collecting'))
+                || ! $this->updateProgress($project, 'cleaning', 35, __('admin.enterprise_knowledge.progress_message.cleaning'))
+                || ! $this->updateProgress($project, 'structuring', 58, __('admin.enterprise_knowledge.progress_message.structuring'))) {
+                return;
+            }
 
             $freshProject = $project->fresh(['sources']) ?? $project;
             $draft = $draftService->generateDraft($freshProject);
             $content = trim((string) $draft['content']);
 
-            $this->updateProgress($project, 'validating', 78, __('admin.enterprise_knowledge.progress_message.validating'));
+            if (! $this->updateProgress($project, 'validating', 78, __('admin.enterprise_knowledge.progress_message.validating'))) {
+                return;
+            }
             $validationItems = $draftService->validateDraft($content);
 
-            $this->updateProgress($project, 'writing', 92, __('admin.enterprise_knowledge.progress_message.writing'));
-            $project->forceFill([
-                'status' => 'reviewing',
-                'draft_content' => $content,
-                'validation_json' => json_encode($validationItems, JSON_UNESCAPED_UNICODE),
-                'ai_model_id' => $draft['model_id'],
-                'error_message' => $draft['error'],
-                'structured_json' => $this->progressJson($project, 'completed', 100, __('admin.enterprise_knowledge.progress_message.completed')),
-            ])->save();
+            if (! $this->updateProgress($project, 'writing', 92, __('admin.enterprise_knowledge.progress_message.writing'))) {
+                return;
+            }
+            $updated = EnterpriseKnowledgeProject::query()
+                ->whereKey($project->id)
+                ->whereIn('status', ['queued', 'processing'])
+                ->update([
+                    'status' => 'reviewing',
+                    'draft_content' => $content,
+                    'validation_json' => json_encode($validationItems, JSON_UNESCAPED_UNICODE),
+                    'ai_model_id' => $draft['model_id'],
+                    'error_message' => $draft['error'],
+                    'structured_json' => $this->progressJson($project, 'completed', 100, __('admin.enterprise_knowledge.progress_message.completed')),
+                    'updated_at' => now(),
+                ]);
+            if ($updated === 0) {
+                return;
+            }
 
             $this->recordRevision($project, $content, (string) $draft['source'], $draft['source'] === 'ai'
                 ? __('admin.enterprise_knowledge.revision_ai')
@@ -78,22 +91,35 @@ class GenerateEnterpriseKnowledgeDraftJob implements ShouldQueue
         $this->markFailed($project, $exception);
     }
 
-    private function updateProgress(EnterpriseKnowledgeProject $project, string $step, int $progress, string $message): void
+    private function updateProgress(EnterpriseKnowledgeProject $project, string $step, int $progress, string $message): bool
     {
-        $project->forceFill([
-            'status' => 'processing',
-            'structured_json' => $this->progressJson($project, $step, $progress, $message),
-        ])->save();
+        $updated = EnterpriseKnowledgeProject::query()
+            ->whereKey($project->id)
+            ->whereIn('status', ['queued', 'processing'])
+            ->update([
+                'status' => 'processing',
+                'structured_json' => $this->progressJson($project, $step, $progress, $message),
+                'updated_at' => now(),
+            ]);
+        if ($updated > 0) {
+            $project->refresh();
+        }
+
+        return $updated > 0;
     }
 
     private function markFailed(EnterpriseKnowledgeProject $project, Throwable $exception): void
     {
         $message = mb_substr($exception->getMessage(), 0, 2000);
-        $project->forceFill([
-            'status' => 'failed',
-            'error_message' => $message,
-            'structured_json' => $this->progressJson($project, 'failed', 100, __('admin.enterprise_knowledge.progress_message.failed', ['message' => $message])),
-        ])->save();
+        EnterpriseKnowledgeProject::query()
+            ->whereKey($project->id)
+            ->whereIn('status', ['queued', 'processing'])
+            ->update([
+                'status' => 'failed',
+                'error_message' => $message,
+                'structured_json' => $this->progressJson($project, 'failed', 100, __('admin.enterprise_knowledge.progress_message.failed', ['message' => $message])),
+                'updated_at' => now(),
+            ]);
     }
 
     private function progressJson(EnterpriseKnowledgeProject $project, string $step, int $progress, string $message): string

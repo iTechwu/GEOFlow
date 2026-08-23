@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Exceptions\ApiException;
 use App\Http\McpAuthContext;
 use App\Jobs\GenerateEnterpriseKnowledgeDraftJob;
 use App\Models\EnterpriseKnowledgeProject;
@@ -87,6 +88,30 @@ class McpEnterpriseKnowledgeServiceTest extends TestCase
 
         $this->expectException(McpToolException::class);
         $service->publish((int) $project->id, 'YES', $this->auth('team-a'));
+    }
+
+    public function test_generation_in_progress_rejects_review_and_publish_operations(): void
+    {
+        $project = EnterpriseKnowledgeProject::query()->create([
+            'name' => 'Generating knowledge',
+            'status' => 'processing',
+            'draft_content' => '# Partial draft',
+            'sso_team_id' => 'team-a',
+        ]);
+        $service = new McpEnterpriseKnowledgeService(app(EnterpriseKnowledgeDraftService::class));
+
+        foreach (['validate', 'autosave', 'publish'] as $operation) {
+            try {
+                match ($operation) {
+                    'validate' => $service->validate(['project_id' => (int) $project->id], $this->auth('team-a')),
+                    'autosave' => $service->autosave(['project_id' => (int) $project->id, 'content' => '# Reviewed'], $this->auth('team-a')),
+                    'publish' => $service->publish((int) $project->id, 'PUBLISH', $this->auth('team-a')),
+                };
+                $this->fail($operation.' should reject an in-progress generation.');
+            } catch (ApiException $exception) {
+                $this->assertSame(409, $exception->getHttpStatus());
+            }
+        }
     }
 
     public function test_publish_creates_tenant_owned_knowledge_base_chunks_and_revision(): void

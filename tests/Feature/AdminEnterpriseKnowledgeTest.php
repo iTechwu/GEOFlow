@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\GenerateEnterpriseKnowledgeDraftJob;
 use App\Models\Admin;
 use App\Models\AiModel;
 use App\Models\EnterpriseKnowledgeProject;
 use App\Models\EnterpriseKnowledgeRevision;
 use App\Models\EnterpriseKnowledgeSource;
 use App\Models\KnowledgeBase;
-use App\Jobs\GenerateEnterpriseKnowledgeDraftJob;
 use App\Services\GeoFlow\EnterpriseKnowledgeDraftService;
 use App\Services\GeoFlow\KnowledgeChunkSyncService;
 use App\Services\GeoFlow\KnowledgeSourceParser;
@@ -82,8 +82,7 @@ class AdminEnterpriseKnowledgeTest extends TestCase
         $this->assertDatabaseMissing('enterprise_knowledge_revisions', [
             'enterprise_knowledge_project_id' => (int) $project->id,
         ]);
-        Queue::assertPushed(GenerateEnterpriseKnowledgeDraftJob::class, fn (GenerateEnterpriseKnowledgeDraftJob $job): bool =>
-            $job->projectId === (int) $project->id && $job->adminId === (int) $admin->id
+        Queue::assertPushed(GenerateEnterpriseKnowledgeDraftJob::class, fn (GenerateEnterpriseKnowledgeDraftJob $job): bool => $job->projectId === (int) $project->id && $job->adminId === (int) $admin->id
         );
     }
 
@@ -144,6 +143,52 @@ class AdminEnterpriseKnowledgeTest extends TestCase
         ]);
     }
 
+    public function test_generation_job_does_not_overwrite_a_draft_reviewed_while_ai_is_running(): void
+    {
+        AiModel::query()->create([
+            'name' => 'Concurrent Chat',
+            'version' => 'v1',
+            'api_key' => app(ApiKeyCrypto::class)->encrypt('test-api-key'),
+            'model_id' => 'test-chat-model',
+            'model_type' => 'chat',
+            'api_url' => 'https://ai.test/v1',
+            'failover_priority' => 1,
+            'daily_limit' => 0,
+            'used_today' => 0,
+            'total_used' => 0,
+            'status' => 'active',
+        ]);
+        $project = EnterpriseKnowledgeProject::query()->create([
+            'name' => 'Concurrent review',
+            'status' => 'queued',
+            'sso_team_id' => 'team-a',
+        ]);
+        EnterpriseKnowledgeSource::query()->create([
+            'enterprise_knowledge_project_id' => (int) $project->id,
+            'original_name' => 'source.md',
+            'file_type' => 'markdown',
+            'content' => '# Company profile'."\n".'A GEO knowledge service.',
+            'character_count' => 50,
+            'sort_order' => 0,
+        ]);
+        Http::fake(function () use ($project) {
+            $project->forceFill([
+                'status' => 'published',
+                'draft_content' => '# Human reviewed content',
+            ])->save();
+
+            return Http::response($this->chatCompletion($this->completeDraftContent('Stale AI content')), 200);
+        });
+
+        (new GenerateEnterpriseKnowledgeDraftJob((int) $project->id))
+            ->handle(app(EnterpriseKnowledgeDraftService::class));
+
+        $project->refresh();
+        $this->assertSame('published', $project->status);
+        $this->assertSame('# Human reviewed content', $project->draft_content);
+        $this->assertSame(0, $project->revisions()->count());
+    }
+
     public function test_fallback_draft_is_grounded_in_uploaded_materials(): void
     {
         $admin = $this->admin();
@@ -157,7 +202,7 @@ class AdminEnterpriseKnowledgeTest extends TestCase
             'enterprise_knowledge_project_id' => (int) $project->id,
             'original_name' => 'company-profile.md',
             'file_type' => 'markdown',
-            'content' => <<<MARKDOWN
+            'content' => <<<'MARKDOWN'
 # 星河智能公司资料
 星河智能为制造企业提供设备巡检 SaaS 和维保工单系统。
 
@@ -308,7 +353,7 @@ MARKDOWN,
             'enterprise_knowledge_project_id' => (int) $project->id,
             'original_name' => 'detail-profile.md',
             'file_type' => 'markdown',
-            'content' => <<<MARKDOWN
+            'content' => <<<'MARKDOWN'
 # 企业背景
 澜舟数据为连锁零售企业提供门店知识库、巡店 SOP 和总部督导协同系统。
 
