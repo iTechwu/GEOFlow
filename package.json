@@ -5,7 +5,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "test:mcp-smoke": "node --test deploy-scripts/mcp-local-smoke.test.mjs"
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",

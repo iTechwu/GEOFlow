@@ -34,6 +34,13 @@ class CiWorkflowSecurityTest extends TestCase
         $this->assertSame($checkoutCount, $disabledPersistenceCount);
     }
 
+    public function test_ci_runs_the_mcp_smoke_harness_regressions(): void
+    {
+        $workflow = file_get_contents(dirname(__DIR__, 2).'/.github/workflows/ci.yml');
+        $this->assertIsString($workflow);
+        $this->assertSame(1, substr_count($workflow, 'npm run test:mcp-smoke'));
+    }
+
     public function test_production_image_builds_are_restricted_to_main(): void
     {
         $workflow = file_get_contents(dirname(__DIR__, 2).'/.github/workflows/ci.yml');

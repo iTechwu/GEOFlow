@@ -1,4 +1,4 @@
-.PHONY: dev dev-up dev-down dev-logs dev-shell check-boundaries test
+.PHONY: dev dev-up dev-down dev-logs dev-shell check-boundaries test test-mcp-smoke
 
 dev: .env.local
 	GEOFLOW_ENV_FILE=.env.local docker compose --env-file .env.local up --build
@@ -25,3 +25,7 @@ check-boundaries:
 # 运行 PHPUnit（需本地 php + vendor）
 test:
 	php artisan test
+
+# 无需真实 Docker，验证 MCP smoke 的协议、失败和清理路径
+test-mcp-smoke:
+	npm run test:mcp-smoke
