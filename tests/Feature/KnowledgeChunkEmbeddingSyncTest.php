@@ -7,8 +7,10 @@ use App\Models\KnowledgeBase;
 use App\Models\SiteSetting;
 use App\Services\GeoFlow\KnowledgeChunkSyncService;
 use App\Support\GeoFlow\ApiKeyCrypto;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 class KnowledgeChunkEmbeddingSyncTest extends TestCase
@@ -81,6 +83,38 @@ class KnowledgeChunkEmbeddingSyncTest extends TestCase
         $this->assertSame(0, (int) $chunk->embedding_dimensions);
         $this->assertCount(256, json_decode((string) $chunk->embedding_json, true));
         Http::assertNothingSent();
+    }
+
+    public function test_sync_keeps_real_embedding_when_optional_vector_column_is_unavailable(): void
+    {
+        Schema::table('knowledge_chunks', function (Blueprint $table): void {
+            $table->dropColumn('embedding_vector');
+        });
+        Http::fake([
+            'https://ai.test/v1/embeddings' => Http::response([
+                'data' => [['embedding' => [0.4, 0.5, 0.6]]],
+            ]),
+        ]);
+        $model = $this->createEmbeddingModel();
+        $knowledgeBase = KnowledgeBase::query()->create([
+            'name' => 'JSON embedding knowledge',
+            'description' => '',
+            'content' => 'Store embeddings without pgvector.',
+            'character_count' => 34,
+            'file_type' => 'markdown',
+            'word_count' => 34,
+        ]);
+
+        $count = app(KnowledgeChunkSyncService::class)->sync(
+            (int) $knowledgeBase->id,
+            'Store real embeddings in JSON when the optional vector column is unavailable.',
+        );
+
+        $chunk = $knowledgeBase->chunks()->firstOrFail();
+        $this->assertSame(1, $count);
+        $this->assertSame((int) $model->id, (int) $chunk->embedding_model_id);
+        $this->assertSame(3, (int) $chunk->embedding_dimensions);
+        $this->assertSame([0.4, 0.5, 0.6], json_decode((string) $chunk->embedding_json, true));
     }
 
     public function test_sync_writes_knowledge_base_evidence_metadata_to_chunks(): void

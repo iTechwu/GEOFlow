@@ -61,12 +61,13 @@ class KnowledgeChunkSyncService
         $embeddingMetadata = $this->resolveEmbeddingMetadata();
         $embeddingDocumentTitle = $this->resolveEmbeddingDocumentTitle($knowledgeBaseId);
         $generatedEmbeddings = $this->generateEmbeddingsForChunks($chunks, $embeddingMetadata, $requireRealEmbedding, $embeddingDocumentTitle);
+        $canStoreEmbeddingVector = $this->canStoreEmbeddingVector();
 
         if ($requireRealEmbedding && count($generatedEmbeddings) !== count($chunks)) {
             throw new \RuntimeException(__('admin.knowledge_bases.error.embedding_sync_failed'));
         }
 
-        DB::transaction(function () use ($knowledgeBaseId, $plannedChunks, $generatedEmbeddings, $knowledgeMetadata): void {
+        DB::transaction(function () use ($knowledgeBaseId, $plannedChunks, $generatedEmbeddings, $knowledgeMetadata, $canStoreEmbeddingVector): void {
             KnowledgeChunk::query()->where('knowledge_base_id', $knowledgeBaseId)->delete();
 
             foreach ($plannedChunks as $index => $chunk) {
@@ -78,7 +79,7 @@ class KnowledgeChunkSyncService
                     ? json_encode($realEmbedding['vector'] ?? [], JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION)
                     : json_encode($fallbackVector, JSON_UNESCAPED_UNICODE | JSON_PRESERVE_ZERO_FRACTION);
 
-                KnowledgeChunk::query()->create([
+                $attributes = [
                     'knowledge_base_id' => $knowledgeBaseId,
                     'chunk_index' => $index,
                     'content' => $chunkContent,
@@ -93,8 +94,12 @@ class KnowledgeChunkSyncService
                     'embedding_model_id' => $isRealEmbedding ? (int) ($realEmbedding['model_id'] ?? 0) : null,
                     'embedding_dimensions' => $isRealEmbedding ? (int) ($realEmbedding['dimensions'] ?? 0) : 0,
                     'embedding_provider' => $isRealEmbedding ? (string) ($realEmbedding['provider'] ?? '') : '',
-                    'embedding_vector' => $isRealEmbedding ? ($realEmbedding['vector_literal'] ?? null) : null,
-                ]);
+                ];
+                if ($canStoreEmbeddingVector) {
+                    $attributes['embedding_vector'] = $isRealEmbedding ? ($realEmbedding['vector_literal'] ?? null) : null;
+                }
+
+                KnowledgeChunk::query()->create($attributes);
             }
         });
 
@@ -1267,7 +1272,7 @@ class KnowledgeChunkSyncService
      */
     private function canStoreEmbeddingVector(): bool
     {
-        if (DB::getDriverName() !== 'pgsql') {
+        if (DB::getDriverName() !== 'pgsql' || ! Schema::hasColumn('knowledge_chunks', 'embedding_vector')) {
             return false;
         }
 
