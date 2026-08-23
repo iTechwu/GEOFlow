@@ -1,4 +1,5 @@
 ARG COMPOSER_IMAGE=composer:2.10.2
+ARG NODE_IMAGE=uhub.service.ucloud.cn/techwu/node:24-bookworm-slim
 ARG COMPOSER_VERSION=2.10.2
 ARG COMPOSER_SHA256=5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027
 ARG PHP_FPM_IMAGE=uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm
@@ -73,7 +74,7 @@ RUN composer dump-autoload \
  && BROADCAST_CONNECTION=null php artisan package:discover --ansi \
  && rm -f bootstrap/cache/config.php bootstrap/cache/routes*.php
 
-FROM uhub.service.ucloud.cn/techwu/node:25-bookworm-slim AS assets
+FROM ${NODE_IMAGE} AS assets
 
 WORKDIR /app
 
