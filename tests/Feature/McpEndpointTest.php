@@ -28,6 +28,7 @@ class McpEndpointTest extends TestCase
             'geoflow.mcp_enabled' => true,
             'geoflow.mcp_token' => $token,
             'geoflow.mcp_read_token' => $readToken ?? '',
+            'geoflow.mcp_allow_cross_tenant' => true,
             'geoflow.mcp_server_name' => 'geoflow-ci',
         ]);
     }
@@ -312,7 +313,7 @@ class McpEndpointTest extends TestCase
         $this->enableMcp('ci-secret');
 
         Http::fake([
-            '*oauth/userinfo' => Http::response(['sub' => 'user-1', 'selected_team_id' => 'team-a'], 200),
+            '*oauth/userinfo' => Http::response(['sub' => 'user-1', 'selected_team_id' => 'team-a', 'scope' => 'tasks:read'], 200),
         ]);
 
         [$catalog, $tasks] = $this->mockServices();
@@ -356,5 +357,34 @@ class McpEndpointTest extends TestCase
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
             ->assertUnauthorized()
             ->assertJsonPath('error.code', -32001);
+    }
+
+    public function test_system_token_requires_tenant_or_explicit_cross_tenant_mode(): void
+    {
+        config([
+            'geoflow.mcp_enabled' => true,
+            'geoflow.mcp_token' => 'ci-secret',
+            'geoflow.mcp_allow_cross_tenant' => false,
+            'geoflow.mcp_default_tenant' => '',
+        ]);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize'])
+            ->assertUnauthorized();
+    }
+
+    public function test_sso_token_without_required_mcp_scope_cannot_read_catalog(): void
+    {
+        $this->enableMcp('ci-secret');
+        Http::fake([
+            '*oauth/userinfo' => Http::response(['sub' => 'user-2', 'selected_team_id' => 'team-a', 'scope' => 'tasks:read'], 200),
+        ]);
+        $this->mockServices();
+
+        $this->withHeader('Authorization', 'Bearer sso-token-without-catalog-scope')
+            ->postJson('/mcp', $this->toolCall('geoflow.catalog', []))
+            ->assertOk()
+            ->assertJsonPath('result.isError', true)
+            ->assertJsonPath('result.structuredContent.error.code', 'tool_error');
     }
 }

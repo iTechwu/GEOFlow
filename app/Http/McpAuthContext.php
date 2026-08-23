@@ -22,11 +22,18 @@ final class McpAuthContext
      * @param  string  $tokenHash  提供令牌的 SHA-256 指纹（绝不落原始令牌）。
      * @param  string|null  $tenantId  SSO selected_team_id；null 表示系统/跨租户令牌。
      * @param  int|null  $auditAdminId  用于文章风险/审核审计的管理员 ID。
+     * @param  list<string>  $scopes  MCP 工具能力；`*` 表示全部能力。
      */
     public function __construct(
         public string $scope,
         public string $tokenHash,
         public ?string $tenantId = null,
-        public ?int $auditAdminId = null
+        public ?int $auditAdminId = null,
+        public array $scopes = [],
     ) {}
+
+    public function allows(string $requiredScope): bool
+    {
+        return in_array('*', $this->scopes, true) || in_array($requiredScope, $this->scopes, true);
+    }
 }

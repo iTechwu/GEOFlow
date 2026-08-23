@@ -262,7 +262,7 @@ prepare_env() {
   fi
 
   local default_ip current_app_url current_admin_path current_web_port current_reverb_port
-  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret db_host redis_host models_base models_key models_chat_smoke_model models_embedding_smoke_model models_allow_insecure_local outbound_private_targets models_internal_base models_internal_secret mcp_token mcp_read_token mcp_default_tenant mcp_enabled
+  local app_url admin_path web_port reverb_port db_password redis_password reverb_secret db_host redis_host models_base models_key models_chat_smoke_model models_embedding_smoke_model models_allow_insecure_local outbound_private_targets models_internal_base models_internal_secret mcp_token mcp_read_token mcp_default_tenant mcp_allow_cross_tenant mcp_enabled
   default_ip="$(detect_primary_ip || true)"
   default_ip="${default_ip:-127.0.0.1}"
 
@@ -298,6 +298,7 @@ prepare_env() {
   mcp_token="${GEOFLOW_MCP_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_TOKEN)}"
   mcp_read_token="${GEOFLOW_MCP_READ_TOKEN:-$(get_env_value .env.prod GEOFLOW_MCP_READ_TOKEN)}"
   mcp_default_tenant="${GEOFLOW_MCP_DEFAULT_TENANT:-$(get_env_value .env.prod GEOFLOW_MCP_DEFAULT_TENANT)}"
+  mcp_allow_cross_tenant="${GEOFLOW_MCP_ALLOW_CROSS_TENANT:-$(get_env_value .env.prod GEOFLOW_MCP_ALLOW_CROSS_TENANT)}"
   mcp_enabled="${GEOFLOW_MCP_ENABLED:-$(get_env_value .env.prod GEOFLOW_MCP_ENABLED)}"
   [ -n "$db_password" ] || fail "Set GEOFLOW_DB_PASSWORD for the externally managed PostgreSQL service."
   [ -n "$redis_password" ] || fail "Set GEOFLOW_REDIS_PASSWORD for the externally managed Redis service."
@@ -350,6 +351,7 @@ prepare_env() {
   set_env_value .env.prod GEOFLOW_MCP_TOKEN "$mcp_token"
   set_env_value .env.prod GEOFLOW_MCP_READ_TOKEN "$mcp_read_token"
   set_env_value .env.prod GEOFLOW_MCP_DEFAULT_TENANT "$mcp_default_tenant"
+  set_env_value .env.prod GEOFLOW_MCP_ALLOW_CROSS_TENANT "${mcp_allow_cross_tenant:-false}"
   set_env_value .env.prod WEB_PORT "$web_port"
   set_env_value .env.prod REVERB_EXPOSE_PORT "$reverb_port"
   set_env_value .env.prod REVERB_APP_SECRET "$reverb_secret"

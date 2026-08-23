@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\ApiException;
 use App\Http\McpAuthContext;
 use App\Services\GeoFlow\ArticleGeoFlowService;
 use App\Services\GeoFlow\CatalogGeoFlowService;
@@ -50,6 +51,8 @@ final class McpController extends Controller
             };
         } catch (McpToolException $exception) {
             return $this->toolError($id, $exception->getMessage());
+        } catch (ApiException $exception) {
+            return $this->toolError($id, $exception->getMessage(), $exception->getErrorCode(), $exception->getDetails());
         } catch (\InvalidArgumentException $exception) {
             return $this->error($id, -32602, $exception->getMessage());
         } catch (Throwable $exception) {
@@ -141,6 +144,7 @@ final class McpController extends Controller
     private function runWriteTool(Request $request, string $tool, array $arguments, Closure $operation): array
     {
         $auth = $this->mcpAuth($request);
+        $this->authorizeTool($auth, $tool);
         if ($auth->scope !== McpAuthContext::SCOPE_WRITE) {
             throw new McpToolException('只读令牌无权调用写工具 '.$tool);
         }
@@ -173,6 +177,7 @@ final class McpController extends Controller
     private function runReadTool(Request $request, string $tool, array $arguments, Closure $operation): array
     {
         $auth = $this->mcpAuth($request);
+        $this->authorizeTool($auth, $tool);
 
         try {
             $data = $operation($arguments);
@@ -297,11 +302,28 @@ final class McpController extends Controller
         return response()->json(['jsonrpc' => '2.0', 'id' => $id, 'result' => $result]);
     }
 
-    private function toolError(mixed $id, string $message): JsonResponse
+    private function authorizeTool(McpAuthContext $auth, string $tool): void
+    {
+        $required = match (true) {
+            str_ends_with($tool, '.review'), str_ends_with($tool, '.publish') => 'articles:publish',
+            str_starts_with($tool, 'geoflow.articles.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') ? 'articles:read' : 'articles:write',
+            str_starts_with($tool, 'geoflow.tasks.') => str_ends_with($tool, '.list') || str_ends_with($tool, '.get') || str_ends_with($tool, '.jobs') ? 'tasks:read' : 'tasks:write',
+            str_starts_with($tool, 'geoflow.materials.') => str_contains($tool, '.list') || str_ends_with($tool, '.get') ? 'materials:read' : 'materials:write',
+            $tool === 'geoflow.catalog' => 'catalog:read',
+            default => null,
+        };
+
+        if ($required !== null && ! $auth->allows($required)) {
+            throw new McpToolException('当前 MCP Token 没有 '.$required.' 权限');
+        }
+    }
+
+    private function toolError(mixed $id, string $message, string $code = 'tool_error', array $details = []): JsonResponse
     {
         return $this->result($id, [
             'content' => [['type' => 'text', 'text' => $message]],
             'isError' => true,
+            'structuredContent' => ['error' => ['code' => $code, 'message' => $message, 'details' => $details]],
         ]);
     }
 

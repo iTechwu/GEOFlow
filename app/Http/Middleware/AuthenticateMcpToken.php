@@ -66,21 +66,30 @@ final class AuthenticateMcpToken
         if ($writeToken !== '' && hash_equals($writeToken, $provided)) {
             $auditAdminId = (int) config('geoflow.mcp_audit_admin_id', 0);
             $defaultTenant = trim((string) config('geoflow.mcp_default_tenant', ''));
+            if ($defaultTenant === '' && ! (bool) config('geoflow.mcp_allow_cross_tenant', false)) {
+                return null;
+            }
 
             return new McpAuthContext(
                 McpAuthContext::SCOPE_WRITE,
                 hash('sha256', $writeToken),
                 $defaultTenant !== '' ? $defaultTenant : null,
                 $auditAdminId > 0 ? $auditAdminId : null,
+                ['*'],
             );
         }
         if ($readToken !== '' && hash_equals($readToken, $provided)) {
             $defaultTenant = trim((string) config('geoflow.mcp_default_tenant', ''));
+            if ($defaultTenant === '' && ! (bool) config('geoflow.mcp_allow_cross_tenant', false)) {
+                return null;
+            }
 
             return new McpAuthContext(
                 McpAuthContext::SCOPE_READ,
                 hash('sha256', $readToken),
                 $defaultTenant !== '' ? $defaultTenant : null,
+                null,
+                ['catalog:read', 'tasks:read', 'articles:read', 'materials:read', 'jobs:read'],
             );
         }
 
@@ -95,19 +104,25 @@ final class AuthenticateMcpToken
             return null;
         }
 
-        try {
-            $admin = $this->identities->synchronize($claims);
-        } catch (Throwable) {
-            return null;
-        }
-
         $teamId = $this->identities->selectedTeamId($claims);
         if ($teamId === null || $teamId === '') {
             // 无法确定租户：拒绝访问，避免无团队上下文的 SSO 令牌获得跨租户可见性。
             return null;
         }
 
-        return new McpAuthContext(McpAuthContext::SCOPE_WRITE, hash('sha256', $provided), $teamId, (int) $admin->getKey());
+        try {
+            $admin = $this->identities->synchronize($claims);
+        } catch (Throwable) {
+            return null;
+        }
+
+        return new McpAuthContext(
+            McpAuthContext::SCOPE_WRITE,
+            hash('sha256', $provided),
+            $teamId,
+            (int) $admin->getKey(),
+            $this->scopesFromClaims($claims),
+        );
     }
 
     private function unauthorized(): Response
@@ -127,5 +142,26 @@ final class AuthenticateMcpToken
         }
 
         return trim((string) $matches[1]);
+    }
+
+    /** @param array<string,mixed> $claims
+     *  @return list<string>
+     */
+    private function scopesFromClaims(array $claims): array
+    {
+        $roles = $claims['roles'] ?? $claims['role'] ?? [];
+        $roles = is_string($roles) ? preg_split('/\s+/', trim($roles)) : (array) $roles;
+        $roles = array_map(static fn (mixed $role): string => trim(strtolower((string) $role)), $roles);
+        if (in_array('super_admin', $roles, true) || in_array('superadmin', $roles, true) || ($claims['isAdmin'] ?? false) === true) {
+            return ['*'];
+        }
+
+        $raw = $claims['scopes'] ?? $claims['scope'] ?? $claims['permissions'] ?? [];
+        $scopes = is_string($raw) ? preg_split('/\s+/', trim($raw)) : (array) $raw;
+
+        return array_values(array_unique(array_filter(
+            array_map(static fn (mixed $scope): string => trim((string) $scope), $scopes),
+            static fn (string $scope): bool => $scope !== '',
+        )));
     }
 }
