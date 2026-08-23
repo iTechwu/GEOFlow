@@ -19,12 +19,14 @@ Skill 检索结果中，[internet-court-skill](https://github.com/internet-court
 
 先确认 GEOFlow 已运行于 `http://127.0.0.1:18080`，并拉取官方镜像：
 
+当前已验证 digest：
+
 ```bash
-docker pull mcp/fetch
-docker pull mcp/filesystem
-docker pull mcp/memory
-docker pull mcp/sequentialthinking
-docker pull mcp/time
+docker pull mcp/fetch@sha256:1a7a0996a565a0b8ca5c41b42830d4e5f334d33f851596bbd9debb2beedb22d3
+docker pull mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67
+docker pull mcp/memory@sha256:db0c2db07a44b6797eba7a832b1bda142ffc899588aae82c92780cbb2252407f
+docker pull mcp/sequentialthinking@sha256:cd3174b2ecf37738654cf7671fb1b719a225c40a78274817da00c4241f465e5f
+docker pull mcp/time@sha256:9c46a918633fb474bf8035e3ee90ebac6bcf2b18ccb00679ac4c179cba0ebfcf
 ```
 
 运行 stdio MCP smoke：
@@ -33,7 +35,7 @@ docker pull mcp/time
 node deploy-scripts/mcp-local-smoke.mjs
 ```
 
-脚本为每次测试创建带随机后缀的容器名，并在成功、失败或中断时执行 `docker rm -f`；临时数据只写入 `/tmp/geoflow-mcp-local-<pid>`。fetch 使用 Docker host network 访问 `127.0.0.1:18080`，因此会保留 GEOFlow 的 Host 校验，不通过修改 Host 白名单绕过安全边界。
+脚本默认使用随机临时根目录，并为每次测试创建带随机后缀的容器名；成功、失败或 `SIGINT`/`SIGTERM` 中断时都会执行 `docker rm -f` 并清理默认临时目录。显式设置 `MCP_LOCAL_ROOT` 时目录由调用方负责管理。默认镜像按已验证 digest 锁定，可通过 `MCP_FETCH_IMAGE`、`MCP_FILESYSTEM_IMAGE`、`MCP_MEMORY_IMAGE`、`MCP_SEQUENTIALTHINKING_IMAGE`、`MCP_TIME_IMAGE` 覆盖。fetch 使用 Docker host network 访问 `127.0.0.1:18080`，因此会保留 GEOFlow 的 Host 校验，不通过修改 Host 白名单绕过安全边界。
 
 可替换 fetch 地址进行其他本地页面回归：
 

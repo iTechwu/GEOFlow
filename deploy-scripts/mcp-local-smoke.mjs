@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import { randomUUID } from 'node:crypto';
 import { spawn, spawnSync } from 'node:child_process';
 
-const root = process.env.MCP_LOCAL_ROOT ?? `/tmp/geoflow-mcp-local-${process.pid}`;
+const ownsRoot = !process.env.MCP_LOCAL_ROOT;
+const root = process.env.MCP_LOCAL_ROOT ?? mkdtempSync(`${tmpdir()}/geoflow-mcp-local-`);
 const fetchUrl = process.env.MCP_LOCAL_FETCH_URL ?? 'http://127.0.0.1:18080/';
 const memoryPath = `${root}/memory`;
 const filesystemPath = `${root}/filesystem`;
@@ -12,11 +14,11 @@ mkdirSync(memoryPath, { recursive: true });
 mkdirSync(filesystemPath, { recursive: true });
 
 const definitions = {
-  fetch: ['--network', 'host', 'mcp/fetch'],
-  filesystem: ['--mount', `type=bind,src=${filesystemPath},dst=/projects`, 'mcp/filesystem', '/projects'],
-  memory: ['--mount', `type=bind,src=${memoryPath},dst=/data`, '-e', 'MEMORY_FILE_PATH=/data/memory.jsonl', 'mcp/memory'],
-  sequentialthinking: ['mcp/sequentialthinking'],
-  time: ['mcp/time', '--local-timezone', 'Asia/Shanghai'],
+  fetch: ['--network', 'host', process.env.MCP_FETCH_IMAGE ?? 'mcp/fetch@sha256:1a7a0996a565a0b8ca5c41b42830d4e5f334d33f851596bbd9debb2beedb22d3'],
+  filesystem: ['--mount', `type=bind,src=${filesystemPath},dst=/projects`, process.env.MCP_FILESYSTEM_IMAGE ?? 'mcp/filesystem@sha256:35fcf0217ca0d5bf7b0a5bd68fb3b89e08174676c0e0b4f431604512cf7b3f67', '/projects'],
+  memory: ['--mount', `type=bind,src=${memoryPath},dst=/data`, '-e', 'MEMORY_FILE_PATH=/data/memory.jsonl', process.env.MCP_MEMORY_IMAGE ?? 'mcp/memory@sha256:db0c2db07a44b6797eba7a832b1bda142ffc899588aae82c92780cbb2252407f',],
+  sequentialthinking: [process.env.MCP_SEQUENTIALTHINKING_IMAGE ?? 'mcp/sequentialthinking@sha256:cd3174b2ecf37738654cf7671fb1b719a225c40a78274817da00c4241f465e5f'],
+  time: [process.env.MCP_TIME_IMAGE ?? 'mcp/time@sha256:9c46a918633fb474bf8035e3ee90ebac6bcf2b18ccb00679ac4c179cba0ebfcf', '--local-timezone', 'Asia/Shanghai'],
 };
 
 const calls = {
@@ -26,6 +28,20 @@ const calls = {
   sequentialthinking: ['sequentialthinking', { thought: 'MCP local smoke', nextThoughtNeeded: false, thoughtNumber: 1, totalThoughts: 1 }],
   time: ['get_current_time', { timezone: 'Asia/Shanghai' }],
 };
+
+const activeServers = new Set();
+let shuttingDown = false;
+
+function cleanupAll() {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  for (const server of activeServers) server.cleanup();
+  if (ownsRoot && existsSync(root)) rmSync(root, { recursive: true, force: true });
+}
+
+process.once('SIGINT', () => { cleanupAll(); process.exit(130); });
+process.once('SIGTERM', () => { cleanupAll(); process.exit(143); });
+process.once('exit', cleanupAll);
 
 function fail(message) {
   throw new Error(message);
@@ -65,15 +81,34 @@ function start(name) {
       pending.delete(id);
       reject(new Error(`${name} timeout: ${method}`));
     }, 30000);
-    pending.set(id, { resolve, timer });
+    pending.set(id, { resolve, reject, timer });
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', id, method, params })}\n`);
   });
   const notify = (method, params = {}) => child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method, params })}\n`);
   const cleanup = () => {
     child.kill('SIGTERM');
     spawnSync('docker', ['rm', '-f', container], { stdio: 'ignore' });
+    activeServers.delete(server);
   };
-  return { child, request, notify, cleanup, stderr, container };
+  const server = { child, request, notify, cleanup, stderr, container };
+  child.once('error', (error) => {
+    for (const waiter of pending.values()) {
+      clearTimeout(waiter.timer);
+      waiter.reject(new Error(`${name} docker process failed: ${error.message}`));
+    }
+    pending.clear();
+  });
+  child.once('exit', (code, signal) => {
+    if (shuttingDown || pending.size === 0) return;
+    const detail = server.stderr.join('').trim().split('\n').slice(-3).join(' ');
+    for (const waiter of pending.values()) {
+      clearTimeout(waiter.timer);
+      waiter.reject(new Error(`${name} exited (${code ?? signal})${detail ? `: ${detail}` : ''}`));
+    }
+    pending.clear();
+  });
+  activeServers.add(server);
+  return server;
 }
 
 async function smoke(name) {
@@ -103,6 +138,8 @@ async function smoke(name) {
   }
 }
 
-for (const name of Object.keys(definitions)) {
-  await smoke(name);
+try {
+  for (const name of Object.keys(definitions)) await smoke(name);
+} finally {
+  cleanupAll();
 }
