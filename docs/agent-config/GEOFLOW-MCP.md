@@ -42,6 +42,7 @@ claude -p '只使用 geoflow MCP 查询当前任务和素材摘要。'
 | Enterprise knowledge | `geoflow.enterprise_knowledge.create`, `.status`, `.validate`, `.autosave`, `.publish` |
 | Published site read | `geoflow.site.search`, `.article`, `.archive` (tenant-scoped, no view counter side effect) |
 | Frontend discovery | `geoflow.site.capabilities` (theme catalog and homepage builder contract) |
+| System diagnostics | `geoflow.system.status` (safe deployment and runtime checks) |
 | Distribution read | `geoflow.distribution.channels`, `.jobs`, `.health` (tenant-scoped, redacted, no remote call) |
 | Leads | `geoflow.leads.forms`, `.submissions`, `.get`, `.update_status` (tenant-scoped; payload requires `leads:pii`) |
 
@@ -95,6 +96,12 @@ The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX
 1. Call `geoflow.site.capabilities` before generating homepage or theme-related instructions.
 2. Use the returned theme IDs, module types, layouts, presets, and limits as the only allowed frontend vocabulary.
 3. Theme switching, replication, preview publishing, and site settings changes remain Admin operations.
+
+### System Diagnostics Workflow
+
+1. Call `geoflow.system.status` after deployment or when a queue/task operation behaves unexpectedly.
+2. Check `database.reachable`, `queue.driver`, `migrations.pending_count`, and required PHP extension flags.
+3. The tool intentionally excludes hosts, credentials, filesystem paths, raw exceptions, update plans, and shell execution.
 
 ## Deliberate Boundaries
 

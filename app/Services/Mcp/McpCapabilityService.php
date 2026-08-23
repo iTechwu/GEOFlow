@@ -93,6 +93,13 @@ final class McpCapabilityService
                     'notes' => '只读返回主题 manifest 和主页模块契约；主题切换、复制、发布仍需 Admin。',
                 ],
                 [
+                    'domain' => 'system_diagnostics',
+                    'status' => 'available',
+                    'tools' => ['geoflow.system.status'],
+                    'permission' => 'catalog:read',
+                    'notes' => '只返回版本、队列、数据库可达性、迁移数量和扩展能力；不会执行更新、Shell、远程探针或返回主机/密钥。',
+                ],
+                [
                     'domain' => 'distribution_read',
                     'status' => 'available',
                     'tools' => [
