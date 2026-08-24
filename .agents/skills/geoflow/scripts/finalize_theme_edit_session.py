@@ -567,8 +567,8 @@ def replace_base(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Finalize a GEOFlow preview theme edit session.")
-    parser.add_argument("workspace", help="Path to the GEOFlow workspace")
+    parser = argparse.ArgumentParser(description="Finalize a geo.dofe.ai preview theme edit session.")
+    parser.add_argument("workspace", help="Path to the geo.dofe.ai workspace")
     parser.add_argument("--preview-theme", required=True, help="Preview theme id")
     parser.add_argument("--mode", required=True, choices=["publish_as_new_theme", "replace_base_theme"])
     parser.add_argument("--base-theme", help="Base theme id; used by replace_base_theme")

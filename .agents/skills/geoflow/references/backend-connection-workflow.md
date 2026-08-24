@@ -1,6 +1,6 @@
 # Backend Connection Workflow
 
-Use this workflow in `channel_frontend` when the user asks to connect to the GEOFlow backend, manage channel templates, or compare default and channel frontend capabilities.
+Use this workflow in `channel_frontend` when the user asks to connect to the geo.dofe.ai backend, manage channel templates, or compare default and channel frontend capabilities.
 
 ## Discovery Steps
 
@@ -19,7 +19,7 @@ php artisan geoflow:frontend-experience <channel_id> --json
 
 1. Identify the channel type.
 2. If it is not `geoflow_agent`, explain that module rendering is not guaranteed.
-3. For GeoFlow Agent, choose mode:
+3. For geo.dofe.ai Agent, choose mode:
    - `inherit_default`
    - `snapshot_default`
    - `custom`
@@ -30,7 +30,7 @@ php artisan geoflow:frontend-experience <channel_id> --json
 
 ## Cross-Channel Flow
 
-1. Inventory active GeoFlow Agent channels.
+1. Inventory active geo.dofe.ai Agent channels.
 2. Compare each channel's `frontend_experience_mode`, `template_key`, `front_mode`, and supported modules.
 3. Prefer `inherit_default` for channels that should track the default frontend.
 4. Prefer `snapshot_default` for channels that need an initial copy but later diverge.

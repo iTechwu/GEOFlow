@@ -8,11 +8,11 @@ X: https://x.com/yaojingang
 
 # Laravel Theme Contract
 
-This contract supersedes the legacy PHP-entrypoint assumptions for the current GEOFlow rewrite.
+This contract supersedes the legacy PHP-entrypoint assumptions for the current geo.dofe.ai rewrite.
 
 ## Workspace Detection
 
-A current GEOFlow workspace is detected by these files and directories:
+A current geo.dofe.ai workspace is detected by these files and directories:
 
 - `artisan`
 - `routes/web.php`
@@ -23,7 +23,7 @@ A current GEOFlow workspace is detected by these files and directories:
 - `resources/views/theme`
 - `resources/views/admin/site-settings/index.blade.php`
 
-Legacy GEOFlow workspaces may still contain root `index.php`, `article.php`, `category.php`, `archive.php`, and `/themes`. Support them only as fallback.
+Legacy geo.dofe.ai workspaces may still contain root `index.php`, `article.php`, `category.php`, `archive.php`, and `/themes`. Support them only as fallback.
 
 ## Runtime Theme Root
 
@@ -61,7 +61,7 @@ Theme IDs must match:
 ^[a-zA-Z0-9_-]+$
 ```
 
-The active theme is stored in site settings as `active_theme`; when empty, GEOFlow renders the built-in `resources/views/site` views.
+The active theme is stored in site settings as `active_theme`; when empty, geo.dofe.ai renders the built-in `resources/views/site` views.
 
 The admin base path is configurable. Do not hard-code `/geo_admin` in theme packages, previews, docs, or generated links.
 
@@ -104,7 +104,7 @@ Admin theme discovery can list a directory when it has a valid `manifest.json` o
 
 ## Homepage Builder Contract
 
-Current GEOFlow can expose a configurable homepage builder in addition to Blade theme packages. The builder stores:
+Current geo.dofe.ai can expose a configurable homepage builder in addition to Blade theme packages. The builder stores:
 
 ```text
 site_settings.homepage_modules
@@ -209,7 +209,7 @@ Stable public data/rendering expectations:
 
 ## Preview Reality
 
-Current GEOFlow does not expose an isolated `/preview/{theme}` runtime route by default. Treat preview as one of these:
+Current geo.dofe.ai does not expose an isolated `/preview/{theme}` runtime route by default. Treat preview as one of these:
 
 - static preview files generated in `public_frontend`, or
 - a preview theme package that appears in Admin -> Site Settings and is activated only after operator confirmation, or

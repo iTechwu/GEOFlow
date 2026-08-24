@@ -202,8 +202,8 @@ def system_inventory(workspace: Path) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Discover default and channel frontend experience surfaces in GEOFlow.")
-    parser.add_argument("workspace", help="Path to the GEOFlow workspace")
+    parser = argparse.ArgumentParser(description="Discover default and channel frontend experience surfaces in geo.dofe.ai.")
+    parser.add_argument("workspace", help="Path to the geo.dofe.ai workspace")
     args = parser.parse_args()
 
     workspace = Path(args.workspace).resolve()

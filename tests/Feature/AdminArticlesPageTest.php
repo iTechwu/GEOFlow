@@ -974,7 +974,7 @@ class AdminArticlesPageTest extends TestCase
         $this->actingAs($admin, 'admin')
             ->get(route('admin.dashboard'))
             ->assertOk()
-            ->assertSee('GEOFlow')
+            ->assertSee('geo.dofe.ai')
             ->assertDontSee('Public Frontend Name');
     }
 }

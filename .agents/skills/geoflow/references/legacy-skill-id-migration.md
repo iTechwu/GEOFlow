@@ -1,4 +1,4 @@
-# Legacy GEOFlow Skill ID Migration
+# Legacy geo.dofe.ai Skill ID Migration
 
 Version `1.0.0` consolidates three retired public IDs into `geoflow`:
 

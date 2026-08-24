@@ -1,15 +1,15 @@
-# GEOFlow System Capability Discovery
+# geo.dofe.ai System Capability Discovery
 
-GEOFlow evolves across API, admin, public-site, worker, and channel-package surfaces. Discover the target workspace during each task so the skill follows deployed reality.
+geo.dofe.ai evolves across API, admin, public-site, worker, and channel-package surfaces. Discover the target workspace during each task so the skill follows deployed reality.
 
 ## Static Discovery
 
 Run:
 
 ```bash
-python3 scripts/discover_geoflow_workspace.py /path/to/GEOFlow
-python3 scripts/discover_frontend_surfaces.py /path/to/GEOFlow
-python3 scripts/discover_themes.py /path/to/GEOFlow
+python3 scripts/discover_geoflow_workspace.py /path/to/geo.dofe.ai
+python3 scripts/discover_frontend_surfaces.py /path/to/geo.dofe.ai
+python3 scripts/discover_themes.py /path/to/geo.dofe.ai
 ```
 
 The first command inventories application layers and feature evidence. The frontend commands add homepage, theme, lead-form, and channel-renderer details.

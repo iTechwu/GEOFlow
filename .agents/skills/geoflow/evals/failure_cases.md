@@ -1,4 +1,4 @@
-# GEOFlow Failure Cases
+# geo.dofe.ai Failure Cases
 
 - Selected a remembered route or CLI command without inspecting the target workspace.
 - Treated an admin operation as an API v1 capability when no matching route exists.

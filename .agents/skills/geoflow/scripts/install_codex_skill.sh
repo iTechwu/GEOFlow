@@ -95,6 +95,6 @@ if ! mv "$stage_dir" "$skills_root/geoflow"; then
 fi
 trap - EXIT
 
-echo "Installed GEOFlow skill: $skills_root/geoflow"
+echo "Installed geo.dofe.ai skill: $skills_root/geoflow"
 echo "Previous skill backups: $backup_dir"
 echo "Restart Codex to reload the skill catalog."

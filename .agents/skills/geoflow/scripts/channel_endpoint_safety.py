@@ -56,7 +56,7 @@ def method_source(source: str, signature: str) -> str:
 def require_signed_get_request_protection(workspace: Path) -> None:
     client_path = workspace / "app" / "Services" / "GeoFlow" / "DistributionHttpClient.php"
     if not client_path.is_file():
-        raise SystemExit(f"Cannot verify signed request safety; missing GEOFlow HTTP client: {client_path}")
+        raise SystemExit(f"Cannot verify signed request safety; missing geo.dofe.ai HTTP client: {client_path}")
     source = client_path.read_text(encoding="utf-8", errors="strict")
     function_source = method_source(source, "private function signedGetJson")
     if "withoutRedirecting()" not in function_source and "'allow_redirects' => false" not in function_source:

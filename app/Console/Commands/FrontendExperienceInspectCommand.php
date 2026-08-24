@@ -35,7 +35,7 @@ class FrontendExperienceInspectCommand extends Command
             return self::SUCCESS;
         }
 
-        $this->info('GEOFlow frontend experience capability report');
+        $this->info('geo.dofe.ai frontend experience capability report');
         $this->line('Default site modules: '.$report['default_site']['homepage_modules_count']);
         $this->line('Target package capability version: '.$report['target_package']['capability_version']);
         if ($channel) {

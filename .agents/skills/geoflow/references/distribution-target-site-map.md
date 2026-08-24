@@ -1,8 +1,8 @@
 # Distribution Target Site Map
 
-Use this reference when evaluating or designing GeoFlow Agent target-site frontend behavior.
+Use this reference when evaluating or designing geo.dofe.ai Agent target-site frontend behavior.
 
-## GeoFlow Agent Package Surfaces
+## geo.dofe.ai Agent Package Surfaces
 
 The target package contains:
 

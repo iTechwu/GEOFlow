@@ -60,7 +60,7 @@ class GeoFlowInstallCommand extends Command
         $existingState = SystemState::query()->where('key', self::INSTALLATION_STATE_KEY)->first();
 
         if ($existingState instanceof SystemState && ! $force) {
-            $this->components->info('GEOFlow has already been initialized; first-install seeders were skipped.');
+            $this->components->info('geo.dofe.ai has already been initialized; first-install seeders were skipped.');
 
             return self::SUCCESS;
         }
@@ -71,14 +71,14 @@ class GeoFlowInstallCommand extends Command
                 'detected_tables' => $tablesWithData,
             ]);
 
-            $this->components->warn('Existing application data was detected. GEOFlow recorded the installation marker and skipped first-install seeders.');
+            $this->components->warn('Existing application data was detected. geo.dofe.ai recorded the installation marker and skipped first-install seeders.');
 
             return self::SUCCESS;
         }
 
         $this->components->info($force
-            ? 'Running GEOFlow first-install seeders with --force.'
-            : 'Running GEOFlow first-install seeders for an empty database.');
+            ? 'Running geo.dofe.ai first-install seeders with --force.'
+            : 'Running geo.dofe.ai first-install seeders for an empty database.');
 
         try {
             if ((bool) config('geoflow.seed_frontend_demo', false)) {
@@ -92,12 +92,12 @@ class GeoFlowInstallCommand extends Command
                 'seed_frontend_demo' => (bool) config('geoflow.seed_frontend_demo', false),
             ]);
         } catch (Throwable $e) {
-            $this->error('GEOFlow first-install seeders failed: '.$e->getMessage());
+            $this->error('geo.dofe.ai first-install seeders failed: '.$e->getMessage());
 
             return self::FAILURE;
         }
 
-        $this->components->info('GEOFlow installation marker has been written.');
+        $this->components->info('geo.dofe.ai installation marker has been written.');
 
         return self::SUCCESS;
     }

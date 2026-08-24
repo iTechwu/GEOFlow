@@ -1,4 +1,4 @@
-# GEOFlow Agent Integration
+# geo.dofe.ai Agent Integration
 
 ## Runtime
 
@@ -76,7 +76,7 @@ The per-tenant queued/running limit is controlled by `GEOFLOW_MCP_URL_IMPORT_MAX
 ### Enterprise Knowledge Workflow
 
 1. Call `geoflow.enterprise_knowledge.list` to discover bounded project metadata for the authenticated tenant. The response excludes draft content.
-2. Call `.create` with text content. The project and source are tenant-owned and draft generation is queued on the GEOFlow worker.
+2. Call `.create` with text content. The project and source are tenant-owned and draft generation is queued on the geo.dofe.ai worker.
 3. Poll `.status`, then call `.validate` or `.autosave` while reviewing the bounded draft preview.
 4. Publish only after explicit approval with `confirmation: "PUBLISH"`. The resulting knowledge base and chunks inherit the same tenant.
 5. Delete only after explicit approval with `confirmation: "DELETE"`. Deletion is tenant-scoped and refuses a published knowledge base that is still referenced by a task; binary file upload, editor images, and restore remain Admin operations.

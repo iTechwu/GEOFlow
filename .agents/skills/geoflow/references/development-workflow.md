@@ -1,6 +1,6 @@
-# GEOFlow Development Workflow
+# geo.dofe.ai Development Workflow
 
-Use this workflow for changes to GEOFlow product code, including the public site, admin, API, CLI, workers, database, distribution, and target packages.
+Use this workflow for changes to geo.dofe.ai product code, including the public site, admin, API, CLI, workers, database, distribution, and target packages.
 
 ## 1. Establish The Real Contract
 

@@ -8,11 +8,11 @@ X: https://x.com/yaojingang
 
 # Theme Edit Workflow
 
-Use this workflow when the request is to adjust a theme that already exists in a GEOFlow workspace.
+Use this workflow when the request is to adjust a theme that already exists in a geo.dofe.ai workspace.
 
 ## System Signals To Detect
 
-The current GEOFlow theme system is considered present when the workspace contains:
+The current geo.dofe.ai theme system is considered present when the workspace contains:
 
 - `artisan`
 - `routes/web.php`
@@ -62,7 +62,7 @@ Recommended helper:
 ### 3. Fork Preview Session
 
 - do not edit the target theme live on the first pass
-- create a preview fork under `resources/views/theme/<preview-theme-id>` for Laravel GEOFlow
+- create a preview fork under `resources/views/theme/<preview-theme-id>` for Laravel geo.dofe.ai
 - copy `public/themes/<base-theme-id>` to `public/themes/<preview-theme-id>` when runtime assets exist
 - mark the fork clearly as preview or edit-session in `manifest.json`
 - emit public route samples and clearly note whether the current app has isolated preview routes
@@ -95,7 +95,7 @@ Typical requests:
 - make titles bolder
 - reduce card noise
 - simplify metadata
-- add a display module only when it can be built from existing GEOFlow data
+- add a display module only when it can be built from existing geo.dofe.ai data
 - enrich the default homepage with hero/media, charts, metrics, text modules, service/category blocks, case/resource blocks, large visuals, or CTA bands while keeping search/category states clean
 
 Homepage builder path:
@@ -146,7 +146,7 @@ Recommended helper:
 - require valid object-shaped `manifest.json` and consistent `edit-session.json` IDs before a live replacement
 - reject symbolic links, named pipes, sockets, devices, and other non-regular entries in copied theme trees
 - stage the view and public-asset trees before the first live rename; on commit failure, restore every live tree and report any cleanup path that remains
-- do not add modules that require backend fields GEOFlow does not already expose
+- do not add modules that require backend fields geo.dofe.ai does not already expose
 - do not invent corporate claims, logos, forms, testimonials, or chart data that the current view cannot support
 - do not treat homepage builder import as a preview route; it is a settings change unless the operator has a separate staging workflow
 - do not touch routing, search, SEO generation, or schema generation unless the user explicitly expands scope

@@ -272,7 +272,7 @@ final class EnterpriseKnowledgeDraftService
     private function buildSystemPrompt(): string
     {
         return <<<'PROMPT'
-你是 GEOFlow 企业知识库整理助手。你的任务是把企业资料整理成可审核、可切片、可引用的 Markdown 标准知识稿。
+你是 geo.dofe.ai 企业知识库整理助手。你的任务是把企业资料整理成可审核、可切片、可引用的 Markdown 标准知识稿。
 规则：
 1. 本阶段是“初稿整理”，依赖聊天模型的语义理解能力，不做向量化，也不要求 Embedding 模型。
 2. 先穷举盘点输入资料中的事实、能力、场景、案例、FAQ、限制条件、流程、参数、限制和风险表述，再整理成结构化知识稿，不能遗漏高价值信息。

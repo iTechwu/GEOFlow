@@ -134,8 +134,8 @@ def build_preview_routes(theme_id: str) -> list[str]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Create a preview edit session for an existing GEOFlow theme.")
-    parser.add_argument("workspace", help="Path to the GEOFlow workspace")
+    parser = argparse.ArgumentParser(description="Create a preview edit session for an existing geo.dofe.ai theme.")
+    parser.add_argument("workspace", help="Path to the geo.dofe.ai workspace")
     parser.add_argument("--base-theme", required=True, help="Existing theme id to fork")
     parser.add_argument("--new-theme-id", help="Preview theme id; auto-generated when omitted")
     parser.add_argument("--new-name", help="Preview theme display name")
@@ -242,7 +242,7 @@ def main() -> None:
         "session_state": "preview",
         "change_request": args.change_request.strip(),
         "preview_routes": build_preview_routes(preview_theme_id),
-        "preview_note": "Laravel GEOFlow does not expose isolated /preview/{theme} routes by default; use static previews or activate the preview theme only after operator confirmation.",
+        "preview_note": "Laravel geo.dofe.ai does not expose isolated /preview/{theme} routes by default; use static previews or activate the preview theme only after operator confirmation.",
         "public_assets_dir": public_assets_dir,
         "public_assets_copied": public_assets_copied,
         "editable_files": editable_files,
@@ -272,9 +272,9 @@ def main() -> None:
             "## Preview Checklist",
             "",
             "- check home/category/article/archive preview routes",
-            "- for Laravel GEOFlow, confirm whether preview is static or temporarily activated through Site Settings",
+            "- for Laravel geo.dofe.ai, confirm whether preview is static or temporarily activated through Site Settings",
             "- verify layout, typography, spacing, and module hierarchy",
-            "- confirm GEOFlow data placeholders still render correctly",
+            "- confirm geo.dofe.ai data placeholders still render correctly",
         ]) + "\n",
         encoding="utf-8",
     )

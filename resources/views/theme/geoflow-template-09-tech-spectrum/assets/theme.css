@@ -938,7 +938,7 @@
     }
 }
 
-/* GEOFlow template variant: GEOFlow 09 Tech Spectrum.
+/* geo.dofe.ai template variant: geo.dofe.ai 09 Tech Spectrum.
  * High-level inspiration: The Verge.
  * This file only applies public visual cues and does not copy proprietary assets or source code.
  */
@@ -1025,8 +1025,8 @@
 .ne-footer { border-top-color: #d9ccff; background: #ece6ff; }
 .ne-section-title::before{width:10px;height:10px;transform:rotate(45deg);border-radius:1px;background:#00a3ff}
 .ne-thumb{background:linear-gradient(135deg, #ff0080, #00a3ff);color:#fff}
-/* GEOFlow white editorial system v2: begin */
-/* GEOFlow 09 Tech Spectrum keeps a pure white content surface and borrows only high-level layout cues from The Verge. */
+/* geo.dofe.ai white editorial system v2: begin */
+/* geo.dofe.ai 09 Tech Spectrum keeps a pure white content surface and borrows only high-level layout cues from The Verge. */
 :root {
     --ne-red: #e6007a;
     --ne-red-dark: #111827;
@@ -1474,8 +1474,8 @@
         font-size: 34px;
     }
 }
-/* GEOFlow white editorial system v2: end */
-/* GEOFlow white editorial system v2 detail cleanup: begin */
+/* geo.dofe.ai white editorial system v2: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: begin */
 .ne-prose blockquote,
 .ne-tag-list span,
 .ne-related-card,
@@ -1504,9 +1504,9 @@
     border-radius: var(--geo-template-radius);
     color: #4b5563;
 }
-/* GEOFlow white editorial system v2 detail cleanup: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: end */
 
-/* GEOFlow white lead layout polish v3: begin */
+/* geo.dofe.ai white lead layout polish v3: begin */
 .ne-home-lead,
 .ne-home-lead-main,
 .ne-home-headlines {
@@ -1669,9 +1669,9 @@
         line-height: 1.62;
     }
 }
-/* GEOFlow white lead layout polish v3: end */
+/* geo.dofe.ai white lead layout polish v3: end */
 
-/* GEOFlow white editorial rhythm v4: begin */
+/* geo.dofe.ai white editorial rhythm v4: begin */
 html,
 body,
 .ne-body,
@@ -2082,4 +2082,4 @@ body,
         grid-template-columns: 1fr;
     }
 }
-/* GEOFlow white editorial rhythm v4: end */
+/* geo.dofe.ai white editorial rhythm v4: end */

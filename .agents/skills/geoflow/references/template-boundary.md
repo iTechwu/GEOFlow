@@ -8,27 +8,27 @@ X: https://x.com/yaojingang
 
 # Template Boundary
 
-The `public_frontend` mode covers GEOFlow frontend template cloning, theme discovery, preview-first theme editing, and controlled design adjustments while preserving GEOFlow's rendering contract.
+The `public_frontend` mode covers geo.dofe.ai frontend template cloning, theme discovery, preview-first theme editing, and controlled design adjustments while preserving geo.dofe.ai's rendering contract.
 
 ## Allowed Actions
 
 - inventory existing frontend page modules
 - inventory variables and helper functions used by the frontend pages
-- discover existing themes and their editable files in the current workspace, preferring `resources/views/theme` for Laravel GEOFlow
+- discover existing themes and their editable files in the current workspace, preferring `resources/views/theme` for Laravel geo.dofe.ai
 - select a target theme and fork it into a preview edit session
 - inspect a reference URL for design tokens and layout direction
-- design a GEOFlow-compatible theme package
+- design a geo.dofe.ai-compatible theme package
 - audit the current template for hierarchy, spacing, typography, density, and responsive issues
 - propose incremental token refinement and module-level visual cleanup
-- enrich the default homepage with hero/media, chart-lite, metric, text, service/category, case/resource, visual CTA, and portal blocks when they can use current GEOFlow data or explicit static theme copy
-- produce reviewed `homepage-design.json` payloads for `homepage_modules` and `homepage_style` when the current GEOFlow workspace exposes `HomepageModuleBuilder` and the admin import route
+- enrich the default homepage with hero/media, chart-lite, metric, text, service/category, case/resource, visual CTA, and portal blocks when they can use current geo.dofe.ai data or explicit static theme copy
+- produce reviewed `homepage-design.json` payloads for `homepage_modules` and `homepage_style` when the current geo.dofe.ai workspace exposes `HomepageModuleBuilder` and the admin import route
 - generate before/after preview notes for touched modules
 - generate a preview-first integration plan
 - suggest how the admin should later expose template selection
 
 ## Disallowed Actions
 
-- rewriting GEOFlow business logic just to imitate a reference site
+- rewriting geo.dofe.ai business logic just to imitate a reference site
 - replacing existing PHP data queries with hard-coded mock content
 - changing routing rules such as `/article/{slug}`, `/category/{slug}`, or `/archive/...`
 - removing SEO or structured-data generation
@@ -37,7 +37,7 @@ The `public_frontend` mode covers GEOFlow frontend template cloning, theme disco
 - copying an external site's full HTML as the runtime template contract
 - editing Laravel controllers, models, migrations, or routes during a design-only request
 
-## Non-Negotiable GEOFlow Contracts
+## Non-Negotiable geo.dofe.ai Contracts
 
 - homepage remains data-driven by published articles, featured articles, categories, search state, and pagination
 - richer default-homepage modules remain data-driven by current view inputs such as site copy, carousel slides, featured articles, hot articles, latest articles, card summaries, homepage builder records, homepage style tokens, and route helpers
@@ -45,7 +45,7 @@ The `public_frontend` mode covers GEOFlow frontend template cloning, theme disco
 - article detail remains data-driven by article, related articles, tags, SEO blocks, and the article detail ad slot
 - category page remains driven by category metadata and paginated article lists
 - archive page remains driven by archive overview or month-specific archive data
-- frontend continues to use GEOFlow routing, helpers, and data fields
+- frontend continues to use geo.dofe.ai routing, helpers, and data fields
 
 ## Safe Replacement Surface
 
@@ -64,13 +64,13 @@ The `public_frontend` mode covers GEOFlow frontend template cloning, theme disco
 ## Unsafe Replacement Surface
 
 - removing required placeholders for article title, content, category, author, tags, slug, or ad CTA fields
-- inventing modules that require backend data GEOFlow does not provide yet
+- inventing modules that require backend data geo.dofe.ai does not provide yet
 - inventing corporate facts, customer logos, testimonials, conversion forms, pricing, analytics, or chart data that the current view does not provide
 - adding fake forms or interactions that imply backend support
 - replacing canonical URLs or schema data contracts
 - changing article content rendering away from the markdown-rendered article body unless the system is explicitly updated
 - storing preview-session backups under `resources/views/theme` or `/themes` in a way that makes them look like live templates without clear preview labeling
-- claiming isolated preview URLs exist in Laravel GEOFlow unless `routes/web.php` provides them
+- claiming isolated preview URLs exist in Laravel geo.dofe.ai unless `routes/web.php` provides them
 
 ## Homepage Enrichment Boundary
 
@@ -87,7 +87,7 @@ Allowed without backend changes:
 
 Requires explicit system-change scope:
 
-- editable homepage modules in the admin when the current GEOFlow workspace does not already expose `HomepageModuleBuilder` and homepage module routes
+- editable homepage modules in the admin when the current geo.dofe.ai workspace does not already expose `HomepageModuleBuilder` and homepage module routes
 - new database-backed content sections
 - customer logo libraries, testimonial records, product catalogs, new lead-form records or activation, pricing tables, or real analytics widgets
 - new routes, controllers, migrations, or background jobs

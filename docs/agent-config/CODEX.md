@@ -1,4 +1,4 @@
-# GEOFlow Codex / GPT Instructions
+# geo.dofe.ai Codex / GPT Instructions
 
 Laravel Boost support is installed for this repository.
 

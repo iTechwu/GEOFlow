@@ -1,4 +1,4 @@
-# GEOFlow Frontend Resource Index
+# geo.dofe.ai Frontend Resource Index
 
 Load only the section that matches the selected frontend phase.
 

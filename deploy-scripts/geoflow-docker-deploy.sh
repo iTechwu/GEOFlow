@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# GEOFlow production Docker first-install helper for a fresh empty database.
+# geo.dofe.ai production Docker first-install helper for a fresh empty database.
 # It performs host preflight checks, prepares .env.prod, deploys the
 # docker-compose.prod.yml stack, seeds the default admin, and runs a healthcheck.
 
@@ -192,7 +192,7 @@ check_ports() {
 }
 
 clone_or_update_repo() {
-  log "Preparing GEOFlow source at ${APP_DIR}."
+  log "Preparing geo.dofe.ai source at ${APP_DIR}."
   if [ -d "${APP_DIR}/.git" ]; then
     git -C "$APP_DIR" fetch origin "$BRANCH"
     git -C "$APP_DIR" checkout "$BRANCH"
@@ -405,7 +405,7 @@ deploy_stack() {
     -e AUTO_INSTALL_ONCE=false \
     app php artisan migrate --force --no-interaction
 
-  log "Initializing GEOFlow application data once."
+  log "Initializing geo.dofe.ai application data once."
   "${COMPOSE[@]}" run --rm --no-deps \
     -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
     -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \
@@ -413,7 +413,7 @@ deploy_stack() {
     -e AUTO_INSTALL_ONCE=false \
     app php artisan geoflow:install --no-interaction
 
-  log "Starting GEOFlow services."
+  log "Starting geo.dofe.ai services."
   "${COMPOSE[@]}" up -d app web queue scheduler reverb
 
   log "Clearing and rebuilding Laravel caches."

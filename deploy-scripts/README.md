@@ -1,6 +1,6 @@
-# GEOFlow 部署脚本 / Deployment Scripts
+# geo.dofe.ai 部署脚本 / Deployment Scripts
 
-这个目录用于存放 GEOFlow 的参考部署脚本，方便技术人员在常见云服务器、VPS、Docker 主机或面板服务器上快速完成环境自检和生产部署。
+这个目录用于存放 geo.dofe.ai 的参考部署脚本，方便技术人员在常见云服务器、VPS、Docker 主机或面板服务器上快速完成环境自检和生产部署。
 
 脚本默认走仓库现有的 `docker-compose.prod.yml` 生产链路，不绕开项目标准部署方式。
 
@@ -130,9 +130,9 @@ GEOFLOW_APP_DIR=/opt/geoflow \
 bash /opt/geoflow/deploy-scripts/deploy-prebuilt-release.sh
 ```
 
-该脚本只管理 GEOFlow 的 `app/web/queue/scheduler/reverb` 容器，并通过 `app` 镜像执行外部显式迁移命令。它不会创建、停止或删除集中管理的 PostgreSQL、Redis、RabbitMQ 服务与卷。发布失败后应用保持维护模式，需处理失败原因后重跑；数据库迁移不能通过简单切回旧镜像自动回滚。
+该脚本只管理 geo.dofe.ai 的 `app/web/queue/scheduler/reverb` 容器，并通过 `app` 镜像执行外部显式迁移命令。它不会创建、停止或删除集中管理的 PostgreSQL、Redis、RabbitMQ 服务与卷。发布失败后应用保持维护模式，需处理失败原因后重跑；数据库迁移不能通过简单切回旧镜像自动回滚。
 
-默认 `GEOFLOW_RELEASE_MODE=upgrade`，用于已有数据库的停机排空升级。仅在首次空库上线时显式设置 `GEOFLOW_RELEASE_MODE=fresh`；该模式要求全部 GEOFlow 常驻服务尚未运行，并将 fresh-install 确认严格限定到外部迁移和安装命令。
+默认 `GEOFLOW_RELEASE_MODE=upgrade`，用于已有数据库的停机排空升级。仅在首次空库上线时显式设置 `GEOFLOW_RELEASE_MODE=fresh`；该模式要求全部 geo.dofe.ai 常驻服务尚未运行，并将 fresh-install 确认严格限定到外部迁移和安装命令。
 
 CI 可先将生产 Secret 映射为同名环境变量，再生成配置：
 
@@ -150,7 +150,7 @@ bash deploy-scripts/render-prod-env.sh /opt/geoflow/.env.prod
 GEOFLOW_SELF_DELETE=1 bash geoflow-docker-deploy.sh
 ```
 
-这个动作只会删除当前执行的脚本文件，不会删除已部署的 GEOFlow 源码目录。
+这个动作只会删除当前执行的脚本文件，不会删除已部署的 geo.dofe.ai 源码目录。
 
 ## 手动健康检查
 
@@ -194,7 +194,7 @@ proxy_set_header X-Forwarded-Host $host;
 
 ---
 
-This folder contains reference scripts for technical operators who want a faster, repeatable GEOFlow deployment path.
+This folder contains reference scripts for technical operators who want a faster, repeatable geo.dofe.ai deployment path.
 
 ## Scripts
 
@@ -304,7 +304,7 @@ If you download the script to a temporary location and want it removed after dep
 GEOFLOW_SELF_DELETE=1 bash geoflow-docker-deploy.sh
 ```
 
-This only removes the executed script file. It does not remove the deployed GEOFlow source code.
+This only removes the executed script file. It does not remove the deployed geo.dofe.ai source code.
 
 ## Manual Healthcheck
 

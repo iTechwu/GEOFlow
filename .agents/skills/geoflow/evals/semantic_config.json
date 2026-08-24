@@ -1,8 +1,8 @@
 {
   "optimizer_hints": {
-    "capability": "Develop and operate GEOFlow across product code, admin, CLI/API, default frontend, themes, visitor flows, and channel sites",
-    "inputs": ["GEOFlow workspace", "running instance", "resource ids", "reference URL", "channel id", "legacy template package"],
-    "trigger_actions": ["implement GEOFlow features", "operate GEOFlow", "edit GEOFlow frontend", "manage channel frontend", "migrate legacy templates"],
+    "capability": "Develop and operate geo.dofe.ai across product code, admin, CLI/API, default frontend, themes, visitor flows, and channel sites",
+    "inputs": ["geo.dofe.ai workspace", "running instance", "resource ids", "reference URL", "channel id", "legacy template package"],
+    "trigger_actions": ["implement geo.dofe.ai features", "operate geo.dofe.ai", "edit geo.dofe.ai frontend", "manage channel frontend", "migrate legacy templates"],
     "exclusions": ["unrelated Laravel work", "generic website design", "GEO content strategy", "geographic information systems", "summary-only requests"],
     "artifacts": ["code change", "operation result", "capability snapshot", "frontend preview", "channel sync preview", "migration plan"]
   },

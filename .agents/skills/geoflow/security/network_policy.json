@@ -3,11 +3,11 @@
   "default_policy": {
     "require_https": true,
     "custom_hosts": "operator-selected-and-task-scoped",
-    "review_rule": "Network access is limited to the GEOFlow instance or channel target explicitly selected for the current task."
+    "review_rule": "Network access is limited to the geo.dofe.ai instance or channel target explicitly selected for the current task."
   },
   "scripts": {
     "scripts/geoflow_preflight.sh": {
-      "purpose": "Read GEOFlow API v1 or authenticated-admin availability before a running-system mutation.",
+      "purpose": "Read geo.dofe.ai API v1 or authenticated-admin availability before a running-system mutation.",
       "allowed_hosts": [
         "operator-selected-geoflow-host"
       ],
@@ -22,7 +22,7 @@
       "auth": "optional GEOFLOW_API_TOKEN stored in a mode-0600 temporary header file"
     },
     "scripts/build_sync_preview_report.py": {
-      "purpose": "Optionally ask the local GEOFlow application to read current remote channel capabilities with --live-remote.",
+      "purpose": "Optionally ask the local geo.dofe.ai application to read current remote channel capabilities with --live-remote.",
       "allowed_hosts": [
         "operator-selected-channel-target"
       ],
@@ -31,11 +31,11 @@
       ],
       "requires_https": "required for non-loopback hosts; loopback HTTP is allowed for local development",
       "custom_url_policy": "the helper reads a cached report first, allows HTTPS endpoints or loopback HTTP only, rejects userinfo/query/fragment, and blocks live mode unless signedGetJson explicitly disables redirects",
-      "timeout_seconds": "enforced by the GEOFlow application HTTP client",
-      "auth": "signed or configured channel request handled by the GEOFlow application"
+      "timeout_seconds": "enforced by the geo.dofe.ai application HTTP client",
+      "auth": "signed or configured channel request handled by the geo.dofe.ai application"
     },
     "scripts/compare_default_vs_channel_frontend.py": {
-      "purpose": "Optionally ask the local GEOFlow application for a non-persistent live channel capability comparison.",
+      "purpose": "Optionally ask the local geo.dofe.ai application for a non-persistent live channel capability comparison.",
       "allowed_hosts": [
         "operator-selected-channel-target"
       ],
@@ -44,8 +44,8 @@
       ],
       "requires_https": "required for non-loopback hosts; loopback HTTP is allowed for local development",
       "custom_url_policy": "the helper reads a cached report first, allows HTTPS endpoints or loopback HTTP only, rejects userinfo/query/fragment, and blocks live mode unless signedGetJson explicitly disables redirects",
-      "timeout_seconds": "enforced by the GEOFlow application HTTP client",
-      "auth": "signed or configured channel request handled by the GEOFlow application"
+      "timeout_seconds": "enforced by the geo.dofe.ai application HTTP client",
+      "auth": "signed or configured channel request handled by the geo.dofe.ai application"
     }
   },
   "listeners": {

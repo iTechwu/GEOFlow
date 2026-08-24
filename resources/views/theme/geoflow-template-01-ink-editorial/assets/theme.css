@@ -938,7 +938,7 @@
     }
 }
 
-/* GEOFlow template variant: GEOFlow 01 Ink Editorial.
+/* geo.dofe.ai template variant: geo.dofe.ai 01 Ink Editorial.
  * High-level inspiration: The New York Times.
  * This file only applies public visual cues and does not copy proprietary assets or source code.
  */
@@ -1023,8 +1023,8 @@
 .ne-prose th,
 .ne-ad-slot { background: #f4f1ea; }
 .ne-footer { border-top-color: #d8d2c7; background: #f4f1ea; }
-/* GEOFlow white editorial system v2: begin */
-/* GEOFlow 01 Ink Editorial keeps a pure white content surface and borrows only high-level layout cues from The New York Times. */
+/* geo.dofe.ai white editorial system v2: begin */
+/* geo.dofe.ai 01 Ink Editorial keeps a pure white content surface and borrows only high-level layout cues from The New York Times. */
 :root {
     --ne-red: #111111;
     --ne-red-dark: #8b1e1e;
@@ -1472,8 +1472,8 @@
         font-size: 34px;
     }
 }
-/* GEOFlow white editorial system v2: end */
-/* GEOFlow white editorial system v2 detail cleanup: begin */
+/* geo.dofe.ai white editorial system v2: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: begin */
 .ne-prose blockquote,
 .ne-tag-list span,
 .ne-related-card,
@@ -1502,9 +1502,9 @@
     border-radius: var(--geo-template-radius);
     color: #4b5563;
 }
-/* GEOFlow white editorial system v2 detail cleanup: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: end */
 
-/* GEOFlow white lead layout polish v3: begin */
+/* geo.dofe.ai white lead layout polish v3: begin */
 .ne-home-lead,
 .ne-home-lead-main,
 .ne-home-headlines {
@@ -1667,9 +1667,9 @@
         line-height: 1.62;
     }
 }
-/* GEOFlow white lead layout polish v3: end */
+/* geo.dofe.ai white lead layout polish v3: end */
 
-/* GEOFlow white editorial rhythm v4: begin */
+/* geo.dofe.ai white editorial rhythm v4: begin */
 html,
 body,
 .ne-body,
@@ -2080,4 +2080,4 @@ body,
         grid-template-columns: 1fr;
     }
 }
-/* GEOFlow white editorial rhythm v4: end */
+/* geo.dofe.ai white editorial rhythm v4: end */

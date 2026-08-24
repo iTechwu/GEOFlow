@@ -1,4 +1,4 @@
-# GEOFlow 更新日志
+# geo.dofe.ai 更新日志
 
 该文档记录公开仓库可见功能的持续更新。后续每次推送到 GitHub 时，同步更新本文件和英文版 `CHANGELOG_en.md`。
 

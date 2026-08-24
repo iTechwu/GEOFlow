@@ -1,4 +1,4 @@
-# GEOFlow Agent Instructions
+# geo.dofe.ai Agent Instructions
 
 ## Test Resource Limits
 

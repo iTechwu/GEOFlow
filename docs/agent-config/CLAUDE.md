@@ -1,4 +1,4 @@
-# GEOFlow Claude Instructions
+# geo.dofe.ai Claude Instructions
 
 ## Test Resource Limits
 

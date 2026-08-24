@@ -683,7 +683,7 @@ class KnowledgeChunkSyncService
 
     private function semanticChunkingSystemPrompt(): string
     {
-        return 'You are GEOFlow\'s knowledge-base semantic chunk planner. You only group original block indexes into chunks. Do not rewrite, summarize, translate, add facts, or return source text. Output strict JSON only.';
+        return 'You are geo.dofe.ai\'s knowledge-base semantic chunk planner. You only group original block indexes into chunks. Do not rewrite, summarize, translate, add facts, or return source text. Output strict JSON only.';
     }
 
     /**

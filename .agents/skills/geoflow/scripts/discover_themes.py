@@ -304,7 +304,7 @@ def detect_channel_frontend_contract(workspace: Path) -> dict:
             "command": "php artisan geoflow:frontend-experience {channel?} --json" if command.is_file() else "",
         },
         "notes": [
-            "GeoFlow Agent is the first-class channel frontend renderer.",
+            "geo.dofe.ai Agent is the first-class channel frontend renderer.",
             "WordPress REST and Generic API channels should be treated as external distribution targets.",
             "Use channel JSON settings and signed sync instead of editing remote PHP templates.",
         ] if channel_model else [],
@@ -355,8 +355,8 @@ def detect_workspace(workspace: Path) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Discover themes in a GEOFlow workspace.")
-    parser.add_argument("workspace", help="Path to the GEOFlow workspace")
+    parser = argparse.ArgumentParser(description="Discover themes in a geo.dofe.ai workspace.")
+    parser.add_argument("workspace", help="Path to the geo.dofe.ai workspace")
     args = parser.parse_args()
 
     workspace = Path(args.workspace).resolve()

@@ -36,7 +36,7 @@ class ThemeScaffoldWriter
                     'category' => $replication->category_url,
                     'article' => $replication->article_url,
                 ],
-                'created_by' => 'GEOFlow Theme Replication',
+                'created_by' => 'geo.dofe.ai Theme Replication',
                 'notes' => $blueprint['notes'] ?? [],
             ]),
             'views/tokens.json' => $this->json($blueprint['tokens'] ?? []),

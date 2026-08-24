@@ -198,7 +198,7 @@ HTACCESS;
             .'<link rel="stylesheet" href="assets/css/site.css?v='.$assetVersion.'"><script defer src="assets/js/site.js?v='.$assetVersion.'"></script>'
             .'</head><body class="'.$this->h($themeClass).'"><header><div class="wrap bar"><div class="brand">'.$this->h($siteName).'</div></div></header><main class="wrap">'
             .$experienceHtml
-            .'<div class="empty">暂无文章。请先从 GEOFlow 发布一篇绑定此渠道的文章。</div></main>'
+            .'<div class="empty">暂无文章。请先从 geo.dofe.ai 发布一篇绑定此渠道的文章。</div></main>'
             .'<footer><div class="wrap">'.$this->h($copyright).'</div></footer></body></html>';
     }
 
@@ -1086,15 +1086,15 @@ function normalizeHomeCarouselSlides(mixed $slides): array
 
 function normalizeSiteSettings(array $settings, array $config = []): array
 {
-    $siteName = trim((string) ($settings['site_name'] ?? $config['site_name'] ?? 'GEOFlow Target Site'));
-    $siteName = $siteName !== '' ? $siteName : 'GEOFlow Target Site';
+    $siteName = trim((string) ($settings['site_name'] ?? $config['site_name'] ?? 'geo.dofe.ai Target Site'));
+    $siteName = $siteName !== '' ? $siteName : 'geo.dofe.ai Target Site';
     $frontMode = (string) ($settings['front_mode'] ?? $config['front_mode'] ?? 'static');
     $frontMode = in_array($frontMode, ['static', 'rewrite'], true) ? $frontMode : 'static';
 
     return [
         'site_name' => $siteName,
         'site_subtitle' => trim((string) ($settings['site_subtitle'] ?? $config['site_subtitle'] ?? '')),
-        'site_description' => trim((string) ($settings['site_description'] ?? $config['site_description'] ?? '由 GEOFlow 自动分发和管理的目标站点。')),
+        'site_description' => trim((string) ($settings['site_description'] ?? $config['site_description'] ?? '由 geo.dofe.ai 自动分发和管理的目标站点。')),
         'site_keywords' => trim((string) ($settings['site_keywords'] ?? $config['site_keywords'] ?? '')),
         'copyright_info' => trim((string) ($settings['copyright_info'] ?? $config['copyright_info'] ?? '© '.date('Y').' '.$siteName)),
         'site_logo' => trim((string) ($settings['site_logo'] ?? $config['site_logo'] ?? '')),
@@ -2468,7 +2468,7 @@ function renderHomePage(array $config): void
         echo '<section class="hero"><h1>'.h($siteName).'</h1><p>'.h((string) $settings['site_description']).'</p></section>';
     }
     if ($articles === []) {
-        echo '<div class="card empty">暂无文章。请先从 GEOFlow 发布一篇绑定此渠道的文章。</div>';
+        echo '<div class="card empty">暂无文章。请先从 geo.dofe.ai 发布一篇绑定此渠道的文章。</div>';
         pageFooter($config);
         return;
     }
@@ -2707,7 +2707,7 @@ function renderArticlePage(array $config, string $slug): void
         "mainEntityOfPage"=>$articleUrl,
         "author"=>[
             "@type"=>"Person",
-            "name"=>is_array($article['author'] ?? null) ? (string) ($article['author']['name'] ?? 'GEOFlow') : 'GEOFlow',
+            "name"=>is_array($article['author'] ?? null) ? (string) ($article['author']['name'] ?? 'geo.dofe.ai') : 'geo.dofe.ai',
         ],
         "publisher"=>[
             "@type"=>"Organization",
@@ -2782,7 +2782,7 @@ function renderLlmsText(array $config): string
     $siteName = textMapLine((string) $settings['site_name']);
     $description = textMapLine((string) $settings['site_description']);
     $lines = [
-        '# '.($siteName !== '' ? $siteName : 'GEOFlow Target Site'),
+        '# '.($siteName !== '' ? $siteName : 'geo.dofe.ai Target Site'),
         '',
     ];
     if ($description !== '') {

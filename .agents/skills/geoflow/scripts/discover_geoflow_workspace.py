@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Discover GEOFlow code surfaces without booting the application."""
+"""Discover geo.dofe.ai code surfaces without booting the application."""
 
 from __future__ import annotations
 
@@ -70,7 +70,7 @@ def build_snapshot(root: Path) -> dict:
 
     warnings = []
     if not framework["laravel"] and not framework["local_cli"] and not framework["legacy_root_php"]:
-        warnings.append("No Laravel artisan file, local GEOFlow CLI, or legacy root PHP frontend was detected.")
+        warnings.append("No Laravel artisan file, local geo.dofe.ai CLI, or legacy root PHP frontend was detected.")
     if framework["laravel"] and not (root / "routes/web.php").is_file():
         warnings.append("Laravel was detected without routes/web.php.")
 
@@ -101,8 +101,8 @@ def build_snapshot(root: Path) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Discover GEOFlow workspace capability evidence.")
-    parser.add_argument("workspace", help="Path to a GEOFlow source workspace")
+    parser = argparse.ArgumentParser(description="Discover geo.dofe.ai workspace capability evidence.")
+    parser.add_argument("workspace", help="Path to a geo.dofe.ai source workspace")
     parser.add_argument("--output", help="Optional JSON output path; stdout is used when omitted")
     parser.add_argument("--compact", action="store_true", help="Emit compact JSON")
     args = parser.parse_args()

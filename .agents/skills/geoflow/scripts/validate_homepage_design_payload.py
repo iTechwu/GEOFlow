@@ -180,7 +180,7 @@ def validate(payload: Any) -> dict[str, Any]:
             errors.append(f"Invalid color in style.{key}: {value}")
 
     if len(modules) > 30:
-        errors.append("Too many modules; GEOFlow supports at most 30 homepage modules.")
+        errors.append("Too many modules; geo.dofe.ai supports at most 30 homepage modules.")
 
     for index, module in enumerate(modules, start=1):
         if not isinstance(module, dict):
@@ -232,7 +232,7 @@ def validate(payload: Any) -> dict[str, Any]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Validate GEOFlow homepage-design JSON payload.")
+    parser = argparse.ArgumentParser(description="Validate geo.dofe.ai homepage-design JSON payload.")
     parser.add_argument("payload", nargs="?", help="Payload JSON path, or omit/read '-' for stdin")
     args = parser.parse_args()
 

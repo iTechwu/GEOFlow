@@ -26,7 +26,7 @@ class GeoFlowWorkerCommand extends Command
     /**
      * @var string
      */
-    protected $description = 'Run GEOFlow queue worker loop';
+    protected $description = 'Run geo.dofe.ai queue worker loop';
 
     public function __construct(
         private readonly JobQueueService $queueService,

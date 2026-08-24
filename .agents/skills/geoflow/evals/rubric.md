@@ -1,4 +1,4 @@
-# GEOFlow Skill Rubric
+# geo.dofe.ai Skill Rubric
 
 Score each dimension from 1 to 5.
 

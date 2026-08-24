@@ -1,6 +1,6 @@
-# GEOFlow
+# geo.dofe.ai
 
-GEOFlow 是一套面向 GEO（生成式引擎优化）的开源智能内容工程与多站点分发系统。它把知识库、素材库、提示词、AI 生成任务、审核发布、数据分析、GEOFlow Agent 目标站点包、WordPress REST 渠道、通用 HTTP API 渠道和远端静态页面分发串联为一条可持续运营的工作链路，帮助团队把可信资料沉淀为可管理、可发布、可追踪、可同步到多端的 GEO 内容资产。
+geo.dofe.ai 是一套面向 GEO（生成式引擎优化）的开源智能内容工程与多站点分发系统。它把知识库、素材库、提示词、AI 生成任务、审核发布、数据分析、geo.dofe.ai Agent 目标站点包、WordPress REST 渠道、通用 HTTP API 渠道和远端静态页面分发串联为一条可持续运营的工作链路，帮助团队把可信资料沉淀为可管理、可发布、可追踪、可同步到多端的 GEO 内容资产。
 
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-blue)](https://www.php.net/)
 [![Laravel](https://img.shields.io/badge/Laravel-12-red)](https://laravel.com/)
@@ -24,7 +24,7 @@ GEOFlow 是一套面向 GEO（生成式引擎优化）的开源智能内容工�
 - [安全基线](#安全基线)
 - [界面预览](#界面预览)
 - [适用场景](#适用场景)
-- [GEOFlow Agent Skill](#geoflow-agent-skill)
+- [geo.dofe.ai Agent Skill](#geoflow-agent-skill)
 - [开发与测试](#开发与测试)
 - [版本与文档](#版本与文档)
 - [开源协议](#开源协议)
@@ -41,7 +41,7 @@ GEOFlow 是一套面向 GEO（生成式引擎优化）的开源智能内容工�
 | 🗂 素材与提示词体系 | 标题库、关键词库、图片库、作者库、知识库、正文提示词、特殊提示词集中管理；知识库详情页内置 Markdown 编辑器与重新切片 |
 | 📦 任务自动化 | 任务创建、生成数量、草稿池、审核开关、发布节奏、队列执行、失败重试、发布范围控制和任务文章筛选 |
 | 📋 审核与文章管理 | 草稿、审核、发布、回收站、作者、分类、SEO 字段和任务来源统一管理 |
-| 📡 多站点分发 | GEOFlow Agent、WordPress REST 与通用 HTTP API 三类渠道；密钥管理、测试连接、目标站点包、静态 / 伪静态模式、远端设置同步、远端文章编辑 / 删除、队列与日志 |
+| 📡 多站点分发 | geo.dofe.ai Agent、WordPress REST 与通用 HTTP API 三类渠道；密钥管理、测试连接、目标站点包、静态 / 伪静态模式、远端设置同步、远端文章编辑 / 删除、队列与日志 |
 | 🧾 目标站点包 | 为每个渠道生成预配置 PHP Agent 包，内置首页、详情页、静态资源、sitemap、`llms.txt` / TXT 地图和 Schema |
 | 📊 数据分析 | `/admin/analytics` 集中展示系统总览、单站内容运营、任务健康、素材健康、多站分发状态、访问日志、Top 内容、AI 爬虫识别和趋势图 |
 | 🔍 SEO 与 LLM 抓取友好输出 | 文章 SEO 元信息、Open Graph、JSON-LD Schema（统一 `Js::encode` 防注入）、GFM Markdown、独立 CSS、图片同步、sitemap 和 TXT 地图 |
@@ -115,7 +115,7 @@ make dev-down  # 停止并移除容器，保留数据库卷目录
 ```bash
 # 1. 克隆仓库
 git clone https://github.com/yaojingang/GEOFlow.git
-cd GEOFlow
+cd geo.dofe.ai
 
 # 2. 环境与依赖
 cp .env.example .env
@@ -159,7 +159,7 @@ php artisan reverb:start
 
 ## 接入方式：后台、REST API 与 MCP
 
-GEOFlow 提供三种等价的操作入口，适合不同角色：
+geo.dofe.ai 提供三种等价的操作入口，适合不同角色：
 
 | 入口 | 面向 | 说明 |
 |------|------|------|
@@ -184,7 +184,7 @@ MCP 工具面覆盖：任务管理与执行取消、素材读写、文章操作�
 全新空库首次部署时，可使用参考部署脚本自动完成环境自检、Docker 检测、`.env.prod` 生成、容器部署和健康检查：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/yaojingang/GEOFlow/main/deploy-scripts/geoflow-docker-deploy.sh -o geoflow-docker-deploy.sh
+curl -fsSL https://raw.githubusercontent.com/yaojingang/geo.dofe.ai/main/deploy-scripts/geoflow-docker-deploy.sh -o geoflow-docker-deploy.sh
 bash geoflow-docker-deploy.sh
 ```
 
@@ -268,16 +268,16 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web que
 
 <table>
   <tr>
-    <td width="34%" rowspan="3"><img src="docs/images/screenshots/analytics.png" alt="GEOFlow 中文数据分析" /><br /><sub>数据分析</sub></td>
-    <td width="33%" rowspan="2"><img src="docs/images/screenshots/site-settings.png" alt="GEOFlow 中文网站设置" /><br /><sub>网站设置</sub></td>
-    <td width="33%"><img src="docs/images/screenshots/home.png" alt="GEOFlow 中文后台首页" /><br /><sub>后台首页</sub></td>
+    <td width="34%" rowspan="3"><img src="docs/images/screenshots/analytics.png" alt="geo.dofe.ai 中文数据分析" /><br /><sub>数据分析</sub></td>
+    <td width="33%" rowspan="2"><img src="docs/images/screenshots/site-settings.png" alt="geo.dofe.ai 中文网站设置" /><br /><sub>网站设置</sub></td>
+    <td width="33%"><img src="docs/images/screenshots/home.png" alt="geo.dofe.ai 中文后台首页" /><br /><sub>后台首页</sub></td>
   </tr>
   <tr>
-    <td width="33%"><img src="docs/images/screenshots/task-management.png" alt="GEOFlow 中文任务管理" /><br /><sub>任务管理</sub></td>
+    <td width="33%"><img src="docs/images/screenshots/task-management.png" alt="geo.dofe.ai 中文任务管理" /><br /><sub>任务管理</sub></td>
   </tr>
   <tr>
-    <td width="33%"><img src="docs/images/screenshots/ai-config.png" alt="GEOFlow 中文 AI 模型配置" /><br /><sub>AI 模型配置</sub></td>
-    <td width="33%"><img src="docs/images/screenshots/materials.png" alt="GEOFlow 中文素材管理" /><br /><sub>素材管理</sub></td>
+    <td width="33%"><img src="docs/images/screenshots/ai-config.png" alt="geo.dofe.ai 中文 AI 模型配置" /><br /><sub>AI 模型配置</sub></td>
+    <td width="33%"><img src="docs/images/screenshots/materials.png" alt="geo.dofe.ai 中文素材管理" /><br /><sub>素材管理</sub></td>
   </tr>
 </table>
 
@@ -285,7 +285,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml up -d app web que
 
 ## 适用场景
 
-GEOFlow 适合这些真实且可落地的场景：
+geo.dofe.ai 适合这些真实且可落地的场景：
 
 - **独立 GEO 官网**：把官网内容、产品资料、FAQ、案例和品牌知识组织成可持续更新的内容系统，提升 AI 搜索可见度和品牌信源覆盖
 - **官网中的 GEO 子频道**：在现有官网下搭建独立的资讯、知识或解决方案频道，通过导航、子域名或目录与主站打通
@@ -301,20 +301,20 @@ GEOFlow 适合这些真实且可落地的场景：
 3. 先确保内容真实、可核验、可维护
 4. 再用模型、任务和模板能力去提效
 
-这套系统的收益建立在**真实、优质、持续维护的知识库**之上。我们不鼓励利用系统制造信息噪音、批量污染互联网或堆积虚假内容。GEOFlow 的本质是帮助团队更高效地管理、生产和分发可信内容，而不是替代事实、替代判断或替代内容质量本身。
+这套系统的收益建立在**真实、优质、持续维护的知识库**之上。我们不鼓励利用系统制造信息噪音、批量污染互联网或堆积虚假内容。geo.dofe.ai 的本质是帮助团队更高效地管理、生产和分发可信内容，而不是替代事实、替代判断或替代内容质量本身。
 
 ---
 
-## GEOFlow Agent Skill
+## geo.dofe.ai Agent Skill
 
-仓库在 [`.agents/skills/geoflow`](.agents/skills/geoflow/) 内提供统一的 GEOFlow Skill。支持 Agent Skills 的工具打开本项目后可以直接发现它；在 Codex 中可通过 `$geoflow` 调用。
+仓库在 [`.agents/skills/geoflow`](.agents/skills/geoflow/) 内提供统一的 geo.dofe.ai Skill。支持 Agent Skills 的工具打开本项目后可以直接发现它；在 Codex 中可通过 `$geoflow` 调用。
 
 | 模式 | 适用范围 |
 |------|----------|
 | `development` | Laravel 后端、管理后台、API、CLI、队列、迁移和测试 |
 | `operations` | 通过受支持的 CLI、API v1 或登录后的管理界面执行系统操作 |
 | `public_frontend` | 默认网站、Blade 主题、首页模块、线索表单和前台页面 |
-| `channel_frontend` | GEOFlow Agent 目标站点包、渠道能力检查、同步预览和渠道前台设置 |
+| `channel_frontend` | geo.dofe.ai Agent 目标站点包、渠道能力检查、同步预览和渠道前台设置 |
 | `legacy_migration` | 旧版根目录 PHP 模板、历史包体和旧 Skill 标识迁移 |
 
 它统一替代 `yao-geoflow-cli`、`yao-geoflow-design` 和 `yao-geoflow-template`。安装或升级为 Codex 全局 Skill：
@@ -358,7 +358,7 @@ npm run test:browser # Playwright 浏览器测试
 
 ## 开源协议
 
-本项目采用 [Apache License 2.0](LICENSE)。该协议允许个人和企业在遵守许可证声明、版权保留、修改说明、专利授权和免责声明等条款的前提下使用、修改、分发和商用 GEOFlow。
+本项目采用 [Apache License 2.0](LICENSE)。该协议允许个人和企业在遵守许可证声明、版权保留、修改说明、专利授权和免责声明等条款的前提下使用、修改、分发和商用 geo.dofe.ai。
 
 ---
 

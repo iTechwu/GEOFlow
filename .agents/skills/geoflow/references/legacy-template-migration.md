@@ -1,6 +1,6 @@
-# Legacy GEOFlow Template Migration
+# Legacy geo.dofe.ai Template Migration
 
-Use this reference when the input explicitly contains historical GEOFlow PHP template packages or mentions the retired template skill.
+Use this reference when the input explicitly contains historical geo.dofe.ai PHP template packages or mentions the retired template skill.
 
 ## Legacy Signals
 
@@ -13,7 +13,7 @@ These signals describe the historical PHP frontend contract.
 
 ## Current Laravel Destination
 
-Map reusable visual decisions into current GEOFlow surfaces:
+Map reusable visual decisions into current geo.dofe.ai surfaces:
 
 | Legacy artifact | Current destination |
 |---|---|

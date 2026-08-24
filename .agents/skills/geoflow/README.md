@@ -1,6 +1,6 @@
 # geoflow
 
-`geoflow` is the single GEOFlow skill for product development, running-system operations, the default public frontend, Laravel Blade themes, visitor and lead flows, GeoFlow Agent channel sites, and legacy template migration.
+`geoflow` is the single geo.dofe.ai skill for product development, running-system operations, the default public frontend, Laravel Blade themes, visitor and lead flows, geo.dofe.ai Agent channel sites, and legacy template migration.
 
 ## Modes
 
@@ -14,9 +14,9 @@ The package supersedes `yao-geoflow-cli`, `yao-geoflow-design`, and `yao-geoflow
 
 ## Installation
 
-Agent Skills compatible tools can discover this package directly from `.agents/skills/geoflow` in a GEOFlow checkout.
+Agent Skills compatible tools can discover this package directly from `.agents/skills/geoflow` in a geo.dofe.ai checkout.
 
-For a clean global Codex install or upgrade, run this command from the GEOFlow repository root:
+For a clean global Codex install or upgrade, run this command from the geo.dofe.ai repository root:
 
 ```bash
 bash .agents/skills/geoflow/scripts/install_codex_skill.sh
@@ -40,7 +40,7 @@ If the backup contains retired Skill directories that must be restored, move tho
 | Package install | Bash, Python 3.10+ | macOS, Linux, or Windows through WSL |
 | Source discovery, public frontend, legacy migration | Python 3.10+ | macOS, Linux, or WSL |
 | Runtime preflight and API fallback | Bash, Python 3.10+, `curl` | macOS, Linux, or WSL |
-| Live channel capability reports | Python 3.10+, PHP CLI, project `artisan` and installed Composer dependencies | A working GEOFlow application checkout |
-| Product development | The dependencies declared by the target GEOFlow checkout, commonly PHP/Composer, Node.js, and optional Docker | Follow the repository's own support matrix |
+| Live channel capability reports | Python 3.10+, PHP CLI, project `artisan` and installed Composer dependencies | A working geo.dofe.ai application checkout |
+| Product development | The dependencies declared by the target geo.dofe.ai checkout, commonly PHP/Composer, Node.js, and optional Docker | Follow the repository's own support matrix |
 
 Native Windows PowerShell is not a supported execution shell for the bundled Bash helpers. Use WSL or load the references manually. When a required tool is unavailable, stay in read-only discovery, report the missing verification layer, and do not claim preflight, live capability, preview, sync, activation, or publication success.

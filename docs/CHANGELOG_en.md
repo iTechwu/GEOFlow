@@ -1,4 +1,4 @@
-# GEOFlow Changelog
+# geo.dofe.ai Changelog
 
 This document tracks user-facing updates in the public repository. For future GitHub pushes, update this file together with the Chinese version in `CHANGELOG.md`.
 

@@ -8,7 +8,7 @@ X: https://x.com/yaojingang
 
 # Design Optimization Playbook
 
-Use this reference when the request is to improve an existing GEOFlow theme rather than replace it wholesale.
+Use this reference when the request is to improve an existing geo.dofe.ai theme rather than replace it wholesale.
 
 ## Optimization Modes
 
@@ -16,9 +16,9 @@ Use this reference when the request is to improve an existing GEOFlow theme rath
 - `structural_cleanup`: simplify noisy sections, unify repeated cards, and reduce layout inconsistency
 - `page_specific_tuning`: improve one or two pages such as homepage or article detail without redesigning the full system
 - `homepage_enrichment`: turn the default homepage into a richer front page with hero/media, metrics/chart-lite, text/value blocks, visual CTAs, and article-derived resource/case sections
-- `homepage_builder_design`: produce importable `homepage-design.json` for `homepage_modules` and `homepage_style` when the current GEOFlow system exposes the builder/import contract
+- `homepage_builder_design`: produce importable `homepage-design.json` for `homepage_modules` and `homepage_style` when the current geo.dofe.ai system exposes the builder/import contract
 - `hybrid_restyle`: use a reference site as direction while staying anchored to the current template
-- `target_theme_edit`: apply the changes inside a selected theme fork that can be previewed in the live GEOFlow system
+- `target_theme_edit`: apply the changes inside a selected theme fork that can be previewed in the live geo.dofe.ai system
 
 ## Default Audit Checklist
 
@@ -29,7 +29,7 @@ Use this reference when the request is to improve an existing GEOFlow theme rath
 - ad block tone and how aggressive it feels
 - mobile spacing, stacking, and overflow risk
 - repeated token drift across colors, radii, borders, and shadows
-- whether the requested new display modules can be built from existing GEOFlow data fields
+- whether the requested new display modules can be built from existing geo.dofe.ai data fields
 - whether default homepage modules stay out of search/category result states
 - whether charts and metrics are derived from current collections or clearly marked as static theme illustrations
 - whether homepage module/style requests fit the current `HomepageModuleBuilder` contract before editing Blade
@@ -47,7 +47,7 @@ Use this reference when the request is to improve an existing GEOFlow theme rath
 
 ## Guardrails
 
-- preserve GEOFlow routes, helpers, and data queries
+- preserve geo.dofe.ai routes, helpers, and data queries
 - optimize modules that already exist before inventing new ones
 - when inventing homepage modules, prefer safe composition from current variables over backend expansion
 - when the homepage builder exists, prefer builder module JSON for supported module/style changes before adding Blade-only sections

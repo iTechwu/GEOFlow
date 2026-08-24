@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# GEOFlow Compose 边界检查：
+# geo.dofe.ai Compose 边界检查：
 # 禁止本仓库的 Docker Compose 创建、运行或内嵌 PostgreSQL / Redis / RabbitMQ 服务。
 # 这些依赖由 ../docker-helm.dofe.ai 集中管理（见 AGENTS.md / CLAUDE.md）。
 #

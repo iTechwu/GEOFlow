@@ -938,7 +938,7 @@
     }
 }
 
-/* GEOFlow template variant: GEOFlow 06 Public Broadcast.
+/* geo.dofe.ai template variant: geo.dofe.ai 06 Public Broadcast.
  * High-level inspiration: BBC News.
  * This file only applies public visual cues and does not copy proprietary assets or source code.
  */
@@ -1023,8 +1023,8 @@
 .ne-prose th,
 .ne-ad-slot { background: #f3f3f3; }
 .ne-footer { border-top-color: #d7d7d7; background: #f3f3f3; }
-/* GEOFlow white editorial system v2: begin */
-/* GEOFlow 06 Public Broadcast keeps a pure white content surface and borrows only high-level layout cues from BBC News. */
+/* geo.dofe.ai white editorial system v2: begin */
+/* geo.dofe.ai 06 Public Broadcast keeps a pure white content surface and borrows only high-level layout cues from BBC News. */
 :root {
     --ne-red: #b80000;
     --ne-red-dark: #111111;
@@ -1472,8 +1472,8 @@
         font-size: 34px;
     }
 }
-/* GEOFlow white editorial system v2: end */
-/* GEOFlow white editorial system v2 detail cleanup: begin */
+/* geo.dofe.ai white editorial system v2: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: begin */
 .ne-prose blockquote,
 .ne-tag-list span,
 .ne-related-card,
@@ -1502,9 +1502,9 @@
     border-radius: var(--geo-template-radius);
     color: #4b5563;
 }
-/* GEOFlow white editorial system v2 detail cleanup: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: end */
 
-/* GEOFlow white lead layout polish v3: begin */
+/* geo.dofe.ai white lead layout polish v3: begin */
 .ne-home-lead,
 .ne-home-lead-main,
 .ne-home-headlines {
@@ -1667,9 +1667,9 @@
         line-height: 1.62;
     }
 }
-/* GEOFlow white lead layout polish v3: end */
+/* geo.dofe.ai white lead layout polish v3: end */
 
-/* GEOFlow white editorial rhythm v4: begin */
+/* geo.dofe.ai white editorial rhythm v4: begin */
 html,
 body,
 .ne-body,
@@ -2080,4 +2080,4 @@ body,
         grid-template-columns: 1fr;
     }
 }
-/* GEOFlow white editorial rhythm v4: end */
+/* geo.dofe.ai white editorial rhythm v4: end */

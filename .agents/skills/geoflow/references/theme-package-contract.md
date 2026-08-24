@@ -8,7 +8,7 @@ X: https://x.com/yaojingang
 
 # Theme Edit and Package Contract
 
-The output of a GEOFlow design run should be a preview-first session or package rather than a direct production overwrite.
+The output of a geo.dofe.ai design run should be a preview-first session or package rather than a direct production overwrite.
 
 ## Mode A: Full New Theme Package
 
@@ -69,7 +69,7 @@ public/themes/target-theme-edit-YYYYMMDD-XXX/
 
 ## Mode C: Homepage Builder Design JSON
 
-Use this mode when the current GEOFlow workspace exposes `HomepageModuleBuilder`, `homepage_modules`, `homepage_style`, and the admin import route.
+Use this mode when the current geo.dofe.ai workspace exposes `HomepageModuleBuilder`, `homepage_modules`, `homepage_style`, and the admin import route.
 
 ```text
 homepage-composition-plan.md
@@ -213,7 +213,7 @@ The package should be previewed on at least:
 - article detail preview
 - archive overview preview
 
-Current Laravel GEOFlow may not provide isolated `/preview/{theme}` URLs. Preview theme edit sessions should clearly say whether review uses static preview artifacts, temporary admin activation, or a real preview route discovered in `routes/web.php`.
+Current Laravel geo.dofe.ai may not provide isolated `/preview/{theme}` URLs. Preview theme edit sessions should clearly say whether review uses static preview artifacts, temporary admin activation, or a real preview route discovered in `routes/web.php`.
 
 Optimization runs should also include a short before/after rationale for each touched module.
 

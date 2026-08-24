@@ -1,4 +1,4 @@
-# GEOFlow Laravel 生产 Docker 部署
+# geo.dofe.ai Laravel 生产 Docker 部署
 
 本文对应仓库中的生产编排文件：
 
@@ -18,7 +18,7 @@
 - `queue`: `php artisan queue:work`
 - `scheduler`: `php artisan schedule:work`
 - `reverb`: `php artisan reverb:start`
-- PostgreSQL/Redis：由 `../docker-helm.dofe.ai` 集中提供，GEOFlow 仅通过 `DB_*`/`REDIS_*` 连接
+- PostgreSQL/Redis：由 `../docker-helm.dofe.ai` 集中提供，geo.dofe.ai 仅通过 `DB_*`/`REDIS_*` 连接
 
 这套方案与当前开发用 `docker-compose.yml` 分离：
 
@@ -37,7 +37,7 @@ bash geoflow-docker-deploy.sh
 脚本会完成：
 
 - 检查 CPU、内存、磁盘、Docker、Docker Compose 与端口占用
-- 克隆或更新 GEOFlow 源码
+- 克隆或更新 geo.dofe.ai 源码
 - 生成 `.env.prod` 并写入生产默认配置
 - 连接外部 PostgreSQL/Redis，并启动 Nginx、PHP-FPM、队列、调度和 Reverb
 - 执行迁移、写入默认管理员、清理并重建 Laravel 缓存
@@ -158,7 +158,7 @@ $COMPOSE_PROD run --rm app php artisan geoflow:security-audit
 $COMPOSE_PROD run --rm app php artisan geoflow:security-audit --json
 ```
 
-退出码 `0` 表示没有 finding；退出码 `1` 表示发现问题、需要复核的私网出站例外，或审计无法安全完成。JSON 包含 `schema_version`、`status`、按 severity 汇总的 `summary` 和按稳定 code 排序的 `findings`，不会输出路径、URL、token、owner 或哈希原文。该命令用于 GEOFlow 运行数据与安全配置检查，依赖漏洞检查仍需单独执行 `composer audit`。
+退出码 `0` 表示没有 finding；退出码 `1` 表示发现问题、需要复核的私网出站例外，或审计无法安全完成。JSON 包含 `schema_version`、`status`、按 severity 汇总的 `summary` 和按稳定 code 排序的 `findings`，不会输出路径、URL、token、owner 或哈希原文。该命令用于 geo.dofe.ai 运行数据与安全配置检查，依赖漏洞检查仍需单独执行 `composer audit`。
 
 完成审计处理，再次确认运行中的容器全部来自新镜像，然后将 `GEOFLOW_MANAGED_IMAGE_DELETION_ENABLED=true` 写入生产环境配置，并重新创建会执行图片清理的新版本进程：
 
@@ -210,7 +210,7 @@ docker compose --env-file .env.prod -f docker-compose.prod.yml run --rm app php 
 
 ## 6. 运维建议
 
-- 不要在 GEOFlow Compose 中声明或对外暴露 PostgreSQL/Redis；它们属于集中基础设施
+- 不要在 geo.dofe.ai Compose 中声明或对外暴露 PostgreSQL/Redis；它们属于集中基础设施
 - 建议在反向代理层只公开 `80/443`
 - 若更新了 PHP 代码，因 OPcache `validate_timestamps=0`，请重新构建镜像
 - 修改 `.env.prod` 后，执行：

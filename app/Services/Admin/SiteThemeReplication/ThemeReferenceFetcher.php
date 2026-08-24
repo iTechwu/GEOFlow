@@ -49,7 +49,7 @@ class ThemeReferenceFetcher
         $request = $this->http->timeout(20)
             ->connectTimeout(8)
             ->withHeaders([
-                'User-Agent' => 'GEOFlow Theme Replication/2.0',
+                'User-Agent' => 'geo.dofe.ai Theme Replication/2.0',
                 'Accept' => 'text/html,application/xhtml+xml,text/plain;q=0.8,*/*;q=0.5',
             ]);
         try {
@@ -136,7 +136,7 @@ class ThemeReferenceFetcher
             $request = $this->http->timeout(10)
                 ->connectTimeout(5)
                 ->withHeaders([
-                    'User-Agent' => 'GEOFlow Theme Replication/2.0',
+                    'User-Agent' => 'geo.dofe.ai Theme Replication/2.0',
                     'Accept' => 'text/css,*/*;q=0.5',
                 ]);
             $response = $this->safeHttp->get($request, $url, self::MAX_CSS_BYTES, 3);

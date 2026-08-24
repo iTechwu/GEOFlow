@@ -6,9 +6,9 @@ Date: 2026-07-05
 X: https://x.com/yaojingang
 -->
 
-# GEOFlow Current Capability Map
+# geo.dofe.ai Current Capability Map
 
-This reference maps current GEOFlow 2.1+ operations to the supported automation surface. Always inspect the target workspace before mutating anything:
+This reference maps current geo.dofe.ai 2.1+ operations to the supported automation surface. Always inspect the target workspace before mutating anything:
 
 ```bash
 php artisan route:list --path=api/v1
@@ -138,7 +138,7 @@ Channel types:
 
 Rules:
 
-- GEOFlow Agent channels can use target packages, static/rewrite frontend mode, secret reveal/rotation, frontend-capability inspection, and settings sync.
+- geo.dofe.ai Agent channels can use target packages, static/rewrite frontend mode, secret reveal/rotation, frontend-capability inspection, and settings sync.
 - WordPress REST channels use WordPress username and Application Password. Do not reveal the password after save.
 - Generic HTTP API channels support configurable auth, request paths, success statuses, response mapping, health checks, and optional settings sync path.
 - Treat frontend-capability mismatches as remote package/version issues, not as proof that local homepage modules are invalid.

@@ -8,11 +8,11 @@ X: https://x.com/yaojingang
 
 # Homepage Composition Guide
 
-Use this reference when a GEOFlow theme request asks for a fuller homepage, a corporate-site feel, a portal-style front page, or modules beyond a basic article list.
+Use this reference when a geo.dofe.ai theme request asks for a fuller homepage, a corporate-site feel, a portal-style front page, or modules beyond a basic article list.
 
 ## Goal
 
-Turn the GEOFlow homepage from a simple feed into a composed front page while preserving the Laravel theme contract. The homepage may feel like a company website, resource hub, product newsroom, or media portal, but it must still render from existing site settings, article collections, route helpers, and theme assets.
+Turn the geo.dofe.ai homepage from a simple feed into a composed front page while preserving the Laravel theme contract. The homepage may feel like a company website, resource hub, product newsroom, or media portal, but it must still render from existing site settings, article collections, route helpers, and theme assets.
 
 ## Current Data Surface
 
@@ -34,7 +34,7 @@ Do not query the database from a Blade theme to invent more homepage data. If a 
 
 ## Homepage Builder Mode
 
-Current GEOFlow may expose `HomepageModuleBuilder`, `homepage_modules`, `homepage_style`, and the admin import route `homepage-modules/import`. When those signals are present, prefer an importable `homepage-design.json` payload for homepage module and style work. Use Blade/theme edits only when the requested visual treatment cannot be represented by the builder or when the selected theme intentionally overrides the default partial.
+Current geo.dofe.ai may expose `HomepageModuleBuilder`, `homepage_modules`, `homepage_style`, and the admin import route `homepage-modules/import`. When those signals are present, prefer an importable `homepage-design.json` payload for homepage module and style work. Use Blade/theme edits only when the requested visual treatment cannot be represented by the builder or when the selected theme intentionally overrides the default partial.
 
 Builder style fields:
 

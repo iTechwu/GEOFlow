@@ -10,7 +10,7 @@ class GeoFlowProcessUrlImportCommand extends Command
 {
     protected $signature = 'geoflow:process-url-import {jobId : URL import job ID}';
 
-    protected $description = 'Process a GEOFlow URL smart import job in the background';
+    protected $description = 'Process a geo.dofe.ai URL smart import job in the background';
 
     public function handle(UrlImportProcessingService $service): int
     {

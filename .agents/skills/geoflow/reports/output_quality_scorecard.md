@@ -1,4 +1,4 @@
-# GEOFlow Output Quality Scorecard
+# geo.dofe.ai Output Quality Scorecard
 
 ## Deterministic Cases
 

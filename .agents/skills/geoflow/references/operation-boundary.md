@@ -8,7 +8,7 @@ X: https://x.com/yaojingang
 
 # Operation Boundary
 
-The `operations` mode operates a running GEOFlow system. Product code changes require an explicit switch to `development`. Current GEOFlow uses API v1 for scriptable content operations and Blade admin routes for management workflows such as distribution, enterprise knowledge, growth center, system updates, site settings, theme editor, and frontend-capability sync.
+The `operations` mode operates a running geo.dofe.ai system. Product code changes require an explicit switch to `development`. Current geo.dofe.ai uses API v1 for scriptable content operations and Blade admin routes for management workflows such as distribution, enterprise knowledge, growth center, system updates, site settings, theme editor, and frontend-capability sync.
 
 ## Allowed Actions
 
@@ -33,7 +33,7 @@ The `operations` mode operates a running GEOFlow system. Product code changes re
 
 Before the first mutating action in a workspace:
 
-1. Verify whether `bin/geoflow` exists. If it does not, verify a Laravel GEOFlow app with `artisan` and `routes/api.php`.
+1. Verify whether `bin/geoflow` exists. If it does not, verify a Laravel geo.dofe.ai app with `artisan` and `routes/api.php`.
 2. If CLI configuration is missing, run `geoflow login` first. If using API fallback, obtain a bearer token through `/api/v1/auth/login` or the provided token source.
 3. If authenticated reads return `401`, `403`, or token-invalid output, refresh login/token.
 4. Verify an authenticated read such as `catalog` succeeds; public homepage checks alone are not sufficient.
@@ -49,7 +49,7 @@ After any mutating action:
 3. Inspect background jobs separately when the action queues work.
 4. If publishing an article locally, report the persisted `/article/{slug}` route rather than an `article.php?id=...` compatibility link.
 5. If the action used admin web, verify by reading the redirected page, JSON status endpoint, listing page, detail page, or artifact metadata.
-6. If the action touched a remote channel, separate local GEOFlow success from remote target success.
+6. If the action touched a remote channel, separate local geo.dofe.ai success from remote target success.
 
 ## High-Risk Admin Web Actions
 
@@ -77,7 +77,7 @@ Keep these failure classes separate:
 - API failure: `401`, `403`, `404`, `409`, `422`, `500`
 - Admin web failure: missing login session, CSRF mismatch, validation redirect, super-admin denial, password-confirmation failure
 - Business-data failure: task inactive, missing titles, invalid category, review state conflict, missing active lead form slug
-- Remote target failure: WordPress authorization/capability error, generic API mapping failure, GEOFlow Agent health/sync failure
+- Remote target failure: WordPress authorization/capability error, generic API mapping failure, geo.dofe.ai Agent health/sync failure
 - Frontend-capability mismatch: remote target package does not expose or support the local frontend capability being synced
 - System-update failure: preflight failure, missing backup, active run conflict, stale run, manual command not executed, disabled update/rollback config
 - Route-surface mismatch: requested capability exists in admin web but not API v1, or is absent from the target deployment

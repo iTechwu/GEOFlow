@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
-# GEOFlow production Docker healthcheck helper.
+# geo.dofe.ai production Docker healthcheck helper.
 # Run from the repository root or set GEOFLOW_APP_DIR=/path/to/GEOFlow.
 
 APP_DIR="${GEOFLOW_APP_DIR:-$(pwd)}"

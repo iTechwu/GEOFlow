@@ -10,11 +10,11 @@ X: https://x.com/yaojingang
 
 ## Current Capability Rule
 
-Prefer `bin/geoflow` only when it exists and `--help` confirms the requested action. Current Laravel GEOFlow deployments may expose `/api/v1` without a `bin/geoflow` wrapper, so API fallback is expected there.
+Prefer `bin/geoflow` only when it exists and `--help` confirms the requested action. Current Laravel geo.dofe.ai deployments may expose `/api/v1` without a `bin/geoflow` wrapper, so API fallback is expected there.
 
 Do not invent CLI subcommands for actions that only exist in API v1. When the CLI is absent, use the protected header-file setup below and add `X-Idempotency-Key` for writes.
 
-For GEOFlow admin-only capabilities, use authenticated admin web routes. Do not claim they are API v1 endpoints unless `php artisan route:list --path=api/v1` proves it in the target workspace.
+For geo.dofe.ai admin-only capabilities, use authenticated admin web routes. Do not claim they are API v1 endpoints unless `php artisan route:list --path=api/v1` proves it in the target workspace.
 
 ## Preflight
 
@@ -25,10 +25,10 @@ scripts/geoflow_preflight.sh "<workspace>" [config] [checks]
 `checks` is optional and comma-separated for API fallback. Examples:
 
 ```bash
-scripts/geoflow_preflight.sh "/path/to/GEOFlow"
-scripts/geoflow_preflight.sh "/path/to/GEOFlow" "" catalog,materials
-scripts/geoflow_preflight.sh "/path/to/GEOFlow" "" admin
-GEOFLOW_PREFLIGHT_CHECKS=catalog,materials scripts/geoflow_preflight.sh "/path/to/GEOFlow"
+scripts/geoflow_preflight.sh "/path/to/geo.dofe.ai"
+scripts/geoflow_preflight.sh "/path/to/geo.dofe.ai" "" catalog,materials
+scripts/geoflow_preflight.sh "/path/to/geo.dofe.ai" "" admin
+GEOFLOW_PREFLIGHT_CHECKS=catalog,materials scripts/geoflow_preflight.sh "/path/to/geo.dofe.ai"
 ```
 
 The preflight supports two modes:
@@ -74,7 +74,7 @@ if not loopback:
     except ValueError:
         pass
 if parsed.scheme == "http" and not loopback:
-    raise SystemExit("Authenticated non-loopback GEOFlow hosts require HTTPS")
+    raise SystemExit("Authenticated non-loopback geo.dofe.ai hosts require HTTPS")
 print("=http,https" if loopback else "=https")
 PY
 )" || exit 1
@@ -93,8 +93,8 @@ import json
 import pathlib
 import sys
 
-username = input("GEOFlow admin username: ")
-password = getpass.getpass("GEOFlow admin password: ")
+username = input("geo.dofe.ai admin username: ")
+password = getpass.getpass("geo.dofe.ai admin password: ")
 pathlib.Path(sys.argv[1]).write_text(
     json.dumps({"username": username, "password": password}),
     encoding="utf-8",
@@ -499,7 +499,7 @@ Trash article:
 
 ## Distribution Boundary
 
-Current GEOFlow includes Distribution Management, target-site packages, static target sites, WordPress REST channels, generic HTTP API channels, frontend-capability sync, settings-sync preview, and distribution queues. These admin operations are not exposed through the current `/api/v1` surface.
+Current geo.dofe.ai includes Distribution Management, target-site packages, static target sites, WordPress REST channels, generic HTTP API channels, frontend-capability sync, settings-sync preview, and distribution queues. These admin operations are not exposed through the current `/api/v1` surface.
 
 API task fields can set `publish_scope`, which affects worker-driven task publishing:
 
@@ -572,7 +572,7 @@ Use admin web for channel selection through `distribution_channel_ids[]`, task m
 
 Channel types are `geoflow_agent`, `wordpress_rest`, and `generic_http_api`. Secret reveal and package download may require super-admin password confirmation.
 
-Refresh frontend capabilities before syncing homepage/theme settings to a GEOFlow Agent channel. If the target package does not expose frontend capabilities, treat it as an outdated or unsupported target package and report the mismatch.
+Refresh frontend capabilities before syncing homepage/theme settings to a geo.dofe.ai Agent channel. If the target package does not expose frontend capabilities, treat it as an outdated or unsupported target package and report the mismatch.
 
 ### Enterprise Knowledge
 

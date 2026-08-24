@@ -4,7 +4,7 @@
   },
   "channel": {
     "id": 7,
-    "name": "Synthetic GEOFlow Agent Channel",
+    "name": "Synthetic geo.dofe.ai Agent Channel",
     "type": "geoflow_agent",
     "supports_first_party_frontend": true,
     "frontend_experience_mode": "snapshot_default",

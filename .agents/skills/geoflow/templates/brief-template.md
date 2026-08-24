@@ -1,8 +1,8 @@
-# GEOFlow Work Brief
+# geo.dofe.ai Work Brief
 
 - `skill_id`: `geoflow`
 - `workspace`: absolute local path when code or CLI access is available
-- `instance_url`: running GEOFlow base URL when remote operation is requested
+- `instance_url`: running geo.dofe.ai base URL when remote operation is requested
 - `mode`: `auto | development | operations | public_frontend | channel_frontend | legacy_migration`
 - `request`: desired outcome
 - `target_surface`: backend, admin, API, CLI, default site, theme, channel site, or legacy package

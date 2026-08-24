@@ -80,8 +80,8 @@ def build(report: dict) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build a GEOFlow channel frontend sync preview report.")
-    parser.add_argument("--workspace", help="GEOFlow workspace path")
+    parser = argparse.ArgumentParser(description="Build a geo.dofe.ai channel frontend sync preview report.")
+    parser.add_argument("--workspace", help="geo.dofe.ai workspace path")
     parser.add_argument("--channel", help="Distribution channel id for artisan report")
     parser.add_argument("--report", help="Existing geoflow:frontend-experience JSON report")
     parser.add_argument("--live-remote", action="store_true", help="Use --live-remote for a non-persistent live remote read")

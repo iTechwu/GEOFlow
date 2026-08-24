@@ -8,11 +8,11 @@ X: https://x.com/yaojingang
 
 # Laravel API v1, Docker, And Admin Fallback
 
-Use this reference when the target GEOFlow workspace is a Laravel app and no `bin/geoflow` wrapper is available. `/api/v1` is the normal scriptable content-operations path. Current GEOFlow also has many admin-only workflows under `/admin/*`; use authenticated admin web for those.
+Use this reference when the target geo.dofe.ai workspace is a Laravel app and no `bin/geoflow` wrapper is available. `/api/v1` is the normal scriptable content-operations path. Current geo.dofe.ai also has many admin-only workflows under `/admin/*`; use authenticated admin web for those.
 
 ## Detection
 
-A Laravel GEOFlow workspace should contain:
+A Laravel geo.dofe.ai workspace should contain:
 
 - `artisan`
 - `routes/api.php`
@@ -45,7 +45,7 @@ API fallback requires:
 Load the token from a secret manager or a hidden interactive prompt. Avoid placing the value in shell history:
 
 ```bash
-read -rsp 'GEOFlow API token: ' GEOFLOW_API_TOKEN
+read -rsp 'geo.dofe.ai API token: ' GEOFLOW_API_TOKEN
 printf '\n'
 export GEOFLOW_API_TOKEN
 ```
@@ -68,7 +68,7 @@ The current login endpoint returns a token with all available API v1 scopes for 
 
 ## Docker Checks
 
-From the GEOFlow workspace:
+From the geo.dofe.ai workspace:
 
 ```bash
 docker compose ps
@@ -94,22 +94,22 @@ For queue behavior:
 
 ## Preflight
 
-From a GEOFlow repository checkout, run the project-local Skill:
+From a geo.dofe.ai repository checkout, run the project-local Skill:
 
 ```bash
-.agents/skills/geoflow/scripts/geoflow_preflight.sh "/path/to/GEOFlow"
+.agents/skills/geoflow/scripts/geoflow_preflight.sh "/path/to/geo.dofe.ai"
 ```
 
 For material work:
 
 ```bash
-.agents/skills/geoflow/scripts/geoflow_preflight.sh "/path/to/GEOFlow" "" catalog,materials
+.agents/skills/geoflow/scripts/geoflow_preflight.sh "/path/to/geo.dofe.ai" "" catalog,materials
 ```
 
 For admin-web work:
 
 ```bash
-.agents/skills/geoflow/scripts/geoflow_preflight.sh "/path/to/GEOFlow" "" admin
+.agents/skills/geoflow/scripts/geoflow_preflight.sh "/path/to/geo.dofe.ai" "" admin
 ```
 
 From a global Codex installation, replace the script path with `~/.codex/skills/geoflow/scripts/geoflow_preflight.sh`. When working from inside the Skill directory, `scripts/geoflow_preflight.sh` is the package-root-relative form. The helper requires Bash, Python 3.10+, and `curl`; a non-executable legacy `bin/geoflow` also requires PHP CLI.
@@ -219,6 +219,6 @@ API v1 task responses may include `task_progress`, `queue_overview`, `schedule_e
 
 ## Admin Fallback Boundary
 
-Current GEOFlow has admin UI capabilities including Distribution Management, target-site packages, WordPress REST channels, generic HTTP API channels, frontend-capability refresh, target settings-sync preview, logs, queue retry, remote article management, enterprise knowledge drafting/publish, growth-center lead forms/leads/export, Analytics, URL Import, System Updates, Theme Replication, Theme Editor, site settings, AI configuration, API tokens, and admin users. These are not part of the current `/api/v1` operations surface unless route inspection proves otherwise.
+Current geo.dofe.ai has admin UI capabilities including Distribution Management, target-site packages, WordPress REST channels, generic HTTP API channels, frontend-capability refresh, target settings-sync preview, logs, queue retry, remote article management, enterprise knowledge drafting/publish, growth-center lead forms/leads/export, Analytics, URL Import, System Updates, Theme Replication, Theme Editor, site settings, AI configuration, API tokens, and admin users. These are not part of the current `/api/v1` operations surface unless route inspection proves otherwise.
 
 Use API v1 only for the exposed task/article/material operations. When an operation requires an admin-only capability, switch to authenticated admin web routes if the user has provided or already has a valid admin session. Otherwise report the missing admin session/prerequisite.

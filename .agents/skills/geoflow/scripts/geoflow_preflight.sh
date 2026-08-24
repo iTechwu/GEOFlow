@@ -180,7 +180,7 @@ if not is_loopback:
     except ValueError:
         pass
 if token_required and parsed.scheme != "https" and not is_loopback:
-    print("Authenticated GEOFlow API preflight requires HTTPS unless the host is loopback.", file=sys.stderr)
+    print("Authenticated geo.dofe.ai API preflight requires HTTPS unless the host is loopback.", file=sys.stderr)
     raise SystemExit(1)
 PY
 }
@@ -210,7 +210,7 @@ if [[ ! -f "$cli_path" ]]; then
 
     if [[ -z "$api_base_url" || ( "$needs_api_token" -eq 1 && -z "$api_token" ) ]]; then
       echo "Missing CLI: $cli_path" >&2
-      echo "Laravel GEOFlow detected. Set GEOFLOW_BASE_URL for admin checks and also GEOFLOW_API_TOKEN for API v1 fallback checks." >&2
+      echo "Laravel geo.dofe.ai detected. Set GEOFLOW_BASE_URL for admin checks and also GEOFLOW_API_TOKEN for API v1 fallback checks." >&2
       docker_hint
       exit 1
     fi
@@ -297,7 +297,7 @@ if [[ ! -f "$cli_path" ]]; then
 
       if [[ "$expected_json" -eq 1 ]] && ! normalize_json_response "$check_tmp"; then
         print_body_excerpt "$check_tmp" >&2
-        echo "Preflight failed. API fallback returned invalid JSON. Check that GEOFLOW_BASE_URL points to the GEOFlow public web root and that /api/v1 routes are routed to Laravel API, not a proxy/login/HTML page." >&2
+        echo "Preflight failed. API fallback returned invalid JSON. Check that GEOFLOW_BASE_URL points to the geo.dofe.ai public web root and that /api/v1 routes are routed to Laravel API, not a proxy/login/HTML page." >&2
         docker_hint
         exit 3
       fi

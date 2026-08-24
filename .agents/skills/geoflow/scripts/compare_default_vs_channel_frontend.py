@@ -45,7 +45,7 @@ def compare(report: dict) -> dict:
         findings.append({
             "severity": "info",
             "area": "channel_type",
-            "message": "Channel is not a GeoFlow Agent target; GEOFlow module rendering is not guaranteed.",
+            "message": "Channel is not a geo.dofe.ai Agent target; geo.dofe.ai module rendering is not guaranteed.",
         })
     if list_missing(default_modules, target_modules):
         findings.append({
@@ -95,7 +95,7 @@ def compare(report: dict) -> dict:
     elif mode == "custom":
         mode_recommendation = "Use custom when the channel has its own homepage modules, carousel, and style tokens."
     else:
-        mode_recommendation = "Select a GeoFlow Agent channel to receive mode guidance."
+        mode_recommendation = "Select a geo.dofe.ai Agent channel to receive mode guidance."
 
     preview_warnings = list(sync_preview.get("warnings") or [])
     requires_confirmation = bool(sync_preview.get("requires_confirmation"))
@@ -104,7 +104,7 @@ def compare(report: dict) -> dict:
     elif remote_target.get("status") == "not_checked":
         recommended_action = "Refresh remote capabilities before syncing."
     elif remote_target.get("status") == "unsupported_or_not_found":
-        recommended_action = "Download the latest GeoFlow Agent target package and overwrite the remote site package."
+        recommended_action = "Download the latest geo.dofe.ai Agent target package and overwrite the remote site package."
     elif remote_target.get("is_stale"):
         recommended_action = "Refresh the cached remote capabilities, then sync if the preview remains acceptable."
     else:
@@ -141,8 +141,8 @@ def compare(report: dict) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Compare GEOFlow default frontend and channel frontend capability report.")
-    parser.add_argument("--workspace", help="GEOFlow workspace path")
+    parser = argparse.ArgumentParser(description="Compare geo.dofe.ai default frontend and channel frontend capability report.")
+    parser.add_argument("--workspace", help="geo.dofe.ai workspace path")
     parser.add_argument("--channel", help="Distribution channel id for live artisan inventory")
     parser.add_argument("--report", help="Existing geoflow:frontend-experience JSON report")
     parser.add_argument("--live-remote", action="store_true", help="Pass --live-remote to geoflow:frontend-experience without persisting cache")

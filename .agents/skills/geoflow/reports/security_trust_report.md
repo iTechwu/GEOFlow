@@ -67,14 +67,14 @@
 
 | Script | Interface | Declared | Argparse | Main Guard | Input | Network mode | File Write | Subprocess | Reason |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| scripts/build_sync_preview_report.py | cli | False | True | True | False | delegated-live | False | True | Fixed-argument local Artisan command; live mode delegates the signed remote read to GEOFlow. |
+| scripts/build_sync_preview_report.py | cli | False | True | True | False | delegated-live | False | True | Fixed-argument local Artisan command; live mode delegates the signed remote read to geo.dofe.ai. |
 | scripts/channel_endpoint_safety.py | internal-module | True | False | False | False | False | False | False | Shared endpoint and redirect-safety checks imported by channel report CLIs. |
-| scripts/compare_default_vs_channel_frontend.py | cli | False | True | True | False | delegated-live | False | True | Fixed-argument local Artisan command; live mode delegates the signed remote read to GEOFlow. |
+| scripts/compare_default_vs_channel_frontend.py | cli | False | True | True | False | delegated-live | False | True | Fixed-argument local Artisan command; live mode delegates the signed remote read to geo.dofe.ai. |
 | scripts/discover_frontend_surfaces.py | cli | False | True | True | False | False | False | False | Default CLI classification; add SCRIPT_INTERFACE for internal modules. |
 | scripts/discover_geoflow_workspace.py | cli | False | True | True | False | False | True | False | Default CLI classification; add SCRIPT_INTERFACE for internal modules. |
 | scripts/discover_themes.py | cli | False | True | True | False | False | False | False | Default CLI classification; add SCRIPT_INTERFACE for internal modules. |
 | scripts/finalize_theme_edit_session.py | cli | False | True | True | False | False | True | False | Default CLI classification; add SCRIPT_INTERFACE for internal modules. |
-| scripts/geoflow_preflight.sh | cli | True | n/a | n/a | False | direct-curl | temporary-only | False | Validates operator-selected GEOFlow endpoints, bounds responses, and redacts sensitive output. |
+| scripts/geoflow_preflight.sh | cli | True | n/a | n/a | False | direct-curl | temporary-only | False | Validates operator-selected geo.dofe.ai endpoints, bounds responses, and redacts sensitive output. |
 | scripts/install_codex_skill.sh | cli | True | n/a | n/a | False | False | bounded-install | False | Copies the declared artifact contract through same-filesystem staging and moves prior Skills to persistent backup. |
 | scripts/prepare_theme_edit_session.py | cli | False | True | True | False | False | True | False | Default CLI classification; add SCRIPT_INTERFACE for internal modules. |
 | scripts/serve_preview.py | cli | False | True | True | False | loopback-listener | False | False | Serves a fixed allowlist from the bundled preview directory on `127.0.0.1`. |

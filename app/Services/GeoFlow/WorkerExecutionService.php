@@ -496,8 +496,8 @@ class WorkerExecutionService
         }
 
         return Author::query()->firstOrCreate(
-            ['name' => 'GEOFlow'],
-            ['bio' => 'Default GEOFlow author for automated content generation.']
+            ['name' => 'geo.dofe.ai'],
+            ['bio' => 'Default geo.dofe.ai author for automated content generation.']
         );
     }
 

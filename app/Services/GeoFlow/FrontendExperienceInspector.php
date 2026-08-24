@@ -267,7 +267,7 @@ class FrontendExperienceInspector
         if (! $channel->isGeoFlowAgent()) {
             return $this->remoteFailure(
                 'not_applicable',
-                'WordPress REST 和 Generic API 不作为 GEOFlow 前台渲染目标读取远端能力。'
+                'WordPress REST 和 Generic API 不作为 geo.dofe.ai 前台渲染目标读取远端能力。'
             );
         }
 
@@ -484,7 +484,7 @@ class FrontendExperienceInspector
             $differences[] = [
                 'area' => 'frontend_rendering',
                 'severity' => 'info',
-                'message' => 'WordPress REST 和 Generic API 作为外部分发渠道处理，不保证渲染 GEOFlow 首页模块。',
+                'message' => 'WordPress REST 和 Generic API 作为外部分发渠道处理，不保证渲染 geo.dofe.ai 首页模块。',
             ];
 
             return $differences;

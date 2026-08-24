@@ -6,13 +6,13 @@ Date: 2026-05-16
 X: https://x.com/yaojingang
 -->
 
-# GEOFlow Frontend Module And Variable Map
+# geo.dofe.ai Frontend Module And Variable Map
 
-This document is the current GEOFlow frontend contract for `geoflow`. It is based on the Laravel rewrite, not the older root-level PHP frontend.
+This document is the current geo.dofe.ai frontend contract for `geoflow`. It is based on the Laravel rewrite, not the older root-level PHP frontend.
 
 ## 1. Current Workspace Baseline
 
-Current GEOFlow signals:
+Current geo.dofe.ai signals:
 
 - Laravel entry: `artisan`
 - Public routes: `routes/web.php`
@@ -61,7 +61,7 @@ theme.{active_theme}.{template}
 site.{template}
 ```
 
-If a theme does not provide a Blade view, GEOFlow falls back to `resources/views/site`.
+If a theme does not provide a Blade view, geo.dofe.ai falls back to `resources/views/site`.
 
 Allowed theme ID pattern:
 
@@ -253,7 +253,7 @@ Supported layouts are `single`, `split`, `grid`, and `compact`. Supported articl
 
 The `public_frontend` mode does not create lead forms. If no active form slug is available, use a `cta_band` that links to the intended public form URL or switch to `operations` for authenticated lead-form creation.
 
-Default-site supported modules and remote target-package supported modules are separate contracts. The current default site can support `lead_form`; the current managed GeoFlow Agent target package may not expose `lead_form` in `/geoflow-agent/v1/frontend-capabilities`. When remote support is missing, downgrade the channel payload to CTA/link or require target package upgrade before sync.
+Default-site supported modules and remote target-package supported modules are separate contracts. The current default site can support `lead_form`; the current managed geo.dofe.ai Agent target package may not expose `lead_form` in `/geoflow-agent/v1/frontend-capabilities`. When remote support is missing, downgrade the channel payload to CTA/link or require target package upgrade before sync.
 
 Built-in presets, when present:
 
@@ -391,11 +391,11 @@ Unsafe without explicit system-change approval:
 - admin theme activation
 - admin base path behavior
 - multilingual persistence behavior
-- dynamic corporate data such as customers, logos, testimonials, products, plans, or analytics unless GEOFlow already passes it to the view or the user explicitly expands scope
+- dynamic corporate data such as customers, logos, testimonials, products, plans, or analytics unless geo.dofe.ai already passes it to the view or the user explicitly expands scope
 
 ## 12. Preview Notes
 
-Current Laravel GEOFlow does not guarantee an isolated `/preview/{theme}` route. A design run should either:
+Current Laravel geo.dofe.ai does not guarantee an isolated `/preview/{theme}` route. A design run should either:
 
 - generate static preview artifacts for review, or
 - create a preview theme under `resources/views/theme` and ask the operator to activate it only after review, or

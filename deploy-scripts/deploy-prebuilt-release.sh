@@ -209,7 +209,7 @@ run_fresh_install() {
 
   for service in app web queue scheduler reverb; do
     if service_is_running "$service"; then
-      fail "Fresh install requires all GEOFlow services to be stopped: ${service} is running"
+      fail "Fresh install requires all geo.dofe.ai services to be stopped: ${service} is running"
     fi
   done
 
@@ -221,7 +221,7 @@ run_fresh_install() {
     -e AUTO_INSTALL_ONCE=false \
     app php artisan migrate --force --no-interaction
 
-  log "Initializing GEOFlow application data once."
+  log "Initializing geo.dofe.ai application data once."
   "${COMPOSE[@]}" run --rm --no-deps \
     -e GEOFLOW_SECURITY_FRESH_INSTALL_CONFIRMED=true \
     -e GEOFLOW_SECURITY_UPGRADE_DRAIN_CONFIRMED=false \

@@ -1,10 +1,10 @@
-# GEOFlow Docker 生产部署初始化与 500 排查说明
+# geo.dofe.ai Docker 生产部署初始化与 500 排查说明
 
-适用场景：在 Ubuntu 24.04 LTS 服务器上使用 Docker、`docker-compose.prod.yml` 和 `.env.prod` 部署 GEOFlow 后，遇到初始化命令找不到、后台 500、首页 500、环境变量看似已填写但未生效等问题。
+适用场景：在 Ubuntu 24.04 LTS 服务器上使用 Docker、`docker-compose.prod.yml` 和 `.env.prod` 部署 geo.dofe.ai 后，遇到初始化命令找不到、后台 500、首页 500、环境变量看似已填写但未生效等问题。
 
 ## 零、先确认当前执行位置
 
-下面的 Docker Compose 命令都应该在服务器的 GEOFlow 项目目录执行，也就是能看到这些文件的位置：
+下面的 Docker Compose 命令都应该在服务器的 geo.dofe.ai 项目目录执行，也就是能看到这些文件的位置：
 
 ```bash
 ls docker-compose.prod.yml .env.prod
@@ -49,7 +49,7 @@ Docker 生产部署时，不建议在服务器宿主机上直接执行裸命令�
 php artisan migrate --force
 ```
 
-原因是 Ubuntu 宿主机上不一定安装了 PHP、Composer 依赖和 Laravel 运行环境。GEOFlow 的 PHP 运行环境在 `app` 容器内。
+原因是 Ubuntu 宿主机上不一定安装了 PHP、Composer 依赖和 Laravel 运行环境。geo.dofe.ai 的 PHP 运行环境在 `app` 容器内。
 
 正确方式是在服务器项目目录执行 Docker Compose 命令，让命令运行到 `app` 容器内：
 

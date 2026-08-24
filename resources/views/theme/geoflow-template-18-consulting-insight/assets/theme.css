@@ -938,7 +938,7 @@
     }
 }
 
-/* GEOFlow template variant: GEOFlow 18 Consulting Insight.
+/* geo.dofe.ai template variant: geo.dofe.ai 18 Consulting Insight.
  * High-level inspiration: McKinsey Insights.
  * This file only applies public visual cues and does not copy proprietary assets or source code.
  */
@@ -1024,8 +1024,8 @@
 .ne-ad-slot { background: #e8f0f8; }
 .ne-footer { border-top-color: #cfdbe8; background: #e8f0f8; }
 .ne-article-card{grid-template-columns:minmax(0,1fr) 110px}.ne-feed-card,.ne-panel{border-top:1px solid #cfdbe8}.ne-panel{padding-top:14px}
-/* GEOFlow white editorial system v2: begin */
-/* GEOFlow 18 Consulting Insight keeps a pure white content surface and borrows only high-level layout cues from McKinsey Insights. */
+/* geo.dofe.ai white editorial system v2: begin */
+/* geo.dofe.ai 18 Consulting Insight keeps a pure white content surface and borrows only high-level layout cues from McKinsey Insights. */
 :root {
     --ne-red: #003a70;
     --ne-red-dark: #111827;
@@ -1473,8 +1473,8 @@
         font-size: 34px;
     }
 }
-/* GEOFlow white editorial system v2: end */
-/* GEOFlow white editorial system v2 detail cleanup: begin */
+/* geo.dofe.ai white editorial system v2: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: begin */
 .ne-prose blockquote,
 .ne-tag-list span,
 .ne-related-card,
@@ -1503,9 +1503,9 @@
     border-radius: var(--geo-template-radius);
     color: #4b5563;
 }
-/* GEOFlow white editorial system v2 detail cleanup: end */
+/* geo.dofe.ai white editorial system v2 detail cleanup: end */
 
-/* GEOFlow white lead layout polish v3: begin */
+/* geo.dofe.ai white lead layout polish v3: begin */
 .ne-home-lead,
 .ne-home-lead-main,
 .ne-home-headlines {
@@ -1668,9 +1668,9 @@
         line-height: 1.62;
     }
 }
-/* GEOFlow white lead layout polish v3: end */
+/* geo.dofe.ai white lead layout polish v3: end */
 
-/* GEOFlow white editorial rhythm v4: begin */
+/* geo.dofe.ai white editorial rhythm v4: begin */
 html,
 body,
 .ne-body,
@@ -2081,4 +2081,4 @@ body,
         grid-template-columns: 1fr;
     }
 }
-/* GEOFlow white editorial rhythm v4: end */
+/* geo.dofe.ai white editorial rhythm v4: end */
