@@ -35,7 +35,7 @@ services:
       timeout: 5s
       retries: 3
   web:
-    ports:
+    ports: !override
       - "0.0.0.0:${WEB_PORT:-18080}:80"
   queue:
     networks:
