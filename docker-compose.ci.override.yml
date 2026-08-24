@@ -1,0 +1,52 @@
+services:
+  # The production compose file intentionally omits the one-shot initializer.
+  # CI needs an explicit service so migrations/install checks run against the
+  # same image and environment as the long-running PHP application.
+  init:
+    platform: linux/amd64
+    image: geoflow-app-prod:latest
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.prod
+    working_dir: /var/www/html
+    env_file:
+      - ./.env.prod
+    volumes:
+      - ./.env.prod:/var/www/html/.env:ro
+      - ./storage:/var/www/html/storage
+    restart: "no"
+    networks:
+      - default
+      - common_network
+    environment:
+      AUTO_MIGRATE: "false"
+      AUTO_INSTALL_ONCE: "false"
+      AUTO_OPTIMIZE: "false"
+    command: ["sh", "-lc", "php artisan migrate --force --no-interaction && php artisan geoflow:install --no-interaction && php artisan optimize --no-interaction && php artisan about"]
+
+  app:
+    networks:
+      - default
+      - common_network
+    command: ["php-cgi", "-b", "0.0.0.0:9000"]
+    healthcheck:
+      test: ["CMD-SHELL", "php-cgi -v"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+  queue:
+    networks:
+      - default
+      - common_network
+  scheduler:
+    networks:
+      - default
+      - common_network
+  reverb:
+    networks:
+      - default
+      - common_network
+
+networks:
+  common_network:
+    external: true
