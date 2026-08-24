@@ -1,7 +1,5 @@
 # GEOFlow
 
-> Languages: [简体中文](README.md) | [English](docs/readme/README_en.md) | [日本語](docs/readme/README_ja.md) | [Español](docs/readme/README_es.md) | [Русский](docs/readme/README_ru.md) | [Português (BR)](docs/readme/README_pt_BR.md)
-
 GEOFlow 是一套面向 GEO（生成式引擎优化）的开源智能内容工程与多站点分发系统。它把知识库、素材库、提示词、AI 生成任务、审核发布、数据分析、GEOFlow Agent 目标站点包、WordPress REST 渠道、通用 HTTP API 渠道和远端静态页面分发串联为一条可持续运营的工作链路，帮助团队把可信资料沉淀为可管理、可发布、可追踪、可同步到多端的 GEO 内容资产。
 
 [![PHP](https://img.shields.io/badge/PHP-8.3%2B-blue)](https://www.php.net/)
@@ -348,7 +346,6 @@ npm run test:browser # Playwright 浏览器测试
 - 当前版本：**v2.1.1**（2026-07-17），更新内容见 [`docs/CHANGELOG.md`](docs/CHANGELOG.md)（[English](docs/CHANGELOG_en.md)）
 - 部署手册：[`docs/deployment/DEPLOYMENT.md`](docs/deployment/DEPLOYMENT.md)
 - 生产初始化排障：[`docs/deployment/docker-prod-init-troubleshooting.md`](docs/deployment/docker-prod-init-troubleshooting.md)
-- 多语言文档：[English](docs/readme/README_en.md) · [日本語](docs/readme/README_ja.md) · [Español](docs/readme/README_es.md) · [Русский](docs/readme/README_ru.md) · [Português (BR)](docs/readme/README_pt_BR.md)
 
 ### 2.1 系列亮点
 
