@@ -36,6 +36,13 @@ final class AuthenticateMcpToken
             abort(404);
         }
 
+        $gatewayContext = $this->resolveGatewayContext($request);
+        if ($gatewayContext !== null) {
+            $request->attributes->set('mcp_auth', $gatewayContext);
+
+            return $next($request);
+        }
+
         $provided = $this->bearerToken($request);
         if ($provided === '') {
             return $this->unauthorized();
@@ -56,6 +63,34 @@ final class AuthenticateMcpToken
         $request->attributes->set('mcp_auth', $context);
 
         return $next($request);
+    }
+
+    private function resolveGatewayContext(Request $request): ?McpAuthContext
+    {
+        $expectedSecret = trim((string) config('geoflow.mcp_gateway_secret', ''));
+        $providedSecret = trim((string) $request->header('X-Dofe-Mcp-Gateway-Secret', ''));
+        $verified = trim((string) $request->header('X-Dofe-Auth-Verified', ''));
+        $apiKeyId = trim((string) $request->header('X-Dofe-Api-Key-Id', ''));
+        $tenantId = trim((string) $request->header('X-Dofe-Tenant-Id', ''));
+
+        if (
+            $expectedSecret === '' ||
+            $providedSecret === '' ||
+            ! hash_equals($expectedSecret, $providedSecret) ||
+            $verified !== 'models-api-key-v1' ||
+            $apiKeyId === '' ||
+            $tenantId === ''
+        ) {
+            return null;
+        }
+
+        return new McpAuthContext(
+            McpAuthContext::SCOPE_WRITE,
+            hash('sha256', 'models-api-key:'.$apiKeyId),
+            $tenantId,
+            null,
+            ['*'],
+        );
     }
 
     private function resolveStaticToken(string $provided): ?McpAuthContext

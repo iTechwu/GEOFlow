@@ -94,6 +94,47 @@ class McpEndpointTest extends TestCase
         ])->assertUnauthorized()->assertJsonPath('error.code', -32001);
     }
 
+    public function test_mcp_accepts_only_models_context_from_the_ci_gateway(): void
+    {
+        config([
+            'geoflow.mcp_enabled' => true,
+            'geoflow.mcp_gateway_secret' => 'gateway-secret',
+            'geoflow.mcp_server_name' => 'geoflow-ci',
+        ]);
+        $this->mockServices();
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer sk-test-key',
+            'X-Dofe-Mcp-Gateway-Secret' => 'gateway-secret',
+            'X-Dofe-Auth-Verified' => 'models-api-key-v1',
+            'X-Dofe-Api-Key-Id' => 'key-1',
+            'X-Dofe-Tenant-Id' => 'tenant-1',
+            'X-Dofe-Sso-Team-Id' => 'sso-team-1',
+        ])->postJson('/mcp', [
+            'jsonrpc' => '2.0',
+            'id' => 1,
+            'method' => 'initialize',
+        ])->assertOk()->assertJsonPath('result.serverInfo.name', 'geoflow-ci');
+    }
+
+    public function test_mcp_rejects_spoofed_gateway_context(): void
+    {
+        config([
+            'geoflow.mcp_enabled' => true,
+            'geoflow.mcp_gateway_secret' => 'gateway-secret',
+        ]);
+
+        $this->withHeader('X-Dofe-Mcp-Gateway-Secret', 'wrong-secret')
+            ->withHeader('X-Dofe-Auth-Verified', 'models-api-key-v1')
+            ->withHeader('X-Dofe-Api-Key-Id', 'key-1')
+            ->withHeader('X-Dofe-Tenant-Id', 'tenant-1')
+            ->postJson('/mcp', [
+                'jsonrpc' => '2.0',
+                'id' => 1,
+                'method' => 'initialize',
+            ])->assertUnauthorized();
+    }
+
     public function test_initialize_and_tools_list_are_json_rpc_responses(): void
     {
         $this->enableMcp();
