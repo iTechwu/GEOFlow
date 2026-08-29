@@ -115,6 +115,18 @@ return [
     'models_internal_api_secret' => trim((string) env('MODELS_INTERNAL_API_SECRET', env('INTERNAL_API_SECRET', ''))),
     'models_service_name' => trim((string) env('MODELS_SERVICE_NAME', 'geoflow')),
 
+    // knowledge.dofe.ai 统一知识基础设施。默认 local，按租户切换到 shadow/primary。
+    'knowledge_api_url' => rtrim(trim((string) env('KNOWLEDGE_API_URL', '')), '/'),
+    'knowledge_sso_issuer' => rtrim(trim((string) env('KNOWLEDGE_SSO_ISSUER', env('SSO_ISSUER', ''))), '/'),
+    'knowledge_sso_client_id' => trim((string) env('KNOWLEDGE_SSO_CLIENT_ID', 'geoflow-dofe-ai')),
+    'knowledge_sso_client_secret' => trim((string) env('KNOWLEDGE_SSO_CLIENT_SECRET', '')),
+    'knowledge_tenant_slug' => trim((string) env('KNOWLEDGE_TENANT_SLUG', 'yootun')),
+    'knowledge_space_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('KNOWLEDGE_SPACE_IDS', ''))), static fn (string $id): bool => $id !== '')),
+    'knowledge_read_mode' => in_array(env('KNOWLEDGE_READ_MODE', 'local'), ['local', 'shadow', 'primary'], true)
+        ? env('KNOWLEDGE_READ_MODE', 'local')
+        : 'local',
+    'knowledge_timeout_seconds' => max(1, (int) env('KNOWLEDGE_TIMEOUT_SECONDS', 15)),
+
     // Streamable HTTP MCP endpoint; disabled when no explicit token is configured.
     'mcp_enabled' => filter_var(env('GEOFLOW_MCP_ENABLED', false), FILTER_VALIDATE_BOOLEAN),
     // 全量（读+写）令牌；未配置 read token 时，也是唯一的访问令牌。

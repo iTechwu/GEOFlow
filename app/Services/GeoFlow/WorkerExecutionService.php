@@ -16,6 +16,7 @@ use App\Models\Prompt;
 use App\Models\Task;
 use App\Models\Title;
 use App\Services\Ixicai\IxicaiRuntimeCredentials;
+use App\Services\Knowledge\KnowledgeInfraClient;
 use App\Support\GeoFlow\ApiKeyCrypto;
 use App\Support\GeoFlow\ArticleWorkflow;
 use App\Support\GeoFlow\ImageUrlNormalizer;
@@ -44,6 +45,7 @@ class WorkerExecutionService
         private readonly ArticleRiskScanner $articleRiskScanner,
         private readonly ArticleWorkflowTransitionService $articleWorkflowTransitionService,
         private readonly IxicaiRuntimeCredentials $ixicaiCredentials,
+        private readonly KnowledgeInfraClient $knowledgeInfraClient,
     ) {}
 
     /**
@@ -659,6 +661,30 @@ class WorkerExecutionService
      */
     private function resolveKnowledgeContext(Task $task, string $title, string $keyword): string
     {
+        $query = trim($title."\n".$keyword);
+        $knowledgeMode = (string) config('geoflow.knowledge_read_mode', 'local');
+        if ($knowledgeMode !== 'local' && $this->knowledgeInfraClient->isConfigured()) {
+            try {
+                $remoteContext = $this->remoteKnowledgeContext($query);
+                if ($knowledgeMode === 'primary') {
+                    return $remoteContext;
+                }
+                Log::info('knowledge shadow search completed', [
+                    'source_system' => 'geoflow',
+                    'query_hash' => hash('sha256', $query),
+                    'hit_count' => substr_count($remoteContext, '[knowledge]'),
+                ]);
+            } catch (Throwable $error) {
+                Log::warning('knowledge remote search failed', [
+                    'mode' => $knowledgeMode,
+                    'error' => $error->getMessage(),
+                ]);
+                if ($knowledgeMode === 'primary') {
+                    throw $error;
+                }
+            }
+        }
+
         $knowledgeBaseIds = $this->resolveTaskKnowledgeBaseIds($task);
         if ($knowledgeBaseIds === []) {
             return '';
@@ -696,7 +722,6 @@ class WorkerExecutionService
             return '';
         }
 
-        $query = trim($title."\n".$keyword);
         $context = $this->knowledgeRetrievalService->retrieveContextFromMany($knowledgeBaseIds, $query, 5, 3200);
         if ($context !== '') {
             return $context;
@@ -708,6 +733,19 @@ class WorkerExecutionService
         }
 
         return $this->fallbackKnowledgeContext($fallbackContents, 2400);
+    }
+
+    private function remoteKnowledgeContext(string $query): string
+    {
+        $result = $this->knowledgeInfraClient->search($query, 5, true);
+        $parts = [];
+        foreach ($result['list'] as $hit) {
+            $content = trim((string) ($hit['content'] ?? ''));
+            if ($content === '') continue;
+            $title = trim((string) ($hit['title'] ?? 'knowledge'));
+            $parts[] = '[knowledge] '.$title."\n".$content;
+        }
+        return implode("\n\n", array_slice($parts, 0, 5));
     }
 
     /**
