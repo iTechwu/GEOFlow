@@ -38,6 +38,12 @@ services:
     ports: !override
       - "0.0.0.0:${WEB_PORT:-18080}:80"
   queue:
+    # CI serves the public MCP endpoint and must not inherit the single laptop
+    # worker. Removing container_name allows Compose to create the requested
+    # number of independently health-checked queue replicas.
+    container_name: !reset null
+    deploy:
+      replicas: ${GEOFLOW_QUEUE_WORKER_CONCURRENCY:-12}
     networks:
       - default
       - common_network
