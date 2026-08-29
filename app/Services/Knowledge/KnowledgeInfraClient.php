@@ -60,7 +60,7 @@ final class KnowledgeInfraClient
         if (is_string($cached) && $cached !== '') return $cached;
 
         $response = $this->safeHttp->post(
-            $this->request()->asForm()->withBasicAuth(self::clientId(), self::clientSecret()),
+            $this->request(false)->asForm()->withBasicAuth(self::clientId(), self::clientSecret()),
             self::issuer().'/oauth/token',
             ['grant_type' => 'client_credentials'],
             (int) config('geoflow.outbound_json_max_bytes', 4 * 1024 * 1024),
@@ -69,28 +69,29 @@ final class KnowledgeInfraClient
         $payload = $response->json();
         $token = is_array($payload) ? trim((string) ($payload['access_token'] ?? '')) : '';
         if ($token === '') throw new RuntimeException('knowledge SSO token response is invalid');
-        $ttl = max(30, min(300, (int) ($payload['expires_in'] ?? 300) - 30));
+        $ttl = max(1, min(300, (int) ($payload['expires_in'] ?? 300) - 30));
         Cache::put($key, $token, $ttl);
         return $token;
     }
 
-    private function request(): PendingRequest
+    private function request(bool $withKnowledgeContext = true): PendingRequest
     {
         if (! KnowledgeEndpointPolicy::allows(self::baseUrl()) || ! KnowledgeEndpointPolicy::allows(self::issuer())) {
             throw new RuntimeException('knowledge endpoint is not allow-listed');
         }
-        return Http::acceptJson()
+        $request = Http::acceptJson()
             ->connectTimeout(5)
             ->timeout((int) config('geoflow.knowledge_timeout_seconds', 15))
             ->retry([200, 500], when: static function (Throwable $exception): bool {
                 return $exception instanceof ConnectionException
                     || ($exception instanceof RequestException && ($exception->response->status() === 429 || $exception->response->serverError()));
-            }, throw: false)
-            ->withHeaders([
+            }, throw: false);
+
+        return $withKnowledgeContext ? $request->withHeaders([
                 'X-Knowledge-Source-System' => 'geoflow',
                 'X-Knowledge-Tenant' => self::tenantSlug(),
                 'X-API-Version' => '1',
-            ]);
+            ]) : $request;
     }
 
     private static function baseUrl(): string { return rtrim((string) config('geoflow.knowledge_api_url', ''), '/'); }
