@@ -116,6 +116,31 @@ final class KnowledgeInfraClientTest extends TestCase
         $this->assertCount(2, $transport->calls);
     }
 
+    public function test_token_failure_reports_only_the_oauth_error_code(): void
+    {
+        $transport = new KnowledgeRecordingTransport([
+            $this->jsonResponse([
+                'error' => 'unauthorized_client',
+                'error_description' => 'upstream-sensitive-detail',
+            ], 400),
+        ]);
+        $client = new KnowledgeInfraClient(new SafeOutboundHttpClient(
+            new KnowledgeHostResolver,
+            $transport,
+        ));
+
+        try {
+            $client->search('query');
+            $this->fail('Expected OAuth failure');
+        } catch (\RuntimeException $error) {
+            $this->assertSame(
+                'knowledge SSO token request returned HTTP 400 (unauthorized_client)',
+                $error->getMessage(),
+            );
+            $this->assertStringNotContainsString('upstream-sensitive-detail', $error->getMessage());
+        }
+    }
+
     /** @param array<string, mixed> $payload */
     private function jsonResponse(array $payload, int $status = 200): Response
     {

@@ -65,7 +65,13 @@ final class KnowledgeInfraClient
             ['grant_type' => 'client_credentials', 'scope' => self::scope()],
             (int) config('geoflow.outbound_json_max_bytes', 4 * 1024 * 1024),
         );
-        if (! $response->successful()) throw new RuntimeException('knowledge SSO token request returned HTTP '.$response->status());
+        if (! $response->successful()) {
+            $oauthError = $response->json('error');
+            $suffix = is_string($oauthError) && preg_match('/^[a-z][a-z0-9_]{0,63}$/', $oauthError) === 1
+                ? ' ('.$oauthError.')'
+                : '';
+            throw new RuntimeException('knowledge SSO token request returned HTTP '.$response->status().$suffix);
+        }
         $payload = $response->json();
         $token = is_array($payload) ? trim((string) ($payload['access_token'] ?? '')) : '';
         if ($token === '') throw new RuntimeException('knowledge SSO token response is invalid');
