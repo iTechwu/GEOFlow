@@ -12,10 +12,17 @@ final class SystemHostResolver implements HostResolver
     /** @var Closure(string): array<int, array<string, mixed>> */
     private readonly Closure $lookup;
 
-    /** @param (Closure(string): array<int, array<string, mixed>>)|null $lookup */
-    public function __construct(?Closure $lookup = null)
+    /** @var Closure(string): list<string> */
+    private readonly Closure $systemLookup;
+
+    /**
+     * @param  (Closure(string): array<int, array<string, mixed>>)|null  $lookup
+     * @param  (Closure(string): list<string>)|null  $systemLookup
+     */
+    public function __construct(?Closure $lookup = null, ?Closure $systemLookup = null)
     {
         $this->lookup = $lookup ?? static fn (string $host): array => @dns_get_record($host, DNS_A | DNS_AAAA | DNS_CNAME) ?: [];
+        $this->systemLookup = $systemLookup ?? static fn (string $host): array => @gethostbynamel($host) ?: [];
     }
 
     public function resolve(string $host): array
@@ -34,7 +41,10 @@ final class SystemHostResolver implements HostResolver
         }
 
         $visited[$host] = true;
-        $addresses = [];
+        $addresses = array_values(array_filter(
+            ($this->systemLookup)($host),
+            static fn (string $ip): bool => filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false,
+        ));
         foreach ($this->lookupRecords($host) as $record) {
             $type = strtoupper((string) ($record['type'] ?? ''));
             if ($type === 'A' && filter_var($record['ip'] ?? null, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {

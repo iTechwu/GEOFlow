@@ -268,6 +268,24 @@ class SafeOutboundHttpClientTest extends TestCase
     }
 
     #[Test]
+    public function the_system_resolver_prefers_an_explicit_hosts_mapping_before_public_dns(): void
+    {
+        $resolver = new SystemHostResolver(
+            static fn (string $host): array => $host === 'knowledge.local.dofe.ai'
+                ? [['type' => 'A', 'ip' => '127.0.0.1']]
+                : [],
+            static fn (string $host): array => $host === 'knowledge.local.dofe.ai'
+                ? ['192.168.65.254']
+                : [],
+        );
+
+        $this->assertSame(
+            ['192.168.65.254', '127.0.0.1'],
+            $resolver->resolve('knowledge.local.dofe.ai'),
+        );
+    }
+
+    #[Test]
     public function the_production_transport_disables_redirects_and_proxies_and_pins_the_validated_ip(): void
     {
         $captured = [];
