@@ -72,10 +72,54 @@ final class KnowledgeInfraClientTest extends TestCase
         $client->search('query');
     }
 
-    /** @param array<string, mixed> $payload */
-    private function jsonResponse(array $payload): Response
+    public function test_search_refreshes_a_rejected_token_once(): void
     {
-        return new Response(new PsrResponse(200, ['Content-Type' => 'application/json'], json_encode($payload)));
+        $transport = new KnowledgeRecordingTransport([
+            $this->jsonResponse(['access_token' => 'stale-token', 'expires_in' => 300]),
+            $this->jsonResponse(['code' => 401], 401),
+            $this->jsonResponse(['access_token' => 'fresh-token', 'expires_in' => 300]),
+            $this->jsonResponse([
+                'code' => 200,
+                'data' => ['list' => [], 'total' => 0, 'page' => 1, 'limit' => 5],
+            ]),
+        ]);
+        $client = new KnowledgeInfraClient(new SafeOutboundHttpClient(
+            new KnowledgeHostResolver,
+            $transport,
+        ));
+
+        $result = $client->search('query');
+
+        $this->assertSame(0, $result['total']);
+        $this->assertCount(4, $transport->calls);
+        $this->assertSame('Bearer stale-token', $transport->calls[1]['headers']['Authorization']);
+        $this->assertSame('Bearer fresh-token', $transport->calls[3]['headers']['Authorization']);
+    }
+
+    public function test_search_does_not_retry_an_acl_rejection(): void
+    {
+        $transport = new KnowledgeRecordingTransport([
+            $this->jsonResponse(['access_token' => 'token-1', 'expires_in' => 300]),
+            $this->jsonResponse(['code' => 403], 403),
+        ]);
+        $client = new KnowledgeInfraClient(new SafeOutboundHttpClient(
+            new KnowledgeHostResolver,
+            $transport,
+        ));
+
+        try {
+            $client->search('query');
+            $this->fail('Expected ACL rejection');
+        } catch (\RuntimeException $error) {
+            $this->assertSame('knowledge search returned HTTP 403', $error->getMessage());
+        }
+        $this->assertCount(2, $transport->calls);
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function jsonResponse(array $payload, int $status = 200): Response
+    {
+        return new Response(new PsrResponse($status, ['Content-Type' => 'application/json'], json_encode($payload)));
     }
 }
 

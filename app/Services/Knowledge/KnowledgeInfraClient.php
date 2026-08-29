@@ -28,17 +28,17 @@ final class KnowledgeInfraClient
     public function search(string $query, int $topK = 5, bool $includeMemories = true): array
     {
         if (! $this->isConfigured()) throw new RuntimeException('knowledge client is not configured');
-        $response = $this->safeHttp->post(
-            $this->request()->withToken($this->accessToken()),
-            self::baseUrl().'/yootun/v1/search',
-            [
-                'query' => trim($query),
-                'spaceIds' => array_values(config('geoflow.knowledge_space_ids', [])),
-                'topK' => max(1, min(50, $topK)),
-                'includeMemories' => $includeMemories,
-            ],
-            (int) config('geoflow.outbound_json_max_bytes', 4 * 1024 * 1024),
-        );
+        $payload = [
+            'query' => trim($query),
+            'spaceIds' => array_values(config('geoflow.knowledge_space_ids', [])),
+            'topK' => max(1, min(50, $topK)),
+            'includeMemories' => $includeMemories,
+        ];
+        $response = $this->searchRequest($payload);
+        if ($response->status() === 401) {
+            Cache::forget($this->tokenCacheKey());
+            $response = $this->searchRequest($payload);
+        }
         if (! $response->successful()) throw new RuntimeException('knowledge search returned HTTP '.$response->status());
 
         $payload = $response->json();
@@ -55,7 +55,7 @@ final class KnowledgeInfraClient
 
     private function accessToken(): string
     {
-        $key = 'geoflow:knowledge:m2m:'.sha1(self::clientId());
+        $key = $this->tokenCacheKey();
         $cached = Cache::get($key);
         if (is_string($cached) && $cached !== '') return $cached;
 
@@ -72,6 +72,22 @@ final class KnowledgeInfraClient
         $ttl = max(1, min(300, (int) ($payload['expires_in'] ?? 300) - 30));
         Cache::put($key, $token, $ttl);
         return $token;
+    }
+
+    /** @param array<string, mixed> $payload */
+    private function searchRequest(array $payload): \Illuminate\Http\Client\Response
+    {
+        return $this->safeHttp->post(
+            $this->request()->withToken($this->accessToken()),
+            self::baseUrl().'/yootun/v1/search',
+            $payload,
+            (int) config('geoflow.outbound_json_max_bytes', 4 * 1024 * 1024),
+        );
+    }
+
+    private function tokenCacheKey(): string
+    {
+        return 'geoflow:knowledge:m2m:'.sha1(self::clientId());
     }
 
     private function request(bool $withKnowledgeContext = true): PendingRequest
