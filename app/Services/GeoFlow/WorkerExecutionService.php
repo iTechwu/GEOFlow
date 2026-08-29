@@ -672,7 +672,7 @@ class WorkerExecutionService
                 Log::info('knowledge shadow search completed', [
                     'source_system' => 'geoflow',
                     'query_hash' => hash('sha256', $query),
-                    'hit_count' => substr_count($remoteContext, '[knowledge]'),
+                    'hit_count' => preg_match_all('/\[K\d+\]/', $remoteContext),
                 ]);
             } catch (Throwable $error) {
                 Log::warning('knowledge remote search failed', [
@@ -738,14 +738,37 @@ class WorkerExecutionService
     private function remoteKnowledgeContext(string $query): string
     {
         $result = $this->knowledgeInfraClient->search($query, 5, true);
+
+        return $this->formatRemoteKnowledgeContext($result['list'], 4000);
+    }
+
+    /**
+     * @param  list<array<string,mixed>>  $hits
+     */
+    private function formatRemoteKnowledgeContext(array $hits, int $maxChars): string
+    {
         $parts = [];
-        foreach ($result['list'] as $hit) {
+        $charCount = 0;
+        foreach (array_slice($hits, 0, 5) as $index => $hit) {
             $content = trim((string) ($hit['content'] ?? ''));
-            if ($content === '') continue;
+            if ($content === '') {
+                continue;
+            }
             $title = trim((string) ($hit['title'] ?? 'knowledge'));
-            $parts[] = '[knowledge] '.$title."\n".$content;
+            $header = '[K'.($index + 1).'] '.($title !== '' ? $title : 'knowledge');
+            $remaining = max(0, $maxChars - $charCount - mb_strlen($header."\n", 'UTF-8'));
+            if ($remaining <= 0) {
+                break;
+            }
+            $snippet = mb_strlen($content, 'UTF-8') > $remaining
+                ? mb_substr($content, 0, $remaining, 'UTF-8')
+                : $content;
+            $part = $header."\n".$snippet;
+            $parts[] = $part;
+            $charCount += mb_strlen($part, 'UTF-8') + 2;
         }
-        return implode("\n\n", array_slice($parts, 0, 5));
+
+        return implode("\n\n", $parts);
     }
 
     /**
