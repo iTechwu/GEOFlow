@@ -24,6 +24,7 @@ final class KnowledgeInfraClientTest extends TestCase
             'geoflow.knowledge_sso_issuer' => 'https://sso.ixicai.cn/api',
             'geoflow.knowledge_sso_client_id' => 'geoflow-dofe-ai',
             'geoflow.knowledge_sso_client_secret' => 'test-secret',
+            'geoflow.knowledge_sso_scope' => 'service:access',
             'geoflow.knowledge_tenant_slug' => 'yootun',
             'geoflow.knowledge_space_ids' => ['space-1'],
             'geoflow.knowledge_timeout_seconds' => 15,
@@ -50,6 +51,7 @@ final class KnowledgeInfraClientTest extends TestCase
         $this->assertSame(1, $result['total']);
         $this->assertCount(2, $transport->calls);
         $this->assertSame('https://sso.ixicai.cn/api/oauth/token', $transport->calls[0]['url']);
+        $this->assertSame('service:access', $transport->calls[0]['data']['scope']);
         $this->assertArrayNotHasKey('X-Knowledge-Tenant', $transport->calls[0]['headers']);
         $this->assertSame('https://knowledge.local.dofe.ai/api/yootun/v1/search', $transport->calls[1]['url']);
         $this->assertSame('geoflow', $transport->calls[1]['headers']['X-Knowledge-Source-System']);

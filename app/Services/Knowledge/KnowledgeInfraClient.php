@@ -62,7 +62,7 @@ final class KnowledgeInfraClient
         $response = $this->safeHttp->post(
             $this->request(false)->asForm()->withBasicAuth(self::clientId(), self::clientSecret()),
             self::issuer().'/oauth/token',
-            ['grant_type' => 'client_credentials'],
+            ['grant_type' => 'client_credentials', 'scope' => self::scope()],
             (int) config('geoflow.outbound_json_max_bytes', 4 * 1024 * 1024),
         );
         if (! $response->successful()) throw new RuntimeException('knowledge SSO token request returned HTTP '.$response->status());
@@ -98,5 +98,6 @@ final class KnowledgeInfraClient
     private static function issuer(): string { return rtrim((string) config('geoflow.knowledge_sso_issuer', ''), '/'); }
     private static function clientId(): string { return trim((string) config('geoflow.knowledge_sso_client_id', '')); }
     private static function clientSecret(): string { return trim((string) config('geoflow.knowledge_sso_client_secret', '')); }
+    private static function scope(): string { return trim((string) config('geoflow.knowledge_sso_scope', 'service:access')); }
     private static function tenantSlug(): string { return trim((string) config('geoflow.knowledge_tenant_slug', 'yootun')); }
 }
