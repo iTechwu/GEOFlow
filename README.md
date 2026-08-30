@@ -175,7 +175,7 @@ MCP 工具面覆盖：任务管理与执行取消、素材读写、文章操作�
 
 ### 共享基础设施约束
 
-**本仓库的 Dockerfile 与 Compose 文件不创建、不运行、不内嵌 PostgreSQL、Redis 或 RabbitMQ。** 这些依赖由外部基础设施统一管理，应用通过配置连接外部服务。仓库内置 `make check-boundaries` 校验该约束。
+**本仓库的 Dockerfile 与 Compose 文件不创建、不运行、不内嵌 PostgreSQL、Redis 或 RabbitMQ，也不直连 Neo4j 或 MinIO。** PostgreSQL、Redis、RabbitMQ 由外部基础设施统一管理；企业知识检索、对象与图谱基础设施统一通过 `knowledge.dofe.ai` 的租户/空间授权 API 使用，底层 MinIO 与 Neo4j 凭据只属于 Knowledge。仓库内置 `make check-boundaries` 校验该约束。
 
 ### Docker（生产）
 

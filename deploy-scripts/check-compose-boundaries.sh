@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # geo.dofe.ai Compose 边界检查：
-# 禁止本仓库的 Docker Compose 创建、运行或内嵌 PostgreSQL / Redis / RabbitMQ 服务。
-# 这些依赖由 ../docker-helm.dofe.ai 集中管理（见 AGENTS.md / CLAUDE.md）。
+# 禁止本仓库的 Docker Compose 创建、运行或内嵌 PostgreSQL / Redis / RabbitMQ 服务，
+# 并禁止应用绕过 knowledge.dofe.ai 直连 Neo4j / MinIO。
 #
 # 检查项：
 #   1) 2 空格缩进的顶层 key（服务名或持久卷名）以 postgres/redis/rabbitmq 开头；
@@ -22,7 +22,7 @@ else
   )
 fi
 
-FORBIDDEN='postgres|redis|rabbitmq'
+FORBIDDEN='postgres|redis|rabbitmq|neo4j|minio'
 FORBIDDEN_INIT='init|db[-_]?init|migrat(e|ion)'
 violations=0
 
@@ -55,9 +55,15 @@ for file in "${FILES[@]}"; do
   fi
 done
 
+if grep -ERni --include='*.php' \
+  '(^|[^A-Z])(NEO4J|MINIO)_[A-Z0-9_]+|Laudis\\Neo4j|Aws\\S3\\S3Client' \
+  "$ROOT/app" "$ROOT/config"; then
+  violations=$((violations + 1))
+fi
+
 if [ "$violations" -ne 0 ]; then
-  echo "[compose-boundary] FAIL: found $violations forbidden external-dependency or initialization service reference(s) in Compose files." >&2
+  echo "[compose-boundary] FAIL: found $violations forbidden direct infrastructure dependency reference(s)." >&2
   exit 1
 fi
 
-echo "[compose-boundary] OK: no PostgreSQL/Redis/RabbitMQ or initialization service definitions in Compose files."
+echo "[compose-boundary] OK: shared services stay external and Neo4j/MinIO remain behind Knowledge."

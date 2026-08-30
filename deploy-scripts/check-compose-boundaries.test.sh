@@ -28,5 +28,7 @@ assert_passes app $'  app:\n    image: example/app:1'
 assert_fails postgres $'  postgres:\n    image: postgres:17'
 assert_fails init $'  init:\n    image: example/app:1'
 assert_fails migrate $'  migrate:\n    image: example/app:1'
+assert_fails neo4j $'  neo4j:\n    image: neo4j:5'
+assert_fails minio $'  minio:\n    image: minio/minio:latest'
 
 printf '[compose-boundary-test] PASS\n'
