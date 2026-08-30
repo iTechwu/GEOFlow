@@ -28,9 +28,9 @@ services:
     networks:
       - default
       - common_network
-    command: ["php-cgi", "-b", "0.0.0.0:9000"]
+    command: ["php-fpm", "-F"]
     healthcheck:
-      test: ["CMD-SHELL", "php-cgi -v"]
+      test: ["CMD-SHELL", "php-fpm -t"]
       interval: 30s
       timeout: 5s
       retries: 3
