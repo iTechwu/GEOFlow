@@ -27,7 +27,7 @@ final class ModelsEndpointPolicy
                 && ($port === null || $port === 443);
         }
 
-        $localHosts = ['127.0.0.1', 'host.docker.internal', 'dofe-models-api-local'];
+        $localHosts = ['127.0.0.1', 'host.docker.internal'];
         $privateTargets = config('geoflow.outbound_private_targets', []);
         if (! is_array($privateTargets)) {
             return false;
