@@ -5,6 +5,7 @@ namespace App\Services\Models;
 final class ModelsEndpointPolicy
 {
     private const PRODUCTION_HOST = 'models.dofe.ai';
+    private const PUBLIC_ROUTER_HOST = 'ixicai.cn';
 
     public static function allows(string $baseUrl): bool
     {
@@ -22,7 +23,7 @@ final class ModelsEndpointPolicy
         if ($scheme === 'https') {
             $port = $parts['port'] ?? null;
 
-            return $host === self::PRODUCTION_HOST
+            return in_array($host, [self::PRODUCTION_HOST, self::PUBLIC_ROUTER_HOST], true)
                 && ($port === null || $port === 443);
         }
 

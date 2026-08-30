@@ -97,6 +97,26 @@ class ModelsGatewayClientTest extends TestCase
         Http::assertNothingSent();
     }
 
+    public function test_check_allows_public_ixicai_models_router(): void
+    {
+        config()->set('geoflow.models_base_url', 'https://ixicai.cn/api');
+        config()->set('geoflow.models_api_key', 'test-key');
+        config()->set('geoflow.models_chat_smoke_model', 'test-chat');
+        config()->set('geoflow.models_embedding_smoke_model', 'test-embedding');
+
+        Http::fake([
+            'https://ixicai.cn/api/chat/completions' => Http::response([
+                'choices' => [['message' => ['content' => 'pong']]],
+            ]),
+            'https://ixicai.cn/api/embeddings' => Http::response([
+                'data' => [['embedding' => [0.1, 0.2]]],
+            ]),
+        ]);
+
+        ModelsGatewayClient::check();
+        Http::assertSentCount(2);
+    }
+
     public function test_check_allows_explicit_local_http_smoke_endpoint(): void
     {
         config()->set('geoflow.models_base_url', 'http://dofe-models-api-local:3101/v1');
