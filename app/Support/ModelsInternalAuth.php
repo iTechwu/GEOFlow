@@ -3,7 +3,7 @@
 namespace App\Support;
 
 /**
- * models.dofe.ai /internal/v1 服务间 HMAC 鉴权客户端。
+ * ixicai.cn/api /internal/v1 服务间 HMAC 鉴权客户端。
  *
  * 与 models 项目 apps/api/src/modules/internal-api/internal-auth.guard.ts 对齐：
  *   Authorization: Bearer <timestamp>:<signature>[:<serviceName>]

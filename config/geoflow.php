@@ -102,7 +102,7 @@ return [
     'ai_base_url' => trim((string) env('GEOFLOW_AI_BASE_URL', '')),
     'ai_api_key' => trim((string) env('GEOFLOW_AI_API_KEY', '')),
 
-    // models.dofe.ai is the production model catalog and routing gateway.
+    // ixicai.cn is the production model catalog and routing gateway.
     'models_base_url' => rtrim(trim((string) env('MODELS_BASE_URL', '')), '/'),
     'models_api_key' => trim((string) env('MODELS_API_KEY', '')),
     'models_allow_insecure_local' => (bool) env('GEOFLOW_MODELS_ALLOW_INSECURE_LOCAL', false),

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Http;
 use Throwable;
 
 /**
- * models.dofe.ai /internal/* 管理端点客户端（服务间 HMAC 鉴权）。
+ * ixicai.cn/api /internal/* 管理端点客户端（服务间 HMAC 鉴权）。
  *
  * 与 models 项目 apps/api/src/modules/internal-api 对齐；鉴权头由 {@see ModelsInternalAuth}
  * 生成（Authorization: Bearer <timestamp>:<signature>:<serviceName> + x-service-name）。
@@ -46,7 +46,7 @@ final class ModelsInternalClient
         }
 
         if (! ModelsEndpointPolicy::allows(self::baseUrl())) {
-            throw new ModelsInternalCheckException('MODELS_INTERNAL_BASE_URL 必须指向 HTTPS 主机 models.dofe.ai，或使用显式允许的本地 Models 地址。');
+            throw new ModelsInternalCheckException('MODELS_INTERNAL_BASE_URL 必须指向 HTTPS 主机 ixicai.cn，或使用显式允许的本地 Models 地址。');
         }
 
         return Http::withHeaders(ModelsInternalAuth::headers(self::secret(), self::serviceName()))

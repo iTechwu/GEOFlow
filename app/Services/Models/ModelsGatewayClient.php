@@ -121,7 +121,7 @@ final class ModelsGatewayClient
     private static function assertSecureBaseUrl(): void
     {
         if (! ModelsEndpointPolicy::allows(self::baseUrl())) {
-            throw new ModelsGatewayCheckException('MODELS_BASE_URL 必须指向 HTTPS 主机 ixicai.cn/models.dofe.ai，或使用显式允许的本地 Models 地址。');
+            throw new ModelsGatewayCheckException('MODELS_BASE_URL 必须指向 HTTPS 主机 ixicai.cn，或使用显式允许的本地 Models 地址。');
         }
     }
 

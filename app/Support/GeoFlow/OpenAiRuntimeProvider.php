@@ -23,7 +23,7 @@ final class OpenAiRuntimeProvider
     }
 
     /**
-     * 统一 AI 网关 base URL（优先来自 models.dofe.ai，兼容回退到 GEOFLOW_AI_BASE_URL）。
+     * 统一 AI 网关 base URL（优先来自 ixicai.cn，兼容回退到 GEOFLOW_AI_BASE_URL）。
      */
     public static function unifiedBaseUrl(): string
     {
@@ -52,7 +52,7 @@ final class OpenAiRuntimeProvider
         }
 
         if (! ModelsEndpointPolicy::allows($baseUrl)) {
-            throw new RuntimeException('MODELS_BASE_URL 必须指向 HTTPS 主机 ixicai.cn/models.dofe.ai，或使用显式允许的本地 Models 地址。');
+            throw new RuntimeException('MODELS_BASE_URL 必须指向 HTTPS 主机 ixicai.cn，或使用显式允许的本地 Models 地址。');
         }
 
         return ['base_url' => $baseUrl, 'api_key' => $apiKey];

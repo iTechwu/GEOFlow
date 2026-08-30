@@ -24,7 +24,7 @@ final class IxicaiRuntimeCredentials
     /** @return array{base_url:string,api_key:string} */
     public function forAdmin(?Admin $admin): array
     {
-        // models.dofe.ai is the shared gateway for CI and production workers.
+        // ixicai.cn is the shared gateway for CI and production workers.
         if (OpenAiRuntimeProvider::hasUnifiedOverride()) {
             return [
                 'base_url' => OpenAiRuntimeProvider::unifiedBaseUrl(),
