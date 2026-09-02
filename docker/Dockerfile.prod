@@ -128,6 +128,7 @@ RUN set -eux; \
         sed -i 's|security.debian.org|mirrors.aliyun.com|g' /etc/apt/sources.list; \
     fi
 
+COPY docker/phpredis-${PECL_REDIS_VERSION}.tgz /tmp/redis.tgz
 RUN apt-get -o Acquire::Retries=5 update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
@@ -152,12 +153,7 @@ RUN apt-get -o Acquire::Retries=5 update \
         pdo_pgsql \
         pdo_sqlite \
         zip \
-    && for attempt in 1 2 3; do \
-        curl --http1.1 -fsSL --retry 5 --retry-all-errors --connect-timeout 20 --max-time 120 \
-            "https://codeload.github.com/phpredis/phpredis/tar.gz/refs/tags/${PECL_REDIS_VERSION}" -o /tmp/redis.tgz \
-        && echo "${PECL_REDIS_SHA256}  /tmp/redis.tgz" | sha256sum -c - && break; \
-        rm -f /tmp/redis.tgz; [ "$attempt" = 3 ] && exit 1; sleep 5; \
-    done \
+    && echo "${PECL_REDIS_SHA256}  /tmp/redis.tgz" | sha256sum -c - \
     && mkdir -p /tmp/redis-src \
     && tar -xzf /tmp/redis.tgz --strip-components=1 -C /tmp/redis-src \
     && cd /tmp/redis-src \
