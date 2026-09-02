@@ -14,6 +14,9 @@ use App\Http\Controllers\Api\V1\CatalogController;
 use App\Http\Controllers\Api\V1\JobController;
 use App\Http\Controllers\Api\V1\MaterialController;
 use App\Http\Controllers\Api\V1\TaskController;
+use App\Http\McpAuthContext;
+use App\Services\Mcp\McpAnalyticsService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 // 实际路径形如：/api/v1/...
@@ -99,3 +102,31 @@ Route::prefix('v1')
                 ->middleware(['api.scope:articles:write', 'throttle:60,1']);
         });
     });
+
+// Public API Edge adapter: the CI gateway authenticates Models API keys and
+// injects a tenant-scoped McpAuthContext. The broader admin REST API remains
+// SSO-only.
+Route::get('yootun/v1/geoflow/overview', function (Request $request, McpAnalyticsService $analytics) {
+    $auth = $request->attributes->get('mcp_auth');
+    if (! $auth instanceof McpAuthContext || trim((string) $auth->tenantId) === '') {
+        return response()->json([
+            'error' => ['code' => 'UNAUTHORIZED', 'message' => 'A tenant-scoped Models API key is required'],
+        ], 401);
+    }
+
+    $preset = (string) $request->query('preset', 'yesterday');
+    if (! in_array($preset, ['today', 'yesterday', '7d', '30d', '90d'], true)) {
+        return response()->json([
+            'error' => ['code' => 'VALIDATION_ERROR', 'message' => 'preset is invalid'],
+        ], 422);
+    }
+
+    return response()->json([
+        'data' => $analytics->overview(['preset' => $preset], $auth),
+        'meta' => [
+            'source' => 'geoflow',
+            'requestId' => (string) $request->header('X-Request-Id', ''),
+            'generatedAt' => now()->toISOString(),
+        ],
+    ])->header('Cache-Control', 'no-store');
+})->middleware(['api.request_id', 'throttle:api', 'mcp.auth']);
