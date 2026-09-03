@@ -5,6 +5,7 @@ namespace App\Services\Mcp;
 use App\Exceptions\ApiException;
 use App\Http\McpAuthContext;
 use App\Services\Admin\Analytics\AnalyticsFilter;
+use App\Services\Admin\Analytics\AnalyticsGoalsService;
 use App\Services\Admin\Analytics\AnalyticsLogQueryService;
 use App\Services\Admin\Analytics\AnalyticsOverviewService;
 
@@ -13,6 +14,7 @@ class McpAnalyticsService
     public function __construct(
         private readonly AnalyticsOverviewService $overview,
         private readonly AnalyticsLogQueryService $logs,
+        private readonly AnalyticsGoalsService $goals,
     ) {}
 
     /** @param array<string,mixed> $input */
@@ -24,9 +26,9 @@ class McpAnalyticsService
         }
 
         $filter = AnalyticsFilter::fromRequest($input, $tenantId);
-        if ($filter->dateFrom->diffInDays($filter->dateTo) > 90) {
-            throw new ApiException('analytics_range_too_large', 'Analytics 查询时间范围不能超过 90 天', 422, [
-                'max_days' => 90,
+        if ($filter->dateFrom->diffInDays($filter->dateTo) > 366) {
+            throw new ApiException('analytics_range_too_large', 'Analytics 查询时间范围不能超过 366 天', 422, [
+                'max_days' => 366,
             ]);
         }
 
@@ -74,5 +76,24 @@ class McpAnalyticsService
             'url_import_health' => $this->overview->urlImportHealth($filter),
             'traffic' => $traffic,
         ];
+    }
+
+    /**
+     * 内容生产目标达成率（docs/0903/dashboard/06 提案）。只读；目标必须归属
+     * 调用方租户，无目标月份返回空 goals，不伪造百分比。
+     *
+     * @param  array<string,mixed>  $input
+     * @return array<string,mixed>
+     */
+    public function goals(array $input, McpAuthContext $auth): array
+    {
+        $tenantId = trim((string) $auth->tenantId);
+        if ($tenantId === '') {
+            throw new McpToolException('Analytics MCP 工具必须绑定明确的租户');
+        }
+
+        $month = trim((string) ($input['month'] ?? now()->format('Y-m')));
+
+        return $this->goals->goalsForMonth($tenantId, $month);
     }
 }

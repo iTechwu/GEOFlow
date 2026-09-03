@@ -47,7 +47,7 @@ class McpAnalyticsServiceTest extends TestCase
             ],
         ]);
 
-        $result = (new McpAnalyticsService($overview, $logs))->overview([], $this->auth('team-a'));
+        $result = (new McpAnalyticsService($overview, $logs, new \App\Services\Admin\Analytics\AnalyticsGoalsService()))->overview([], $this->auth('team-a'));
 
         $this->assertSame('team-a', $result['tenant_id']);
         $this->assertSame(1, $result['kpis']['articles']);
@@ -60,23 +60,23 @@ class McpAnalyticsServiceTest extends TestCase
     {
         $overview = Mockery::mock(AnalyticsOverviewService::class);
         $logs = Mockery::mock(AnalyticsLogQueryService::class);
-        $service = new McpAnalyticsService($overview, $logs);
+        $service = new McpAnalyticsService($overview, $logs, new \App\Services\Admin\Analytics\AnalyticsGoalsService());
 
         $this->expectException(McpToolException::class);
         $service->overview([], $this->auth(null));
     }
 
-    public function test_overview_rejects_a_date_window_longer_than_ninety_days(): void
+    public function test_overview_rejects_a_date_window_longer_than_366_days(): void
     {
         $overview = Mockery::mock(AnalyticsOverviewService::class);
         $logs = Mockery::mock(AnalyticsLogQueryService::class);
-        $service = new McpAnalyticsService($overview, $logs);
+        $service = new McpAnalyticsService($overview, $logs, new \App\Services\Admin\Analytics\AnalyticsGoalsService());
 
         $this->expectException(ApiException::class);
-        $this->expectExceptionMessage('Analytics 查询时间范围不能超过 90 天');
+        $this->expectExceptionMessage('Analytics 查询时间范围不能超过 366 天');
         $service->overview([
             'preset' => 'custom',
-            'date_from' => '2026-01-01',
+            'date_from' => '2025-01-01',
             'date_to' => '2026-05-01',
         ], $this->auth('team-a'));
     }
