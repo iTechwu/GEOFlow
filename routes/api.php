@@ -1,31 +1,4 @@
-<?
-
-// 目标达成率（docs/0903/dashboard/06 提案）：只读，目标必须归属调用方租户。
-Route::get('yootun/v1/geoflow/goals', function (Request $request, McpAnalyticsService $analytics) {
-    $auth = $request->attributes->get('mcp_auth');
-    if (! $auth instanceof McpAuthContext || trim((string) $auth->tenantId) === '') {
-        return response()->json([
-            'error' => ['code' => 'UNAUTHORIZED', 'message' => 'A tenant-scoped Models API key is required'],
-        ], 401);
-    }
-
-    $month = (string) $request->query('month', now()->format('Y-m'));
-    if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) !== 1) {
-        return response()->json([
-            'error' => ['code' => 'VALIDATION_ERROR', 'message' => 'month must be YYYY-MM'],
-        ], 422);
-    }
-
-    return response()->json([
-        'data' => $analytics->goals(['month' => $month], $auth),
-        'meta' => [
-            'source' => 'geoflow',
-            'requestId' => (string) $request->header('X-Request-Id', ''),
-            'generatedAt' => now()->toISOString(),
-        ],
-    ])->header('Cache-Control', 'no-store');
-});
-php
+<?php
 
 /**
  * geo.dofe.ai REST API 路由（Laravel 默认挂载在 /api 前缀下，本文件内为 v1 子路径）。
@@ -150,6 +123,32 @@ Route::get('yootun/v1/geoflow/overview', function (Request $request, McpAnalytic
 
     return response()->json([
         'data' => $analytics->overview(['preset' => $preset], $auth),
+        'meta' => [
+            'source' => 'geoflow',
+            'requestId' => (string) $request->header('X-Request-Id', ''),
+            'generatedAt' => now()->toISOString(),
+        ],
+    ])->header('Cache-Control', 'no-store');
+})->middleware(['api.request_id', 'throttle:api', 'mcp.auth']);
+
+// 目标达成率（docs/0903/dashboard/06 提案）：只读，目标必须归属调用方租户。
+Route::get('yootun/v1/geoflow/goals', function (Request $request, McpAnalyticsService $analytics) {
+    $auth = $request->attributes->get('mcp_auth');
+    if (! $auth instanceof McpAuthContext || trim((string) $auth->tenantId) === '') {
+        return response()->json([
+            'error' => ['code' => 'UNAUTHORIZED', 'message' => 'A tenant-scoped Models API key is required'],
+        ], 401);
+    }
+
+    $month = (string) $request->query('month', now()->format('Y-m'));
+    if (preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $month) !== 1) {
+        return response()->json([
+            'error' => ['code' => 'VALIDATION_ERROR', 'message' => 'month must be YYYY-MM'],
+        ], 422);
+    }
+
+    return response()->json([
+        'data' => $analytics->goals(['month' => $month], $auth),
         'meta' => [
             'source' => 'geoflow',
             'requestId' => (string) $request->header('X-Request-Id', ''),
