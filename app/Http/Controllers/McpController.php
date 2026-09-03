@@ -112,6 +112,7 @@ final class McpController extends Controller
 
         return [
             ['name' => 'geoflow.catalog', 'description' => 'Read available GEOFlow models, prompts, libraries, knowledge bases and categories.', 'inputSchema' => $empty],
+            ['name' => 'geoflow.prompts.create', 'description' => 'Create a tenant-scoped content generation prompt.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge(['name' => ['type' => 'string', 'maxLength' => 100], 'content' => ['type' => 'string', 'minLength' => 1]], $idempotency), 'required' => ['name', 'content'], 'additionalProperties' => false]],
             ['name' => 'geoflow.capabilities', 'description' => 'Describe exposed MCP tools, tenant scope, permissions, and protected Admin-only GEOFlow domains.', 'inputSchema' => $empty],
             ['name' => 'geoflow.tasks.list', 'description' => 'List GEOFlow tasks with status and queue progress.', 'inputSchema' => ['type' => 'object', 'properties' => ['status' => ['type' => 'string'], 'search' => ['type' => 'string'], 'page' => ['type' => 'integer', 'minimum' => 1], 'per_page' => ['type' => 'integer', 'minimum' => 1, 'maximum' => 100]], 'additionalProperties' => false]],
             ['name' => 'geoflow.tasks.create', 'description' => 'Create a GEOFlow task from catalog references and complete scheduling, category, publication, and distribution options.', 'inputSchema' => ['type' => 'object', 'properties' => array_merge($taskConfiguration, $idempotency), 'required' => ['name', 'title_library_id', 'prompt_id', 'ai_model_id'], 'additionalProperties' => false]],
@@ -195,6 +196,7 @@ final class McpController extends Controller
 
         $data = match ($name) {
             'geoflow.catalog' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $catalog->getCatalog($auth->tenantId)),
+            'geoflow.prompts.create' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $catalog->createPrompt($args, $auth->tenantId)),
             'geoflow.capabilities' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $capabilities->describe($auth)),
             'geoflow.tasks.list' => $this->runReadTool($request, $name, $arguments, fn (array $args) => $tasks->listTasks((int) ($args['page'] ?? 1), (int) ($args['per_page'] ?? 20), $this->scopeFilters($auth, $args))),
             'geoflow.tasks.create' => $this->runWriteTool($request, $name, $arguments, fn (array $args) => $tasks->createTask($this->scopedTaskCreateArguments($auth, $args))),
@@ -538,6 +540,7 @@ final class McpController extends Controller
             str_starts_with($tool, 'geoflow.url_import.') => $tool === 'geoflow.url_import.status' ? 'materials:read' : 'materials:write',
             str_starts_with($tool, 'geoflow.materials.') => in_array($tool, ['geoflow.materials.summary', 'geoflow.materials.list', 'geoflow.materials.get', 'geoflow.materials.items.list'], true) ? 'materials:read' : 'materials:write',
             $tool === 'geoflow.catalog' => 'catalog:read',
+            $tool === 'geoflow.prompts.create' => 'materials:write',
             $tool === 'geoflow.capabilities' => 'catalog:read',
             $tool === 'geoflow.analytics.overview' => 'analytics:read',
             $tool === 'geoflow.analytics.goals' => 'analytics:read',

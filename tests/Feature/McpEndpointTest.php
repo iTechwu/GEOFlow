@@ -476,6 +476,26 @@ class McpEndpointTest extends TestCase
             ->assertJsonPath('result.structuredContent.id', 11);
     }
 
+    public function test_prompt_create_is_tenant_scoped_and_idempotent(): void
+    {
+        $this->enableMcp();
+        config(['geoflow.mcp_default_tenant' => 'team-a']);
+        [$catalog] = $this->mockServices();
+        $catalog->shouldReceive('createPrompt')->once()->with([
+            'name' => '优惠豚 GEO 提示词',
+            'content' => '生成可核验的汽车消费内容。',
+        ], 'team-a')->andReturn(['id' => 12, 'name' => '优惠豚 GEO 提示词', 'type' => 'content']);
+
+        $this->withHeader('Authorization', 'Bearer ci-secret')
+            ->postJson('/mcp', $this->toolCall('geoflow.prompts.create', [
+                'name' => '优惠豚 GEO 提示词',
+                'content' => '生成可核验的汽车消费内容。',
+                'idempotency_key' => 'prompt-create-youhuitun-v1',
+            ]))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.id', 12);
+    }
+
     public function test_tool_arguments_must_match_the_advertised_schema(): void
     {
         $this->enableMcp();

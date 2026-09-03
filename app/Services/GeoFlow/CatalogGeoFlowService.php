@@ -9,10 +9,33 @@ use App\Models\ImageLibrary;
 use App\Models\KeywordLibrary;
 use App\Models\KnowledgeBase;
 use App\Models\Prompt;
+use App\Exceptions\ApiException;
 use App\Models\TitleLibrary;
 
 class CatalogGeoFlowService
 {
+    /** @return array{id:int,name:string,type:string} */
+    public function createPrompt(array $data, ?string $teamId): array
+    {
+        if ($teamId === null || trim($teamId) === '') {
+            throw new ApiException('tenant_required', '创建提示词需要明确的 SSO 租户', 422);
+        }
+        $name = trim((string) ($data['name'] ?? ''));
+        $content = trim((string) ($data['content'] ?? ''));
+        if ($name === '' || mb_strlen($name) > 100 || $content === '') {
+            throw new ApiException('validation_failed', '提示词名称或内容无效', 422);
+        }
+        $prompt = Prompt::query()->create([
+            'name' => $name,
+            'type' => 'content',
+            'content' => $content,
+            'variables' => '',
+            'sso_team_id' => $teamId,
+        ]);
+
+        return ['id' => (int) $prompt->id, 'name' => (string) $prompt->name, 'type' => (string) $prompt->type];
+    }
+
     /**
      * 聚合目录（models/prompts/素材库/知识库/作者/分类）。
      *
