@@ -99,6 +99,7 @@ final class McpController extends Controller
             'auto_keywords' => ['type' => 'boolean'],
             'auto_description' => ['type' => 'boolean'],
             'is_loop' => ['type' => 'boolean'],
+            'schedule_enabled' => ['type' => 'boolean'],
             'image_count' => ['type' => 'integer', 'minimum' => 0],
             'publish_interval' => ['type' => 'integer', 'minimum' => 60],
             'article_limit' => ['type' => 'integer', 'minimum' => 1],

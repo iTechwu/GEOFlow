@@ -93,6 +93,7 @@ class TaskLifecycleService
                 'draft_limit' => $normalized['draft_limit'],
                 'article_limit' => $normalized['article_limit'],
                 'is_loop' => $normalized['is_loop'],
+                'schedule_enabled' => $normalized['schedule_enabled'],
                 'model_selection_mode' => $normalized['model_selection_mode'],
                 'status' => $normalized['status'],
                 'publish_scope' => $normalized['publish_scope'],
@@ -660,12 +661,12 @@ class TaskLifecycleService
             $output['knowledge_base_ids'] = $knowledgeBaseId > 0 ? [$knowledgeBaseId] : [];
         }
 
-        $flagFields = ['need_review', 'auto_keywords', 'auto_description', 'is_loop'];
+        $flagFields = ['need_review', 'auto_keywords', 'auto_description', 'is_loop', 'schedule_enabled'];
         foreach ($flagFields as $field) {
             if (array_key_exists($field, $data)) {
                 $output[$field] = $this->toFlag($data[$field]);
             } elseif (! $isUpdate) {
-                $output[$field] = in_array($field, ['need_review', 'auto_keywords', 'auto_description'], true) ? 1 : 0;
+                $output[$field] = in_array($field, ['need_review', 'auto_keywords', 'auto_description', 'schedule_enabled'], true) ? 1 : 0;
             }
         }
 

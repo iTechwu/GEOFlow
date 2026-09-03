@@ -20,7 +20,7 @@ class McpContractConsistencyTest extends TestCase
             $schemas[(string) $tool['name']] = $tool['inputSchema'];
         }
 
-        foreach (['auto_keywords', 'auto_description', 'is_loop', 'image_count', 'publish_interval', 'category_mode', 'fixed_category_id', 'model_selection_mode', 'publish_scope', 'distribution_strategy'] as $field) {
+        foreach (['auto_keywords', 'auto_description', 'is_loop', 'schedule_enabled', 'image_count', 'publish_interval', 'category_mode', 'fixed_category_id', 'model_selection_mode', 'publish_scope', 'distribution_strategy'] as $field) {
             $this->assertArrayHasKey($field, $schemas['geoflow.tasks.create']['properties']);
             $this->assertArrayHasKey($field, $schemas['geoflow.tasks.update']['properties']);
         }
