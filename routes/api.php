@@ -115,14 +115,31 @@ Route::get('yootun/v1/geoflow/overview', function (Request $request, McpAnalytic
     }
 
     $preset = (string) $request->query('preset', 'yesterday');
-    if (! in_array($preset, ['today', 'yesterday', '7d', '30d', '90d'], true)) {
+    if (! in_array($preset, ['today', 'yesterday', '7d', '30d', '90d', 'custom'], true)) {
         return response()->json([
             'error' => ['code' => 'VALIDATION_ERROR', 'message' => 'preset is invalid'],
         ], 422);
     }
+    $input = ['preset' => $preset];
+    if ($preset === 'custom') {
+        $dateFrom = (string) $request->query('date_from', '');
+        $dateTo = (string) $request->query('date_to', '');
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom) !== 1 || preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo) !== 1) {
+            return response()->json([
+                'error' => ['code' => 'VALIDATION_ERROR', 'message' => 'date_from and date_to must be YYYY-MM-DD'],
+            ], 422);
+        }
+        if (strtotime($dateTo) - strtotime($dateFrom) > 366 * 86400) {
+            return response()->json([
+                'error' => ['code' => 'VALIDATION_ERROR', 'message' => 'range must be at most 366 days'],
+            ], 422);
+        }
+        $input['date_from'] = $dateFrom;
+        $input['date_to'] = $dateTo;
+    }
 
     return response()->json([
-        'data' => $analytics->overview(['preset' => $preset], $auth),
+        'data' => $analytics->overview($input, $auth),
         'meta' => [
             'source' => 'geoflow',
             'requestId' => (string) $request->header('X-Request-Id', ''),
