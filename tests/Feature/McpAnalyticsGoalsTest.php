@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\AnalyticsGoal;
+use App\Models\Author;
 use App\Models\Category;
 use App\Models\Task;
 use App\Services\Mcp\McpAnalyticsService;
@@ -41,11 +42,15 @@ class McpAnalyticsGoalsTest extends TestCase
             'created_count' => 0,
             'published_count' => 0,
         ]);
+        $author = Author::create(['name' => '统计测试作者']);
         $article = \App\Models\Article::create([
             'task_id' => $task->id,
             'category_id' => $category->id,
+            'author_id' => $author->id,
             'title' => '已发布文章',
             'slug' => 'slug-'.Str::random(6),
+            'excerpt' => '用于统计测试的文章摘要。',
+            'content' => '# 已发布文章\n\n用于统计测试的文章正文。',
             'status' => 'published',
             'published_at' => now()->startOfMonth()->addDays(2),
         ]);

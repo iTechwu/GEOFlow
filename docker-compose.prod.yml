@@ -3,8 +3,9 @@ name: geoflow-laravel-prod
 
 x-prod-app-build-args: &prod_app_build_args
   COMPOSER_IMAGE: ${COMPOSER_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-cli-bookworm}
+  NODE_IMAGE: ${NODE_IMAGE:-uhub.service.ucloud.cn/techwu/node:24-bookworm-slim}
   COMPOSER_VERSION: ${COMPOSER_VERSION:-2.10.2}
-  COMPOSER_SHA256: ${COMPOSER_SHA256:-471f2d857abf0ec18af7b055e61472214d91adb24f9bdbbb864c1c64faad7dd6}
+  COMPOSER_SHA256: ${COMPOSER_SHA256:-5ee7125f8a30a34d246cefdc0bc85b8a783b28f2aec968994118512350d28027}
   PHP_FPM_IMAGE: ${PHP_FPM_IMAGE:-uhub.service.ucloud.cn/techwu/php:8.4-fpm-bookworm}
   PECL_REDIS_VERSION: ${PECL_REDIS_VERSION:-6.3.0}
   PECL_REDIS_SHA256: ${PECL_REDIS_SHA256:-cb8f81df1a275599e4f8ddcfec7e1f65ed1953e6f5673649149fd680ebff4cad}
@@ -55,6 +56,7 @@ services:
       network: ${DOCKER_BUILD_NETWORK:-default}
       args:
         NGINX_IMAGE: ${NGINX_IMAGE:-uhub.service.ucloud.cn/techwu/nginx:1.31.1-alpine}
+        NODE_IMAGE: ${NODE_IMAGE:-uhub.service.ucloud.cn/techwu/node:24-bookworm-slim}
     container_name: geoflow-web-prod
     ports:
       - "127.0.0.1:${WEB_PORT:-18080}:80"

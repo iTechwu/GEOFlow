@@ -90,7 +90,7 @@ class ModelsGatewayClientTest extends TestCase
             $this->fail('Expected the models gateway check to reject an unapproved HTTPS host.');
         } catch (\RuntimeException $exception) {
             $this->assertStringContainsString('MODELS_BASE_URL', $exception->getMessage());
-            $this->assertStringContainsString('models.dofe.ai', $exception->getMessage());
+            $this->assertStringContainsString('ixicai.cn', $exception->getMessage());
             $this->assertStringNotContainsString('public-key', $exception->getMessage());
         }
 
@@ -119,14 +119,14 @@ class ModelsGatewayClientTest extends TestCase
 
     public function test_check_allows_explicit_local_http_smoke_endpoint(): void
     {
-        config()->set('geoflow.models_base_url', 'http://dofe-models-api-local:3101/v1');
+        config()->set('geoflow.models_base_url', 'http://127.0.0.1:3101/v1');
         config()->set('geoflow.models_allow_insecure_local', true);
-        config()->set('geoflow.outbound_private_targets', ['dofe-models-api-local:3101']);
+        config()->set('geoflow.outbound_private_targets', ['127.0.0.1:3101']);
         Http::fake([
-            'http://dofe-models-api-local:3101/v1/chat/completions' => Http::response([
+            'http://127.0.0.1:3101/v1/chat/completions' => Http::response([
                 'choices' => [['message' => ['content' => 'ok']]],
             ]),
-            'http://dofe-models-api-local:3101/v1/embeddings' => Http::response([
+            'http://127.0.0.1:3101/v1/embeddings' => Http::response([
                 'data' => [['embedding' => [0.1]]],
             ]),
         ]);

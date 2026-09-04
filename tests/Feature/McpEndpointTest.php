@@ -160,15 +160,17 @@ class McpEndpointTest extends TestCase
         $toolsResponse = $this->withHeader('Authorization', 'Bearer ci-secret')
             ->postJson('/mcp', ['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list'])
             ->assertOk()
-            ->assertJsonPath('result.tools.0.name', 'geoflow.catalog')
-            ->assertJsonPath('result.tools.3.inputSchema.properties.image_library_id.anyOf.0.type', 'integer')
-            ->assertJsonPath('result.tools.3.inputSchema.properties.image_library_id.anyOf.1.type', 'null')
-            ->assertJsonPath('result.tools.7.name', 'geoflow.tasks.enqueue')
-            ->assertJsonPath('result.tools.8.name', 'geoflow.articles.list')
-            ->assertJsonPath('result.tools.10.inputSchema.properties.task_id.anyOf.1.type', 'null')
-            ->assertJsonPath('result.tools.15.name', 'geoflow.materials.summary')
-            ->assertJsonPath('result.tools.18.inputSchema.properties.type.enum', ['keyword-libraries', 'title-libraries', 'image-libraries', 'knowledge-bases'])
-            ->assertJsonPath('result.tools.23.name', 'geoflow.materials.items.delete');
+            ->assertJsonPath('result.tools.0.name', 'geoflow.catalog');
+
+        $toolsByName = collect($toolsResponse->json('result.tools'))->keyBy('name');
+        $this->assertSame(['type' => 'integer'], $toolsByName['geoflow.tasks.create']['inputSchema']['properties']['image_library_id']['anyOf'][0]);
+        $this->assertSame(['type' => 'null'], $toolsByName['geoflow.tasks.create']['inputSchema']['properties']['image_library_id']['anyOf'][1]);
+        $this->assertArrayHasKey('geoflow.tasks.enqueue', $toolsByName);
+        $this->assertArrayHasKey('geoflow.articles.list', $toolsByName);
+        $this->assertSame(['type' => 'null'], $toolsByName['geoflow.articles.create']['inputSchema']['properties']['task_id']['anyOf'][1]);
+        $this->assertArrayHasKey('geoflow.materials.summary', $toolsByName);
+        $this->assertSame(['keyword-libraries', 'title-libraries', 'image-libraries', 'knowledge-bases'], $toolsByName['geoflow.materials.items.list']['inputSchema']['properties']['type']['enum']);
+        $this->assertArrayHasKey('geoflow.materials.items.delete', $toolsByName);
 
         $this->assertStringContainsString('"properties":{}', $toolsResponse->getContent());
     }

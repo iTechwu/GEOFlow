@@ -92,7 +92,7 @@ class ModelsInternalClientTest extends TestCase
             $this->fail('Expected the models internal client to reject an unapproved HTTPS host.');
         } catch (RuntimeException $exception) {
             $this->assertStringContainsString('MODELS_INTERNAL_BASE_URL', $exception->getMessage());
-            $this->assertStringContainsString('models.dofe.ai', $exception->getMessage());
+            $this->assertStringContainsString('ixicai.cn', $exception->getMessage());
             $this->assertStringNotContainsString('test-secret', $exception->getMessage());
         }
 
@@ -101,11 +101,11 @@ class ModelsInternalClientTest extends TestCase
 
     public function test_client_allows_explicit_local_http_with_the_private_target_allowlist(): void
     {
-        config()->set('geoflow.models_internal_base_url', 'http://dofe-models-api-local:3101');
+        config()->set('geoflow.models_internal_base_url', 'http://127.0.0.1:3101');
         config()->set('geoflow.models_allow_insecure_local', true);
-        config()->set('geoflow.outbound_private_targets', ['dofe-models-api-local:3101']);
+        config()->set('geoflow.outbound_private_targets', ['127.0.0.1:3101']);
         Http::fake([
-            'http://dofe-models-api-local:3101/internal/models' => Http::response(['list' => [], 'total' => 0]),
+            'http://127.0.0.1:3101/internal/models' => Http::response(['list' => [], 'total' => 0]),
         ]);
 
         $this->assertSame(['list' => [], 'total' => 0], ModelsInternalClient::listModels());

@@ -452,14 +452,14 @@ class DistributionQueueConfigurationTest extends TestCase
         $compose = file_get_contents($root.'/docker-compose.prod.yml');
         $buildScript = file_get_contents($root.'/deploy-scripts/build-and-push-amd64-images.sh');
         $productionEnv = file_get_contents($root.'/.env.prod.example');
-        $sha256 = '0d5141f634bd1db6c1ddcda053d25ecf2c4fc1c395430d534fd3f8d51dd7f0b5';
+        $sha256 = 'cb8f81df1a275599e4f8ddcfec7e1f65ed1953e6f5673649149fd680ebff4cad';
 
         foreach ([$dockerfile, $compose, $buildScript, $productionEnv] as $contents) {
             $this->assertIsString($contents);
             $this->assertStringContainsString($sha256, $contents);
         }
         $this->assertStringContainsString('ARG PECL_REDIS_SHA256=', $dockerfile);
-        $this->assertStringContainsString('curl --http1.1 -fsSL --retry 5 --retry-all-errors --connect-timeout 20 --max-time 120', $dockerfile);
+        $this->assertStringContainsString('COPY docker/phpredis-${PECL_REDIS_VERSION}.tgz /tmp/redis.tgz', $dockerfile);
         $this->assertStringContainsString('echo "${PECL_REDIS_SHA256}  /tmp/redis.tgz" | sha256sum -c -', $dockerfile);
         $this->assertStringContainsString('--build-arg PECL_REDIS_SHA256="${PECL_REDIS_SHA256}"', $buildScript);
     }
