@@ -6,5 +6,6 @@ return [
         'categories' => 'カテゴリ',
         'all_articles' => 'すべての記事',
         'archive' => 'アーカイブ',
+        'login' => 'ログイン',
     ],
 ];

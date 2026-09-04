@@ -18,6 +18,7 @@
                 @foreach($navCategories->take(5) as $categoryItem)
                     <a href="{{ route('site.category', $categoryItem->slug) }}">{{ $categoryItem->name }}</a>
                 @endforeach
+                <a href="{{ route('sso.login') }}" class="tt-topnav-login">{{ __('front.nav.login') }}</a>
             </nav>
 
             <button type="button" class="tt-mobile-menu" onclick="document.getElementById('ttMobileNav')?.classList.toggle('hidden')" aria-label="{{ __('front.nav.categories') }}">
@@ -30,6 +31,7 @@
                 @foreach($navCategories as $categoryItem)
                     <a href="{{ route('site.category', $categoryItem->slug) }}" class="tt-channel">{{ $categoryItem->name }}</a>
                 @endforeach
+                <a href="{{ route('sso.login') }}" class="tt-channel">{{ __('front.nav.login') }}</a>
             </div>
         </div>
     </div>

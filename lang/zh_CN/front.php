@@ -6,5 +6,6 @@ return [
         'categories' => '分类',
         'all_articles' => '全部文章',
         'archive' => '归档',
+        'login' => '登录',
     ],
 ];

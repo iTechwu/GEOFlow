@@ -43,6 +43,11 @@
                     </div>
                 </div>
 
+                <a href="{{ route('sso.login') }}" class="flex items-center text-sm font-medium text-gray-600 hover:text-gray-900">
+                    <i data-lucide="log-in" class="w-4 h-4 mr-1"></i>
+                    {{ __('front.nav.login') }}
+                </a>
+
             </nav>
 
             <button type="button" class="mobile-menu-toggle md:hidden flex items-center justify-center w-11 h-11 rounded-xl text-gray-600 hover:text-gray-900 hover:bg-gray-50" onclick="toggleMobileMenu()" aria-label="{{ __('front.nav.categories') }}">
@@ -71,6 +76,10 @@
                         </a>
                     @endforeach
                 </div>
+                <a href="{{ route('sso.login') }}" class="mobile-nav-link flex items-center text-gray-600 hover:text-gray-900 font-medium text-sm">
+                    <i data-lucide="log-in" class="w-4 h-4 mr-3"></i>
+                    {{ __('front.nav.login') }}
+                </a>
             </nav>
         </div>
     </div>

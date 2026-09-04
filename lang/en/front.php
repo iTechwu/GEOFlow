@@ -6,5 +6,6 @@ return [
         'categories' => 'Categories',
         'all_articles' => 'All articles',
         'archive' => 'Archive',
+        'login' => 'Sign in',
     ],
 ];
