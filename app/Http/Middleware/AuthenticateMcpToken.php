@@ -84,11 +84,13 @@ final class AuthenticateMcpToken
             return null;
         }
 
+        $auditAdminId = (int) config('geoflow.mcp_audit_admin_id', 0);
+
         return new McpAuthContext(
             McpAuthContext::SCOPE_WRITE,
             hash('sha256', 'models-api-key:'.$apiKeyId),
             $tenantId,
-            null,
+            $auditAdminId > 0 ? $auditAdminId : null,
             ['*'],
         );
     }

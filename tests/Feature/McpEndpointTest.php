@@ -100,6 +100,7 @@ class McpEndpointTest extends TestCase
             'geoflow.mcp_enabled' => true,
             'geoflow.mcp_gateway_secret' => 'gateway-secret',
             'geoflow.mcp_server_name' => 'geoflow-ci',
+            'geoflow.mcp_audit_admin_id' => 42,
         ]);
         $this->mockServices();
 
@@ -115,6 +116,16 @@ class McpEndpointTest extends TestCase
             'id' => 1,
             'method' => 'initialize',
         ])->assertOk()->assertJsonPath('result.serverInfo.name', 'geoflow-ci');
+
+        $this->withHeaders([
+            'Authorization' => 'Bearer sk-test-key',
+            'X-Dofe-Mcp-Gateway-Secret' => 'gateway-secret',
+            'X-Dofe-Auth-Verified' => 'models-api-key-v1',
+            'X-Dofe-Api-Key-Id' => 'key-1',
+            'X-Dofe-Tenant-Id' => 'tenant-1',
+        ])->postJson('/mcp', $this->toolCall('geoflow.system.status', []))
+            ->assertOk()
+            ->assertJsonPath('result.structuredContent.mcp.audit_admin_configured', true);
     }
 
     public function test_mcp_rejects_spoofed_gateway_context(): void
