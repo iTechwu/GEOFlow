@@ -33,6 +33,14 @@ class Article extends Model
         'is_hot',
         'is_featured',
         'published_at',
+        'humanize_status',
+        'humanize_score',
+        'humanize_classification',
+        'humanize_issues',
+        'humanize_original_hash',
+        'humanize_model',
+        'humanized_at',
+        'humanize_error',
     ];
 
     protected function casts(): array
@@ -46,6 +54,9 @@ class Article extends Model
             'is_hot' => 'boolean',
             'is_featured' => 'boolean',
             'published_at' => 'datetime',
+            'humanize_score' => 'integer',
+            'humanize_issues' => 'array',
+            'humanized_at' => 'datetime',
         ];
     }
 

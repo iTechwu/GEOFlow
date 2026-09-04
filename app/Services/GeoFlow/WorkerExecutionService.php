@@ -43,6 +43,7 @@ class WorkerExecutionService
         private readonly KnowledgeRetrievalService $knowledgeRetrievalService,
         private readonly DistributionOrchestrator $distributionOrchestrator,
         private readonly ArticleRiskScanner $articleRiskScanner,
+        private readonly HumanizeArticleService $humanizeArticleService,
         private readonly ArticleWorkflowTransitionService $articleWorkflowTransitionService,
         private readonly IxicaiRuntimeCredentials $ixicaiCredentials,
         private readonly KnowledgeInfraClient $knowledgeInfraClient,
@@ -95,7 +96,15 @@ class WorkerExecutionService
         $generation = $this->generateContentWithModelSelection($task, $contentPrompt);
         $aiModel = $generation['model'];
         $generatedContent = $generation['content'];
-        $imageResult = $this->insertTaskImagesIntoContent($task, $generatedContent);
+        $humanized = $this->humanizeArticleService->process(
+            $task,
+            $aiModel,
+            (string) $titleRow->title,
+            $generatedContent,
+        );
+        $articleTitle = trim((string) ($humanized['title'] ?? '')) ?: (string) $titleRow->title;
+        $content = $humanized['content'];
+        $imageResult = $this->insertTaskImagesIntoContent($task, $content);
         $content = $imageResult['content'];
         $selectedImages = $imageResult['images'];
         $excerpt = $this->buildExcerpt($content);
@@ -105,7 +114,7 @@ class WorkerExecutionService
             'published_at' => null,
         ];
 
-        $articleId = DB::transaction(function () use ($task, $titleRow, $author, $category, $keyword, $content, $excerpt, $workflow, $selectedImages): int {
+        $articleId = DB::transaction(function () use ($task, $titleRow, $articleTitle, $author, $category, $keyword, $content, $excerpt, $workflow, $selectedImages, $humanized, $aiModel): int {
             $freshTask = Task::query()
                 ->whereKey((int) $task->id)
                 ->lockForUpdate()
@@ -120,8 +129,8 @@ class WorkerExecutionService
 
             $pendingWorkflow = ArticleWorkflow::normalizeState('draft', 'pending');
             $article = Article::query()->create([
-                'title' => (string) $titleRow->title,
-                'slug' => ArticleWorkflow::generateUniqueSlug((string) $titleRow->title),
+                'title' => $articleTitle,
+                'slug' => ArticleWorkflow::generateUniqueSlug($articleTitle),
                 'excerpt' => $excerpt,
                 'content' => $content,
                 'category_id' => $category?->id,
@@ -135,6 +144,14 @@ class WorkerExecutionService
                 'is_ai_generated' => 1,
                 'published_at' => $pendingWorkflow['published_at'],
                 'view_count' => 0,
+                'humanize_status' => $humanized['status'],
+                'humanize_score' => $humanized['audit']['score'] ?? null,
+                'humanize_classification' => $humanized['audit']['classification'] ?? null,
+                'humanize_issues' => $humanized['audit']['issues'] ?? null,
+                'humanize_original_hash' => $humanized['original_hash'],
+                'humanize_model' => (string) ($aiModel->name ?? ''),
+                'humanized_at' => $humanized['status'] === 'processed' ? now() : null,
+                'humanize_error' => $humanized['error'],
             ]);
 
             $this->articleRiskScanner->record($article, 'worker_generation');
@@ -187,7 +204,7 @@ class WorkerExecutionService
 
         return [
             'article_id' => $articleId,
-            'title' => (string) $titleRow->title,
+            'title' => $articleTitle,
             'message' => '草稿生成成功',
             'meta' => [
                 'task_id' => (int) $task->id,
@@ -201,6 +218,10 @@ class WorkerExecutionService
                 'used_model_id' => (int) $aiModel->id,
                 'used_model_name' => (string) $aiModel->name,
                 'model_attempts' => $generation['attempts'],
+                'humanize_status' => $humanized['status'],
+                'humanize_score' => $humanized['audit']['score'] ?? null,
+                'humanize_classification' => $humanized['audit']['classification'] ?? null,
+                'humanize_issue_count' => count($humanized['audit']['issues'] ?? []),
             ],
         ];
     }

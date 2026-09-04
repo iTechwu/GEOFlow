@@ -53,9 +53,16 @@ class ArticleGeoFlowService
             ->get([
                 'id', 'title', 'slug', 'status', 'review_status',
                 'task_id', 'author_id', 'category_id', 'published_at',
+                'humanize_status', 'humanize_score', 'humanize_classification',
+                'humanize_issues', 'humanized_at',
                 'created_at', 'updated_at',
             ])
-            ->map(fn (Article $a) => $a->getAttributes())
+            ->map(function (Article $a): array {
+                $attributes = $a->getAttributes();
+                $attributes['humanize_issues'] = $a->humanize_issues;
+
+                return $attributes;
+            })
             ->all();
 
         return [
@@ -202,6 +209,14 @@ class ArticleGeoFlowService
             'published_at' => $article->published_at?->format('Y-m-d H:i:s'),
             'created_at' => $article->created_at?->format('Y-m-d H:i:s'),
             'updated_at' => $article->updated_at?->format('Y-m-d H:i:s'),
+            'humanize_status' => $article->humanize_status,
+            'humanize_score' => $article->humanize_score,
+            'humanize_classification' => $article->humanize_classification,
+            'humanize_issues' => $article->humanize_issues,
+            'humanize_original_hash' => $article->humanize_original_hash,
+            'humanize_model' => $article->humanize_model,
+            'humanized_at' => $article->humanized_at?->format('Y-m-d H:i:s'),
+            'humanize_error' => $article->humanize_error,
             'images' => $images,
         ];
     }
