@@ -20,8 +20,7 @@ final class KnowledgeInfraClient
         return self::baseUrl() !== ''
             && self::issuer() !== ''
             && self::clientId() !== ''
-            && self::clientSecret() !== ''
-            && config('geoflow.knowledge_space_ids', []) !== [];
+            && self::clientSecret() !== '';
     }
 
     /** @return array{list:list<array<string,mixed>>,total:int,page:int,limit:int} */
@@ -30,10 +29,15 @@ final class KnowledgeInfraClient
         if (! $this->isConfigured()) throw new RuntimeException('knowledge client is not configured');
         $payload = [
             'query' => trim($query),
-            'spaceIds' => array_values(config('geoflow.knowledge_space_ids', [])),
             'topK' => max(1, min(50, $topK)),
             'includeMemories' => $includeMemories,
         ];
+        // Knowledge 根据可信租户上下文解析 canonical role space（tenant.all）；
+        // 客户端不持有或硬编码空间 UUID。仅在显式兼容配置时透传筛选。
+        $spaceIds = array_values(config('geoflow.knowledge_space_ids', []));
+        if ($spaceIds !== []) {
+            $payload['spaceIds'] = $spaceIds;
+        }
         $response = $this->searchRequest($payload);
         if ($response->status() === 401) {
             Cache::forget($this->tokenCacheKey());

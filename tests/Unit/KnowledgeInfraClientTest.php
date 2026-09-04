@@ -60,6 +60,24 @@ final class KnowledgeInfraClientTest extends TestCase
         $this->assertSame(['space-1'], $transport->calls[1]['data']['spaceIds']);
     }
 
+    public function test_search_uses_knowledge_acl_when_no_space_ids_are_configured(): void
+    {
+        config()->set('geoflow.knowledge_space_ids', []);
+        $transport = new KnowledgeRecordingTransport([
+            $this->jsonResponse(['access_token' => 'token-1', 'expires_in' => 300]),
+            $this->jsonResponse(['code' => 200, 'data' => ['list' => [], 'total' => 0]]),
+        ]);
+        $client = new KnowledgeInfraClient(new SafeOutboundHttpClient(
+            new KnowledgeHostResolver,
+            $transport,
+        ));
+
+        $this->assertTrue($client->isConfigured());
+        $client->search('query');
+
+        $this->assertArrayNotHasKey('spaceIds', $transport->calls[1]['data']);
+    }
+
     public function test_rejects_non_allowlisted_knowledge_endpoint(): void
     {
         config()->set('geoflow.knowledge_api_url', 'https://attacker.example/api');

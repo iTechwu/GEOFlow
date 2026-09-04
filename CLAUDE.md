@@ -9,6 +9,9 @@
 ## Commit Discipline
 
 - Commit after completing each single functional change; do not accumulate or batch unrelated changes into one commit.
-- Write all commit messages in Chinese.
+- Write all commit messages in Chinese and push each completed commit to the configured upstream branch before reporting completion.
 
+## Knowledge Source Contract
 
+- Article generation and GEO diagnostics must use `knowledge.dofe.ai` as their only knowledge source and must fail closed when Knowledge is unavailable.
+- Local knowledge tables may support authoring or migration, but must never become a generation fallback or an independent source of truth.
