@@ -20,4 +20,4 @@ GeoFlow 在每次 Worker 生成文章后执行两阶段内容处理：
 - `humanize_issues`: 问题、原文片段和修改建议
 - `humanize_original_hash`: 润色前标题和正文的 SHA-256
 
-本集成参考公开的 `humanize-text-skill`（MIT）规则，来源：<https://github.com/lynote-ai/humanize-text-skill>。
+本集成参考已安装的公开 `humanize-text-skill` 规则，来源：<https://github.com/fendouai/humanize-text-skill>。
