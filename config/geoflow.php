@@ -101,7 +101,9 @@ return [
     // 文章生成后的 humanize-text-skill 审查与润色。默认开启并失败闭锁，避免未审查正文进入草稿池。
     'humanize_enabled' => filter_var(env('GEOFLOW_HUMANIZE_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
     'humanize_fail_closed' => filter_var(env('GEOFLOW_HUMANIZE_FAIL_CLOSED', true), FILTER_VALIDATE_BOOLEAN),
-    'humanize_max_tokens' => max(512, (int) env('GEOFLOW_HUMANIZE_MAX_TOKENS', 8192)),
+    // humanize 需要返回审查/改写 JSON；DeepSeek 推理 token 与正文共享预算，
+    // 4096 可避免长文章在人性化阶段耗尽 Models 网关的 completion budget。
+    'humanize_max_tokens' => max(512, (int) env('GEOFLOW_HUMANIZE_MAX_TOKENS', 4096)),
     'humanize_max_input_chars' => max(1000, (int) env('GEOFLOW_HUMANIZE_MAX_INPUT_CHARS', 180000)),
     // Models 余额/账单类确定性失败不应每分钟重试；保持任务 active，并在下一日再探测。
     'task_billing_failure_backoff_seconds' => max(3600, (int) env('GEOFLOW_TASK_BILLING_FAILURE_BACKOFF_SECONDS', 86400)),
