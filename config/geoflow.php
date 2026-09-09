@@ -101,6 +101,8 @@ return [
     'humanize_fail_closed' => filter_var(env('GEOFLOW_HUMANIZE_FAIL_CLOSED', true), FILTER_VALIDATE_BOOLEAN),
     'humanize_max_tokens' => max(512, (int) env('GEOFLOW_HUMANIZE_MAX_TOKENS', 8192)),
     'humanize_max_input_chars' => max(1000, (int) env('GEOFLOW_HUMANIZE_MAX_INPUT_CHARS', 180000)),
+    // Models 余额/账单类确定性失败不应每分钟重试；保持任务 active，并在下一日再探测。
+    'task_billing_failure_backoff_seconds' => max(3600, (int) env('GEOFLOW_TASK_BILLING_FAILURE_BACKOFF_SECONDS', 86400)),
 
     // 统一 AI 网关覆盖：两者均非空时，所有模型调用（chat/embedding/后台测试）强制走此 base + key，
     // 忽略 ai_models 与每用户 ixicai key；留空则恢复按模型/按用户解析（可一键回退）。

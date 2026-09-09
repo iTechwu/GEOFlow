@@ -273,8 +273,12 @@ class JobQueueService
         $runMeta = $this->normalizeMeta($run->meta);
         $attemptCount = (int) ($runMeta['attempt_count'] ?? 0) + 1;
         $maxAttempts = max(1, (int) ($runMeta['max_attempts'] ?? 3));
-        $shouldRetry = $attemptCount < $maxAttempts;
-        $nextAvailableAt = now()->addSeconds(max(1, $retryDelaySeconds));
+        $billingFailure = $this->isBillingFailure($errorMessage);
+        $shouldRetry = ! $billingFailure && $attemptCount < $maxAttempts;
+        $backoffSeconds = $billingFailure
+            ? (int) config('geoflow.task_billing_failure_backoff_seconds', 86400)
+            : max(1, $retryDelaySeconds);
+        $nextAvailableAt = now()->addSeconds(max(1, $backoffSeconds));
 
         $newMeta = array_merge($runMeta, [
             'attempt_count' => $attemptCount,
@@ -294,18 +298,30 @@ class JobQueueService
             return;
         }
 
-        Task::query()->whereKey($taskId)->update([
+        $taskUpdates = [
             'last_run_at' => now(),
             'last_error_at' => now(),
             'last_error_message' => $errorMessage,
             'updated_at' => now(),
-        ]);
+        ];
+        if ($billingFailure) {
+            $taskUpdates['next_run_at'] = $nextAvailableAt;
+        }
+        Task::query()->whereKey($taskId)->update($taskUpdates);
 
         if ($shouldRetry) {
             $this->dispatchLaravelQueueJob($jobId, $nextAvailableAt);
         }
 
         $this->broadcastOverviewUpdate();
+    }
+
+    /**
+     * Models 余额/账单拒绝是确定性错误，重试不会改变结果，只会制造失败队列噪音和额外请求。
+     */
+    private function isBillingFailure(string $errorMessage): bool
+    {
+        return preg_match('/(?:\b402\b|insufficient[_ ](?:balance|credit)|billing[_ ]error|余额不足|额度不足|账户欠费)/iu', $errorMessage) === 1;
     }
 
     /**

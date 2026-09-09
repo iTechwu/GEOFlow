@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Exceptions\ApiException;
+use App\Jobs\ProcessGeoFlowTaskJob;
 use App\Models\Task;
 use App\Models\TaskRun;
 use App\Services\GeoFlow\JobQueueService;
 use App\Services\GeoFlow\TaskLifecycleService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
 
 class McpJobCancellationTest extends TestCase
@@ -56,6 +58,37 @@ class McpJobCancellationTest extends TestCase
         $queue->failJob((int) $run->id, (int) $task->id, 'late failure', 100);
 
         $this->assertSame('cancelled', $run->fresh()->status);
+    }
+
+    public function test_models_billing_failure_does_not_retry_and_defers_next_daily_probe(): void
+    {
+        Queue::fake();
+        $task = Task::query()->create([
+            'name' => '余额退避任务',
+            'status' => 'active',
+            'schedule_enabled' => 1,
+            'next_run_at' => now(),
+        ]);
+        $run = TaskRun::query()->create([
+            'task_id' => $task->id,
+            'status' => 'running',
+            'meta' => ['attempt_count' => 0, 'max_attempts' => 3],
+        ]);
+
+        app(JobQueueService::class)->failJob(
+            (int) $run->id,
+            (int) $task->id,
+            'AI 生成失败: HTTP request returned status code 402: Insufficient Balance',
+            100,
+        );
+
+        $run = $run->fresh();
+        $task = $task->fresh();
+        $this->assertSame('failed', $run->status);
+        $this->assertSame(1, (int) ($run->meta['attempt_count'] ?? 0));
+        $this->assertNotNull($task->next_run_at);
+        $this->assertTrue($task->next_run_at->greaterThan(now()->addHours(23)));
+        Queue::assertNotPushed(ProcessGeoFlowTaskJob::class);
     }
 
     public function test_mcp_job_summary_does_not_expose_payload_or_internal_error_details(): void
