@@ -37,6 +37,7 @@ class MarkdownContentWriterAgent implements Agent, Conversational, HasProviderOp
         public iterable $tools = [],
         public ?int $maxTokens = null,
         public ?float $temperature = null,
+        public bool $jsonOutput = false,
     ) {}
 
     /**
@@ -84,6 +85,9 @@ class MarkdownContentWriterAgent implements Agent, Conversational, HasProviderOp
 
         if ($this->temperature !== null) {
             $options['temperature'] = max(0.0, min(2.0, $this->temperature));
+        }
+        if ($this->jsonOutput) {
+            $options['response_format'] = ['type' => 'json_object'];
         }
 
         return $options;
