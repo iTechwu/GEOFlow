@@ -95,7 +95,9 @@ return [
     'embedding_batch_size' => max(1, min(64, (int) env('GEOFLOW_EMBEDDING_BATCH_SIZE', 1))),
     // 正文生成默认最大输出 token 数；当 AI 模型未单独配置 max_tokens 时使用此兜底值，
     // 避免依赖各服务商较小的默认上限（常见 4K）导致长文被截断。
-    'content_max_tokens' => max(256, (int) env('GEOFLOW_CONTENT_MAX_TOKENS', 8192)),
+    // DeepSeek reasoning tokens share the completion budget; 4096 keeps article generation
+    // below the Models gateway timeout while still allowing long Markdown drafts.
+    'content_max_tokens' => max(256, (int) env('GEOFLOW_CONTENT_MAX_TOKENS', 4096)),
     // 文章生成后的 humanize-text-skill 审查与润色。默认开启并失败闭锁，避免未审查正文进入草稿池。
     'humanize_enabled' => filter_var(env('GEOFLOW_HUMANIZE_ENABLED', true), FILTER_VALIDATE_BOOLEAN),
     'humanize_fail_closed' => filter_var(env('GEOFLOW_HUMANIZE_FAIL_CLOSED', true), FILTER_VALIDATE_BOOLEAN),

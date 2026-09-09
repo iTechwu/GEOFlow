@@ -42,7 +42,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
         $this->assertSame(['maxOutputTokens' => 8192], $agent->providerOptions(Lab::Gemini));
     }
 
-    public function test_generate_content_sends_configured_model_max_tokens(): void
+    public function test_generate_content_caps_configured_model_max_tokens_at_safe_default(): void
     {
         Http::fake([
             'https://models.dofe.ai/v1/chat/completions' => Http::response($this->completion('# 标题'."\n\n".'完整正文。')),
@@ -55,7 +55,7 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
         $this->assertSame('# 标题'."\n\n".'完整正文。', $content);
 
         Http::assertSent(fn ($request): bool => $request->url() === 'https://models.dofe.ai/v1/chat/completions'
-            && ($request['max_tokens'] ?? null) === 8192
+            && ($request['max_tokens'] ?? null) === 4096
             && ! array_key_exists('max_completion_tokens', (array) $request->data()));
     }
 

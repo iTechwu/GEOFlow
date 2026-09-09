@@ -858,11 +858,9 @@ class WorkerExecutionService
     private function resolveMaxTokens(AiModel $aiModel): int
     {
         $configured = (int) ($aiModel->max_tokens ?? 0);
-        if ($configured > 0) {
-            return $configured;
-        }
+        $ceiling = max(256, (int) config('geoflow.content_max_tokens', 4096));
 
-        return max(256, (int) config('geoflow.content_max_tokens', 8192));
+        return $configured > 0 ? min($configured, $ceiling) : $ceiling;
     }
 
     /**
