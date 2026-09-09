@@ -825,14 +825,27 @@ class WorkerExecutionService
         $providerName = OpenAiRuntimeProvider::registerProvider('worker', $driver, $providerUrl, $apiKey);
         $agent = new MarkdownContentWriterAgent(maxTokens: $this->resolveMaxTokens($aiModel));
 
-        try {
-            $response = $agent->prompt($contentPrompt, [], $providerName, (string) ($aiModel->model_id ?? ''));
-        } catch (Throwable $exception) {
-            throw new RuntimeException('AI 生成失败: '.OpenAiRuntimeProvider::normalizeApiException($exception, $providerUrl), 0, $exception);
-        }
+        $rawContent = '';
+        $content = '';
+        $response = null;
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            try {
+                $response = $agent->prompt($contentPrompt, [], $providerName, (string) ($aiModel->model_id ?? ''));
+            } catch (Throwable $exception) {
+                throw new RuntimeException('AI 生成失败: '.OpenAiRuntimeProvider::normalizeApiException($exception, $providerUrl), 0, $exception);
+            }
 
-        $rawContent = (string) ($response->text ?? '');
-        $content = OpenAiRuntimeProvider::normalizeGeneratedText($rawContent);
+            $rawContent = (string) ($response->text ?? '');
+            $content = OpenAiRuntimeProvider::normalizeGeneratedText($rawContent);
+            if ($content !== '' || $attempt === 1) {
+                break;
+            }
+            // DeepSeek reasoning responses can occasionally exhaust the shared
+            // completion budget with an empty visible content field. A bounded
+            // second request prevents one transient empty response from losing
+            // the daily generation slot while keeping the worker fail-closed.
+            usleep(250000);
+        }
         if ($content === '') {
             if (OpenAiRuntimeProvider::looksLikeSseCompletionPayload($rawContent)) {
                 throw new RuntimeException('AI 返回空流式响应，未生成正文内容，请重试或检查模型流式输出兼容性');

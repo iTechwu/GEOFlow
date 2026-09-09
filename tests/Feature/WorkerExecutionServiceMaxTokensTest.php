@@ -86,6 +86,20 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
             && ($request['max_tokens'] ?? null) === 5000);
     }
 
+    public function test_generate_content_retries_one_empty_visible_response(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/v1/chat/completions' => Http::sequence()
+                ->push($this->completion(''))
+                ->push($this->completion('# 标题' . "\n\n" . '重试后正文。')),
+        ]);
+
+        $content = $this->generateContent($this->createChatModel(), '写一篇文章。');
+
+        $this->assertSame('# 标题' . "\n\n" . '重试后正文。', $content);
+        Http::assertSentCount(2);
+    }
+
     public function test_generate_content_logs_warning_when_output_looks_truncated(): void
     {
         // 结尾停在未闭合代码块中间，模拟输出 token 用尽被截断。
