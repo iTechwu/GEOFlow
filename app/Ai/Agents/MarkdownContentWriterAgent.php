@@ -36,6 +36,7 @@ class MarkdownContentWriterAgent implements Agent, Conversational, HasProviderOp
         public iterable $messages = [],
         public iterable $tools = [],
         public ?int $maxTokens = null,
+        public ?float $temperature = null,
     ) {}
 
     /**
@@ -75,10 +76,16 @@ class MarkdownContentWriterAgent implements Agent, Conversational, HasProviderOp
 
         $providerKey = $provider instanceof Lab ? $provider->value : $provider;
 
-        return match ($providerKey) {
+        $options = match ($providerKey) {
             'gemini' => ['maxOutputTokens' => $this->maxTokens],
             'openai' => ['max_output_tokens' => $this->maxTokens],
             default => ['max_tokens' => $this->maxTokens],
         };
+
+        if ($this->temperature !== null) {
+            $options['temperature'] = max(0.0, min(2.0, $this->temperature));
+        }
+
+        return $options;
     }
 }

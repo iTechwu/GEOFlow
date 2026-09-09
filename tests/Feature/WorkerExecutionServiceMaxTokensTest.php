@@ -42,6 +42,13 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
         $this->assertSame(['maxOutputTokens' => 8192], $agent->providerOptions(Lab::Gemini));
     }
 
+    public function test_writer_agent_adds_bounded_temperature_only_when_configured(): void
+    {
+        $agent = new MarkdownContentWriterAgent(maxTokens: 4096, temperature: 0.1);
+
+        $this->assertSame(['max_tokens' => 4096, 'temperature' => 0.1], $agent->providerOptions('deepseek'));
+    }
+
     public function test_generate_content_caps_configured_model_max_tokens_at_safe_default(): void
     {
         Http::fake([
