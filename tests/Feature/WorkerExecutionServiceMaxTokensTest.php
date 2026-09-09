@@ -98,6 +98,9 @@ class WorkerExecutionServiceMaxTokensTest extends TestCase
 
         $this->assertSame('# 标题' . "\n\n" . '重试后正文。', $content);
         Http::assertSentCount(2);
+        $requests = Http::recorded();
+        $this->assertSame(4096, $requests[0][0]['max_tokens']);
+        $this->assertSame(8192, $requests[1][0]['max_tokens']);
     }
 
     public function test_generate_content_logs_warning_when_output_looks_truncated(): void
