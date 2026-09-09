@@ -130,15 +130,16 @@ PROMPT;
         $apiKey = $credentials['api_key'];
         $driver = OpenAiRuntimeProvider::resolveChatDriver($providerUrl, (string) ($aiModel->model_id ?? ''));
         $providerName = OpenAiRuntimeProvider::registerProvider($operation, $driver, $providerUrl, $apiKey);
-        $agent = new MarkdownContentWriterAgent(
-            instructions: '你是 humanize-text-skill 中文编辑，只输出请求的 JSON。',
-            maxTokens: max(512, (int) config('geoflow.humanize_max_tokens', 8192)),
-            temperature: 0.1,
-            jsonOutput: true,
-        );
-
         $raw = '';
         for ($attempt = 0; $attempt < 2; $attempt++) {
+            $agent = new MarkdownContentWriterAgent(
+                instructions: '你是 humanize-text-skill 中文编辑，只输出请求的 JSON。',
+                maxTokens: $attempt === 0
+                    ? max(512, (int) config('geoflow.humanize_max_tokens', 4096))
+                    : max(8192, (int) config('geoflow.humanize_max_tokens', 4096)),
+                temperature: 0.1,
+                jsonOutput: true,
+            );
             try {
                 $response = $agent->prompt($prompt, [], $providerName, (string) ($aiModel->model_id ?? ''));
             } catch (Throwable $exception) {

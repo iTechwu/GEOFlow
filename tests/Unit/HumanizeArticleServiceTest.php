@@ -110,6 +110,9 @@ class HumanizeArticleServiceTest extends TestCase
 
         $this->assertSame('processed', $result['status']);
         $this->assertSame(3, Http::recorded()->count());
+        $requests = Http::recorded();
+        $this->assertSame(4096, $requests[0][0]['max_tokens']);
+        $this->assertSame(8192, $requests[1][0]['max_tokens']);
     }
 
     public function test_humanize_respects_the_model_daily_limit_before_calling_provider(): void
