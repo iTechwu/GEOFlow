@@ -823,12 +823,18 @@ class WorkerExecutionService
 
         $driver = OpenAiRuntimeProvider::resolveChatDriver($providerUrl, (string) ($aiModel->model_id ?? ''));
         $providerName = OpenAiRuntimeProvider::registerProvider('worker', $driver, $providerUrl, $apiKey);
-        $agent = new MarkdownContentWriterAgent(maxTokens: $this->resolveMaxTokens($aiModel));
+        $maxTokens = $this->resolveMaxTokens($aiModel);
 
         $rawContent = '';
         $content = '';
         $response = null;
         for ($attempt = 0; $attempt < 2; $attempt++) {
+            // A reasoning model may spend the first budget entirely on hidden
+            // tokens. The bounded retry gets the configured model ceiling so a
+            // transient empty visible response can still produce the article.
+            $agent = new MarkdownContentWriterAgent(
+                maxTokens: $attempt === 0 ? $maxTokens : max($maxTokens, 8192),
+            );
             try {
                 $response = $agent->prompt($contentPrompt, [], $providerName, (string) ($aiModel->model_id ?? ''));
             } catch (Throwable $exception) {
