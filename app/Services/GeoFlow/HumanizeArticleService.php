@@ -133,6 +133,7 @@ PROMPT;
         $agent = new MarkdownContentWriterAgent(
             instructions: '你是 humanize-text-skill 中文编辑，只输出请求的 JSON。',
             maxTokens: max(512, (int) config('geoflow.humanize_max_tokens', 8192)),
+            temperature: 0.1,
         );
 
         $raw = '';
