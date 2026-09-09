@@ -63,7 +63,8 @@ class HumanizeArticleServiceTest extends TestCase
         $this->assertSame(2, (int) $model->fresh()->used_today);
         Http::assertSentCount(2);
         Http::assertSent(fn ($request): bool => ($request['max_tokens'] ?? null) === 4096
-            && ($request['temperature'] ?? null) === 0.1);
+            && ($request['temperature'] ?? null) === 0.1
+            && ($request['response_format'] ?? null) === ['type' => 'json_object']);
     }
 
     public function test_fail_closed_does_not_accept_invalid_humanize_response(): void
