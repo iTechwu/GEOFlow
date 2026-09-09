@@ -135,15 +135,24 @@ PROMPT;
             maxTokens: max(512, (int) config('geoflow.humanize_max_tokens', 8192)),
         );
 
-        try {
-            $response = $agent->prompt($prompt, [], $providerName, (string) ($aiModel->model_id ?? ''));
-        } catch (Throwable $exception) {
-            throw new RuntimeException(OpenAiRuntimeProvider::normalizeApiException($exception, $providerUrl), 0, $exception);
-        }
+        $raw = '';
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            try {
+                $response = $agent->prompt($prompt, [], $providerName, (string) ($aiModel->model_id ?? ''));
+            } catch (Throwable $exception) {
+                throw new RuntimeException(OpenAiRuntimeProvider::normalizeApiException($exception, $providerUrl), 0, $exception);
+            }
 
-        $raw = OpenAiRuntimeProvider::normalizeGeneratedText((string) ($response->text ?? ''));
+            $raw = OpenAiRuntimeProvider::normalizeGeneratedText((string) ($response->text ?? ''));
+            if ($raw !== '') {
+                break;
+            }
+            if ($attempt === 0) {
+                usleep(250000);
+            }
+        }
         if ($raw === '') {
-            throw new RuntimeException('humanize 模型返回空响应');
+            throw new RuntimeException('humanize 模型返回空响应（重试 1 次后仍为空）');
         }
 
         AiModel::query()->whereKey((int) $aiModel->id)->update([

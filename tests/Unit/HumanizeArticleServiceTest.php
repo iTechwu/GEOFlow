@@ -81,6 +81,34 @@ class HumanizeArticleServiceTest extends TestCase
         );
     }
 
+    public function test_retries_an_empty_model_response_once_before_failing_closed(): void
+    {
+        Http::fake([
+            'https://models.dofe.ai/v1/chat/completions' => Http::sequence()
+                ->push($this->completion(''))
+                ->push($this->completion(json_encode([
+                    'score' => 18,
+                    'classification' => 'HUMAN_ONLY',
+                    'issues' => [],
+                ], JSON_UNESCAPED_UNICODE)))
+                ->push($this->completion(json_encode([
+                    'title' => '购车核验清单',
+                    'content' => '# 购车核验清单\n\n先看合同。',
+                    'audit' => ['score' => 8, 'classification' => 'HUMAN_ONLY', 'issues' => []],
+                ], JSON_UNESCAPED_UNICODE))),
+        ]);
+
+        $result = app(HumanizeArticleService::class)->process(
+            new Task(),
+            $this->createChatModel(),
+            '购车核验清单',
+            '这是一篇需要润色的文章。',
+        );
+
+        $this->assertSame('processed', $result['status']);
+        $this->assertSame(3, Http::recorded()->count());
+    }
+
     public function test_humanize_respects_the_model_daily_limit_before_calling_provider(): void
     {
         Http::fake();
