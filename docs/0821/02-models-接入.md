@@ -9,6 +9,11 @@ MODELS_API_KEY=<由 models 项目签发的服务密钥>
 MODELS_INTERNAL_BASE_URL=https://models.dofe.ai
 MODELS_INTERNAL_API_SECRET=<models 内部服务密钥>
 MODELS_SERVICE_NAME=geoflow
+
+# Jenkins 与 Knowledge 在同一 Docker 网络时使用；不配置时回退到公网 API。
+KNOWLEDGE_INTERNAL_API_URL=http://dofe-knowledge-api:3110
+# 若 SSO 也有内部服务名，可配置；否则沿用 KNOWLEDGE_SSO_ISSUER。
+KNOWLEDGE_INTERNAL_SSO_ISSUER=<可选的内部 SSO issuer>
 ```
 
 `MODELS_BASE_URL` 与 `MODELS_API_KEY` 两个公共数据面变量必须同时设置。GEOFlow 会把它们注册为 Laravel AI 的运行时 Provider，模型名称仍来自 `ai_models.model_id`，因此可以在 models 中切换 alias，而无需重新构建 GEOFlow 镜像。管理面变量是可选的，仅用于 `/internal/*` 检查和后续管理能力。
@@ -36,6 +41,6 @@ MODELS_SERVICE_NAME=geoflow
 
 ## 失败策略
 
-- 无可用 models 公共配置时，保留当前按管理员 ixicai key 的兼容路径；管理面 HMAC 未配置只影响管理端点检查。
-- models 请求失败时，标题和知识库流程继续使用现有 fallback；正文 Worker 按现有队列失败/重试策略处理。
+- 无可用 models 公共配置时，相关生成任务失败并按队列重试；不回退到旧 ixicai key。
+- Knowledge API、SSO 或 models 任一必需依赖不可达时，文章生成和 GEO 诊断 fail closed；不得使用本地知识表或 fallback 内容冒充成功。
 - 不在 GEOFlow 日志记录 API key、完整 Authorization、Prompt 原文或模型上游响应中的敏感字段。
