@@ -120,8 +120,15 @@ final class KnowledgeInfraClient
             ]) : $request;
     }
 
-    private static function baseUrl(): string { return rtrim((string) config('geoflow.knowledge_api_url', ''), '/'); }
-    private static function issuer(): string { return rtrim((string) config('geoflow.knowledge_sso_issuer', ''), '/'); }
+    private static function baseUrl(): string
+    {
+        return rtrim((string) (config('geoflow.knowledge_internal_api_url') ?: config('geoflow.knowledge_api_url', '')), '/');
+    }
+
+    private static function issuer(): string
+    {
+        return rtrim((string) (config('geoflow.knowledge_internal_sso_issuer') ?: config('geoflow.knowledge_sso_issuer', '')), '/');
+    }
     private static function clientId(): string { return trim((string) config('geoflow.knowledge_sso_client_id', '')); }
     private static function clientSecret(): string { return trim((string) config('geoflow.knowledge_sso_client_secret', '')); }
     private static function scope(): string { return trim((string) config('geoflow.knowledge_sso_scope', 'service:access')); }

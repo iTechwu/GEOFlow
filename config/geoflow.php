@@ -128,15 +128,17 @@ return [
 
     // knowledge.dofe.ai 是生成与诊断的唯一知识源；仅允许 primary，拒绝本地回退。
     'knowledge_api_url' => rtrim(trim((string) env('KNOWLEDGE_API_URL', '')), '/'),
+    // Jenkins 与 Knowledge 位于同一 Docker 网络时，优先使用内部 API；仍由
+    // KnowledgeInfraClient 统一鉴权，禁止切换到本地知识表。
+    'knowledge_internal_api_url' => rtrim(trim((string) env('KNOWLEDGE_INTERNAL_API_URL', '')), '/'),
     'knowledge_sso_issuer' => rtrim(trim((string) env('KNOWLEDGE_SSO_ISSUER', env('SSO_ISSUER', ''))), '/'),
+    'knowledge_internal_sso_issuer' => rtrim(trim((string) env('KNOWLEDGE_INTERNAL_SSO_ISSUER', '')), '/'),
     'knowledge_sso_client_id' => trim((string) env('KNOWLEDGE_SSO_CLIENT_ID', 'geoflow-dofe-ai')),
     'knowledge_sso_client_secret' => trim((string) env('KNOWLEDGE_SSO_CLIENT_SECRET', '')),
     'knowledge_sso_scope' => trim((string) env('KNOWLEDGE_SSO_SCOPE', 'service:access')),
     'knowledge_tenant_slug' => trim((string) env('KNOWLEDGE_TENANT_SLUG', 'yootun')),
     'knowledge_space_ids' => array_values(array_filter(array_map('trim', explode(',', (string) env('KNOWLEDGE_SPACE_IDS', ''))), static fn (string $id): bool => $id !== '')),
-    'knowledge_read_mode' => in_array(env('KNOWLEDGE_READ_MODE', 'primary'), ['local', 'shadow', 'primary'], true)
-        ? env('KNOWLEDGE_READ_MODE', 'primary')
-        : 'primary',
+    'knowledge_read_mode' => 'primary',
     'knowledge_timeout_seconds' => max(1, (int) env('KNOWLEDGE_TIMEOUT_SECONDS', 15)),
 
     // Streamable HTTP MCP endpoint; disabled when no explicit token is configured.
