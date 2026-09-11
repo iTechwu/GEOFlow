@@ -47,18 +47,18 @@ class HumanizeArticleService
         }
 
         try {
-            $audit = $this->decodeJson($this->callModel(
+            $audit = $this->callModelJson(
                 $task,
                 $aiModel,
                 $this->auditPrompt($title, $content),
                 'humanize_audit',
-            ));
-            $rewritten = $this->decodeJson($this->callModel(
+            );
+            $rewritten = $this->callModelJson(
                 $task,
                 $aiModel,
                 $this->rewritePrompt($title, $content, $audit),
                 'humanize_rewrite',
-            ));
+            );
 
             $rewrittenContent = trim((string) ($rewritten['content'] ?? ''));
             if ($rewrittenContent === '') {
@@ -120,6 +120,28 @@ PROMPT;
 原始文章：
 {$content}
 PROMPT;
+    }
+
+    /**
+     * 调用模型并解析 JSON；响应为空或不是合法 JSON 时各重试一次，避免上游抖动直接终止生成任务。
+     *
+     * @return array<string,mixed>
+     */
+    private function callModelJson(Task $task, AiModel $aiModel, string $prompt, string $operation): array
+    {
+        $lastError = '';
+        for ($attempt = 0; $attempt < 2; $attempt++) {
+            $effectivePrompt = $attempt === 0
+                ? $prompt
+                : $prompt."\n\n上一次响应无法解析为 JSON。请重新输出，只返回一个合法的 JSON 对象，不要代码围栏，不要任何解释文字。";
+            try {
+                return $this->decodeJson($this->callModel($task, $aiModel, $effectivePrompt, $operation));
+            } catch (RuntimeException $exception) {
+                $lastError = trim($exception->getMessage());
+            }
+        }
+
+        throw new RuntimeException('humanize 模型两次未返回合法 JSON：'.$lastError);
     }
 
     private function callModel(Task $task, AiModel $aiModel, string $prompt, string $operation): string
