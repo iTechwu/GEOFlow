@@ -133,7 +133,7 @@ return [
     'knowledge_internal_api_url' => rtrim(trim((string) env('KNOWLEDGE_INTERNAL_API_URL', '')), '/'),
     'knowledge_sso_issuer' => rtrim(trim((string) env('KNOWLEDGE_SSO_ISSUER', env('SSO_ISSUER', ''))), '/'),
     'knowledge_internal_sso_issuer' => rtrim(trim((string) env('KNOWLEDGE_INTERNAL_SSO_ISSUER', '')), '/'),
-    'knowledge_sso_client_id' => trim((string) env('KNOWLEDGE_SSO_CLIENT_ID', 'geoflow-dofe-ai')),
+    'knowledge_sso_client_id' => trim((string) env('KNOWLEDGE_SSO_CLIENT_ID', 'geoflow-service-dofe-ai')),
     'knowledge_sso_client_secret' => trim((string) env('KNOWLEDGE_SSO_CLIENT_SECRET', '')),
     'knowledge_sso_scope' => trim((string) env('KNOWLEDGE_SSO_SCOPE', 'service:access')),
     'knowledge_tenant_slug' => trim((string) env('KNOWLEDGE_TENANT_SLUG', 'yootun')),
