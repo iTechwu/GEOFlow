@@ -131,6 +131,6 @@ final class KnowledgeInfraClient
     }
     private static function clientId(): string { return trim((string) config('geoflow.knowledge_sso_client_id', '')); }
     private static function clientSecret(): string { return trim((string) config('geoflow.knowledge_sso_client_secret', '')); }
-    private static function scope(): string { return trim((string) config('geoflow.knowledge_sso_scope', 'service:access')); }
+    private static function scope(): string { return trim((string) config('geoflow.knowledge_sso_scope', 'knowledge.read knowledge.document.ingest knowledge.memory.write knowledge.session.checkpoint')); }
     private static function tenantSlug(): string { return trim((string) config('geoflow.knowledge_tenant_slug', 'yootun')); }
 }
